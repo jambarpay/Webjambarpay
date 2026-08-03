@@ -1,16 +1,16 @@
 <div class="landing-shell">
   <header class="site-header">
     <nav class="nav-container" aria-label="Navigation principale">
-      <a class="brand" href="#accueil" aria-label="JambaarPay — Accueil">
+      <a class="brand" routerLink="/" aria-label="JambaarPay — Accueil">
         <img src="assets/images/logo-jambaarpay.png" alt="Jambaar Pay" />
       </a>
 
       <div class="nav-links">
-        <a href="#solution">Fonctionnalités</a>
-        <a href="#espaces">Nos espaces</a>
-        <a href="#securite">Sécurité</a>
-        <a href="#forfaits">Forfaits</a>
-        <a href="#contact">À propos</a>
+        <a routerLink="/fonctionnalites">Fonctionnalités</a>
+        <a routerLink="/espaces">Nos espaces</a>
+        <a routerLink="/securite">Sécurité</a>
+        <a routerLink="/forfaits">Forfaits</a>
+        <a routerLink="/a-propos">À propos</a>
       </div>
 
       <div class="nav-actions">
@@ -37,7 +37,7 @@
         </p>
         <div class="hero-actions">
           <a class="button button-accent" routerLink="/register">Commencer gratuitement <span>↗</span></a>
-          <a class="play-link" href="#solution">
+          <a class="play-link" routerLink="/fonctionnalites">
             <span class="play-icon" aria-hidden="true">▶</span>
             Découvrir JambaarPay
           </a>
@@ -123,7 +123,7 @@
             <div class="feature-icon" aria-hidden="true">{{ benefit.icon }}</div>
             <h3>{{ benefit.title }}</h3>
             <p>{{ benefit.description }}</p>
-            <a href="#securite" [attr.aria-label]="'Découvrir ' + benefit.title">Explorer <span>↗</span></a>
+            <a routerLink="/securite" [attr.aria-label]="'Découvrir ' + benefit.title">Explorer <span>↗</span></a>
             <div class="feature-decoration" aria-hidden="true">
               @if (index === 0) {
                 <span class="mini-stat"><small>Volume mensuel</small><b>21M FCFA</b></span>
@@ -225,7 +225,7 @@
   <footer id="contact" class="site-footer">
     <div class="footer-top section-container">
       <div class="footer-main">
-        <a class="brand brand-footer" href="#accueil" aria-label="JambaarPay — Retour à l’accueil">
+        <a class="brand brand-footer" routerLink="/" aria-label="JambaarPay — Retour à l’accueil">
           <img src="assets/images/logo-jambaarpay.png" alt="Jambaar Pay" />
         </a>
         <p>Le portail qui relie entreprises, salariés et restaurants autour d’un paiement simple et traçable.</p>
@@ -233,8 +233,8 @@
       @for (column of footerColumns; track column.title) {
         <div class="footer-column">
           <h3>{{ column.title }}</h3>
-          @for (link of column.links; track link) {
-            <a href="#accueil">{{ link }}</a>
+          @for (link of column.links; track link.label) {
+            <a [routerLink]="link.route">{{ link.label }}</a>
           }
         </div>
       }

@@ -262,6 +262,11 @@ $border: #c9c9c9;
   white-space: nowrap;
 }
 
+.forgot-link[aria-disabled='true'] {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 .btn-submit {
   display: inline-flex;
   align-items: center;
@@ -294,7 +299,6 @@ $border: #c9c9c9;
   text-decoration: none;
 }
 
-.forgot-link:hover,
 .register-link a:hover {
   text-decoration: underline;
 }

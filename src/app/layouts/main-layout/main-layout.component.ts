@@ -1,3 +1,4 @@
+import { DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, signal, inject } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 
@@ -17,6 +18,7 @@ import { PageRouteData } from '../../core/routing/page-route-data';
 export class MainLayoutComponent {
   private readonly router = inject(Router);
   private readonly activatedRoute = inject(ActivatedRoute);
+  private readonly document = inject(DOCUMENT);
 
   readonly pageTitle = signal('Jambaar Pay');
   readonly pageSubtitle = signal('');
@@ -29,6 +31,10 @@ export class MainLayoutComponent {
         takeUntilDestroyed(),
       )
       .subscribe(() => this.updatePageMeta());
+  }
+
+  skipToMainContent(): void {
+    this.document.getElementById('main-content')?.focus();
   }
 
   private updatePageMeta(): void {

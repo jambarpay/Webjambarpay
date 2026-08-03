@@ -27,4 +27,12 @@ test.describe('page publique Jambaar Pay', () => {
 
     expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.clientWidth + 1);
   });
+
+  test('utilise des URL publiques propres sans fragment', async ({ page }) => {
+    await page.goto('/forfaits');
+
+    await expect(page).toHaveURL(/\/forfaits$/);
+    await expect(page.locator('#forfaits')).toBeInViewport();
+    expect(new URL(page.url()).hash).toBe('');
+  });
 });

@@ -1,5 +1,5 @@
 <div class="app-shell">
-  <a class="skip-link" href="#main-content">Aller au contenu principal</a>
+  <button type="button" class="skip-link" (click)="skipToMainContent()">Aller au contenu principal</button>
   <app-sidebar></app-sidebar>
   <div class="main-content">
     <app-topbar [pageTitle]="pageTitle()" [pageSubtitle]="pageSubtitle()"></app-topbar>

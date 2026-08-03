@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { DOCUMENT } from '@angular/common';
+import { AfterViewInit, ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 
 interface PortalCard {
   readonly title: string;
@@ -14,7 +15,12 @@ interface PortalStat {
 
 interface FooterColumn {
   readonly title: string;
-  readonly links: readonly string[];
+  readonly links: readonly LandingLink[];
+}
+
+interface LandingLink {
+  readonly label: string;
+  readonly route: string;
 }
 
 interface PricingPlan {
@@ -35,7 +41,10 @@ interface PricingPlan {
     class: 'landing-page',
   },
 })
-export class LandingComponent {
+export class LandingComponent implements AfterViewInit {
+  private readonly document = inject(DOCUMENT);
+  private readonly route = inject(ActivatedRoute);
+
   readonly benefits: readonly PortalCard[] = [
     {
       title: 'Gérez vos salariés',
@@ -95,15 +104,39 @@ export class LandingComponent {
   readonly footerColumns: readonly FooterColumn[] = [
     {
       title: 'Produit',
-      links: ['Gestion des salariés', 'Paiement QR', 'Monitoring', 'Exports'],
+      links: [
+        { label: 'Gestion des salariés', route: '/fonctionnalites' },
+        { label: 'Paiement QR', route: '/fonctionnalites' },
+        { label: 'Monitoring', route: '/fonctionnalites' },
+        { label: 'Exports', route: '/fonctionnalites' },
+      ],
     },
     {
       title: 'Entreprise',
-      links: ['Entreprises', 'Restaurants', 'Administrateurs', 'Contact'],
+      links: [
+        { label: 'Entreprises', route: '/espaces' },
+        { label: 'Restaurants', route: '/espaces' },
+        { label: 'Administrateurs', route: '/espaces' },
+        { label: 'Contact', route: '/a-propos' },
+      ],
     },
     {
       title: 'Support',
-      links: ['Connexion', 'Créer un compte', 'Sécurité', 'Mentions légales'],
+      links: [
+        { label: 'Connexion', route: '/login' },
+        { label: 'Créer un compte', route: '/register' },
+        { label: 'Sécurité', route: '/securite' },
+        { label: 'Mentions légales', route: '/a-propos' },
+      ],
     },
   ];
+
+  ngAfterViewInit(): void {
+    const sectionId = this.route.snapshot.data['landingSection'] as string | undefined;
+    const target = sectionId ? this.document.getElementById(sectionId) : null;
+
+    if (target) {
+      target.scrollIntoView({ block: 'start' });
+    }
+  }
 }
