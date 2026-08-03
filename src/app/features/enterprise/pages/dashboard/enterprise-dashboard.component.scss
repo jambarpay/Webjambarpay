@@ -12,7 +12,7 @@
   padding: 1.25rem 1.5rem;
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 0.75rem;
-  background: #fff;
+  background: var(--color-white-card);
   box-shadow: var(--shadow-card);
 }
 
@@ -51,7 +51,7 @@
   border-radius: 0.65rem;
   background: #f8f8fa;
 
-  .financial-icon { display: grid; place-items: center; flex: 0 0 2.5rem; height: 2.5rem; border-radius: 0.6rem; background: #1a1a2e; color: #fff; }
+  .financial-icon { display: grid; place-items: center; flex: 0 0 2.5rem; height: 2.5rem; border-radius: 0.6rem; background: var(--color-text-primary); color: var(--color-white-card); }
   .financial-label, small { display: block; color: var(--color-grey-secondary); font-size: 0.7rem; }
   strong { display: block; margin: 0.2rem 0; color: var(--color-text-primary); font-size: 1rem; }
 }
@@ -65,7 +65,7 @@
   padding: 1.35rem 1.5rem;
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 0.75rem;
-  background: #fff;
+  background: var(--color-white-card);
   box-shadow: var(--shadow-card);
 }
 
@@ -202,7 +202,7 @@
   overflow: hidden;
   border: 1px solid rgba(0, 0, 0, 0.14);
   border-radius: 0.6875rem;
-  background: #fff;
+  background: var(--color-white-card);
   box-shadow: var(--shadow-card);
 }
 
@@ -229,7 +229,7 @@
 
   .p-datatable-thead > tr > th {
     padding: 0.875rem 1.5rem;
-    background: #fff !important;
+    background: var(--color-white-card) !important;
     border-bottom: 1px solid rgba(113, 113, 113, 0.26) !important;
     color: var(--color-text-primary) !important;
     font-family: var(--font-family-base) !important;
@@ -242,14 +242,14 @@
   .p-datatable-tbody > tr > td {
     padding: 0.875rem 1.5rem;
     border: 0 !important;
-    color: #444 !important;
+    color: var(--color-text-muted) !important;
     font-family: var(--font-family-base) !important;
     font-size: 0.9rem !important;
     font-weight: 500 !important;
   }
 
   .p-datatable-tbody > tr:hover > td {
-    background: #fafafa !important;
+    background: var(--color-surface-soft) !important;
   }
 }
 

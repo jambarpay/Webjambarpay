@@ -1,170 +1,117 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { DecimalPipe, SlicePipe } from '@angular/common';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { TableModule } from 'primeng/table';
+import { ChartData, ChartOptions } from 'chart.js';
 import { ChartModule } from 'primeng/chart';
-import { ChartData, ChartOptions, ScriptableContext, TooltipItem } from 'chart.js';
+import { TableModule } from 'primeng/table';
+import { forkJoin } from 'rxjs';
 import { KpiCardComponent } from '../../design-system/components/kpi-card/kpi-card.component';
 import { FcfaCurrencyPipe } from '../../shared/pipes/fcfa-currency.pipe';
+import { COMPANIES_REPOSITORY, CompaniesRepository } from '../companies/application/companies.repository';
+import { MONITORING_REPOSITORY, MonitoringRepository } from '../monitoring/application/monitoring.repository';
+import { MonitoringTransaction } from '../monitoring/domain/monitoring-transaction.model';
+import { RESTAURANTS_REPOSITORY, RestaurantsRepository } from '../restaurants/application/restaurants.repository';
 import { DashboardKpi, RecentActivity, TopRestaurant } from './domain/dashboard.models';
-import { percentageChange } from '../../core/utils/percentage-change';
 
 @Component({
-    selector: 'app-dashboard',
-    imports: [DecimalPipe, SlicePipe, RouterLink, TableModule, ChartModule, KpiCardComponent, FcfaCurrencyPipe],
-    templateUrl: './dashboard.component.html',
-    styleUrls: ['./dashboard.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush
+  selector: 'app-dashboard',
+  imports: [DecimalPipe, SlicePipe, RouterLink, TableModule, ChartModule, KpiCardComponent, FcfaCurrencyPipe],
+  templateUrl: './dashboard.component.html',
+  styleUrls: ['./dashboard.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DashboardComponent implements OnInit {
-  private readonly monthlyMetrics = {
-    companies: { current: 47, previous: 41 },
-    restaurants: { current: 20, previous: 18 },
-    transactions: { current: 390, previous: 342 },
-    volume: { current: 21_000_000, previous: 18_600_000 },
+export class DashboardComponent {
+  private readonly companiesRepository = inject<CompaniesRepository>(COMPANIES_REPOSITORY);
+  private readonly restaurantsRepository = inject<RestaurantsRepository>(RESTAURANTS_REPOSITORY);
+  private readonly monitoringRepository = inject<MonitoringRepository>(MONITORING_REPOSITORY);
+  private readonly changeDetector = inject(ChangeDetectorRef);
+
+  readonly displayedPeriod = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(new Date());
+  readonly monthlyTransactionTarget = 500;
+  monthlyActivityRate = 0;
+  kpis: DashboardKpi[] = [];
+  topRestaurants: TopRestaurant[] = [];
+  recentActivities: RecentActivity[] = [];
+  chartData: ChartData<'line', number[], string> = { datasets: [] };
+  chartOptions: ChartOptions<'line'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false }, border: { display: false } },
+      y: { beginAtZero: true, border: { display: false }, ticks: { precision: 0 } },
+    },
   };
 
-  readonly displayedPeriod = new Intl.DateTimeFormat('fr-FR', {
-    month: 'long',
-    year: 'numeric',
-  }).format(new Date());
-  readonly monthlyTransactionTarget = 500;
-  readonly monthlyActivityRate = Math.round(
-    (this.monthlyMetrics.transactions.current / this.monthlyTransactionTarget) * 100
-  );
-
-  kpis: DashboardKpi[] = [
-    {
-      label: 'Entreprises actives',
-      value: 47,
-      change: percentageChange(this.monthlyMetrics.companies.current, this.monthlyMetrics.companies.previous),
-      icon: 'pi pi-building',
-      iconSrc: 'assets/icons/icon-business.svg',
-    },
-    {
-      label: 'Restaurants actifs',
-      value: '+20',
-      change: percentageChange(this.monthlyMetrics.restaurants.current, this.monthlyMetrics.restaurants.previous),
-      icon: 'pi pi-home',
-      iconSrc: 'assets/icons/icon-restaurant-kpi.svg',
-    },
-    {
-      label: 'Transactions globales',
-      value: 390,
-      change: percentageChange(this.monthlyMetrics.transactions.current, this.monthlyMetrics.transactions.previous),
-      icon: 'pi pi-chart-line',
-      iconSrc: 'assets/icons/icon-transactions.svg',
-    },
-    {
-      label: 'Volume global',
-      value: '21M',
-      change: percentageChange(this.monthlyMetrics.volume.current, this.monthlyMetrics.volume.previous),
-      icon: 'pi pi-wallet',
-      iconSrc: 'assets/icons/icon-volumes.svg',
-    },
-  ];
-
-  topRestaurants: TopRestaurant[] = [
-    { rank: 1, name: 'Restaurant Le Djolof', transactions: 340, volume: 892_998 },
-    { rank: 2, name: 'Le Plat', transactions: 340, volume: 892_998 },
-    { rank: 3, name: 'La Téranga', transactions: 340, volume: 892_998 },
-    { rank: 5, name: 'Thiébou Ndar', transactions: 340, volume: 892_998 },
-    { rank: 6, name: 'FoodGood', transactions: 340, volume: 892_998 },
-  ];
-
-  recentActivities: RecentActivity[] = Array.from({ length: 6 }, () => ({
-    transactionId: `JP-${new Date().getFullYear()}-0001`,
-    company: 'Entreprise 1',
-    restaurant: 'Restaurant 2',
-    amount: 2_000,
-    date: '2026-04-15',
-    status: 'Validé' as const,
-  }));
-
-  chartData: ChartData<'line', number[], string> = { datasets: [] };
-  chartOptions: ChartOptions<'line'> = {};
-
-  ngOnInit(): void {
-    this.initChart();
+  constructor() {
+    forkJoin({
+      companies: this.companiesRepository.list(),
+      restaurants: this.restaurantsRepository.list(),
+      transactions: this.monitoringRepository.list(),
+    }).subscribe({
+      next: data => {
+        const validTransactions = data.transactions.filter(transaction => transaction.status === 'Validé');
+        const volume = validTransactions.reduce((total, transaction) => total + this.parseAmount(transaction.amount), 0);
+        this.monthlyActivityRate = Math.min(100, Math.round((data.transactions.length / this.monthlyTransactionTarget) * 100));
+        this.kpis = [
+          { label: 'Entreprises actives', value: data.companies.filter(company => company.status === 'Actif').length, change: 0, icon: 'pi pi-building', iconSrc: 'assets/icons/icon-business.svg' },
+          { label: 'Restaurants actifs', value: data.restaurants.filter(restaurant => restaurant.status === 'Actif').length, change: 0, icon: 'pi pi-home', iconSrc: 'assets/icons/icon-restaurant-kpi.svg' },
+          { label: 'Transactions globales', value: data.transactions.length, change: 0, icon: 'pi pi-chart-line', iconSrc: 'assets/icons/icon-transactions.svg' },
+          { label: 'Volume global', value: volume, change: 0, icon: 'pi pi-wallet', iconSrc: 'assets/icons/icon-volumes.svg' },
+        ];
+        this.topRestaurants = this.buildTopRestaurants(data.transactions);
+        this.recentActivities = data.transactions.slice(0, 6).map(transaction => ({
+          transactionId: transaction.id,
+          company: transaction.company,
+          restaurant: transaction.restaurant,
+          amount: this.parseAmount(transaction.amount),
+          date: transaction.date,
+          status: transaction.status === 'En attente' ? 'En cours' : transaction.status,
+        }));
+        this.chartData = this.buildChart(data.transactions);
+        this.changeDetector.markForCheck();
+      },
+      error: () => this.changeDetector.markForCheck(),
+    });
   }
 
-  private initChart(): void {
-    const labels = ['Apr10', 'Apr 11', 'Apr12', 'Apr13', 'Apr 14', 'Apr 15', 'Apr 16'];
-    const data = [52, 25, 78, 88, 66, 104, 87];
+  private buildTopRestaurants(transactions: MonitoringTransaction[]): TopRestaurant[] {
+    const totals = new Map<string, { transactions: number; volume: number }>();
+    transactions.forEach(transaction => {
+      const current = totals.get(transaction.restaurant) ?? { transactions: 0, volume: 0 };
+      totals.set(transaction.restaurant, {
+        transactions: current.transactions + 1,
+        volume: current.volume + this.parseAmount(transaction.amount),
+      });
+    });
+    return Array.from(totals, ([name, value]) => ({ name, ...value }))
+      .sort((a, b) => b.volume - a.volume)
+      .slice(0, 5)
+      .map((restaurant, index) => ({ rank: index + 1, ...restaurant }));
+  }
 
-    this.chartData = {
-      labels,
+  private buildChart(transactions: MonitoringTransaction[]): ChartData<'line', number[], string> {
+    const days = Array.from({ length: 7 }, (_, offset) => {
+      const date = new Date();
+      date.setDate(date.getDate() - (6 - offset));
+      return date.toISOString().slice(0, 10);
+    });
+    const counts = days.map(day => transactions.filter(transaction => transaction.date.startsWith(day)).length);
+    return {
+      labels: days.map(day => new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'short' }).format(new Date(day))),
       datasets: [{
         label: 'Transactions',
-        data,
+        data: counts,
         fill: true,
         borderColor: '#fde67a',
-        backgroundColor: (context: ScriptableContext<'line'>) => {
-          const chart = context.chart;
-          const area = chart.chartArea;
-          if (!area) return 'rgba(253, 230, 122, 0.18)';
-          const gradient = chart.ctx.createLinearGradient(0, area.top, 0, area.bottom);
-          gradient.addColorStop(0, 'rgba(253, 230, 122, 0.34)');
-          gradient.addColorStop(1, 'rgba(253, 230, 122, 0.03)');
-          return gradient;
-        },
-        tension: 0.42,
-        borderWidth: 4,
-        pointBackgroundColor: '#F7E47A',
-        pointBorderColor: '#fff',
-        pointBorderWidth: 3,
-        pointRadius: (context: ScriptableContext<'line'>) => context.dataIndex === 5 ? 7 : 0,
-        pointHoverRadius: 8,
+        backgroundColor: 'rgba(253, 230, 122, 0.18)',
+        tension: 0.4,
       }],
     };
+  }
 
-    this.chartOptions = {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          displayColors: false,
-          backgroundColor: '#fff',
-          titleColor: '#1A1A2E',
-          bodyColor: '#8d8d8d',
-          borderColor: 'rgba(0,0,0,0.08)',
-          borderWidth: 1,
-          padding: 10,
-          callbacks: {
-            label: (context: TooltipItem<'line'>) => ` ${context.parsed.y}%`,
-          },
-        },
-      },
-      layout: {
-        padding: {
-          bottom: 16,
-          left: 6,
-          right: 8,
-          top: 8,
-        },
-      },
-      scales: {
-        x: {
-          grid: { display: false },
-          border: { display: false },
-          ticks: {
-            color: '#1A1A2E',
-            font: { size: 11, family: 'Segoe UI', weight: 600 },
-            padding: 14,
-            maxRotation: 0,
-            minRotation: 0,
-          },
-        },
-        y: {
-          min: 0,
-          max: 110,
-          grid: { color: 'rgba(0,0,0,0.045)' },
-          border: { display: false },
-          ticks: { stepSize: 25, color: '#1A1A2E', font: { size: 12, family: 'Segoe UI', weight: 600 } },
-          position: 'left',
-        },
-      },
-    };
+  private parseAmount(value: string): number {
+    const amount = Number(value.replace(/[^\d,.-]/g, '').replace(',', '.'));
+    return Number.isFinite(amount) ? amount : 0;
   }
 }

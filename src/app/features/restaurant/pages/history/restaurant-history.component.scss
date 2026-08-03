@@ -24,7 +24,7 @@
   padding: 0 1rem;
   border: 1px solid rgba(25, 24, 49, 0.12);
   border-radius: 999px;
-  background: #fff;
+  background: var(--color-white-card);
 }
 
 .table-search i {
@@ -72,7 +72,7 @@
 .filter-btn,
 .rows-btn {
   border: 1px solid rgba(25, 24, 49, 0.12);
-  background: #fff;
+  background: var(--color-white-card);
   color: #23223b;
 }
 
@@ -82,11 +82,11 @@
 
 .export-excel {
   background: #f07a2a;
-  color: #fff;
+  color: var(--color-white-card);
 }
 
 .export-pdf {
-  background: #fff;
+  background: var(--color-white-card);
   color: #f07a2a;
 }
 
@@ -100,7 +100,7 @@
   padding: 0.4rem;
   border: 1px solid rgba(25, 24, 49, 0.08);
   border-radius: 0.85rem;
-  background: #fff;
+  background: var(--color-white-card);
   box-shadow: 0 12px 28px rgba(24, 23, 47, 0.12);
 }
 
@@ -129,7 +129,7 @@
   overflow: hidden;
   border: 1px solid rgba(25, 24, 49, 0.08);
   border-radius: 1.1rem;
-  background: #fff;
+  background: var(--color-white-card);
   box-shadow: 0 10px 24px rgba(24, 23, 47, 0.08);
 }
 
@@ -164,7 +164,7 @@
     padding: 0.85rem 1rem;
     border-bottom: 1px solid rgba(25, 24, 49, 0.08) !important;
     color: #2a2940 !important;
-    background: #fff !important;
+    background: var(--color-white-card) !important;
     font-size: 0.9rem !important;
     font-weight: 700 !important;
     text-transform: none;
@@ -233,12 +233,12 @@
 
 .page-number.active {
   background: #23223b;
-  color: #fff;
+  color: var(--color-white-card);
 }
 
 .page-number.outlined {
   border: 1px solid rgba(25, 24, 49, 0.14);
-  background: #fff;
+  background: var(--color-white-card);
 }
 
 .page-ellipsis {

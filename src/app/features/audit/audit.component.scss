@@ -14,7 +14,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: #fff;
+  background: var(--color-white-card);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-panel);
 }
@@ -51,7 +51,7 @@
   width: 16.25rem;
   height: 2.625rem;
   padding: 0 0.875rem;
-  border: 1px solid #dedede;
+  border: 1px solid var(--color-border);
   border-radius: 0.5rem;
 
   i { color: #b5b5b5; font-size: 0.9375rem; flex-shrink: 0; }
@@ -65,7 +65,7 @@
     font-size: 0.875rem;
     background: transparent;
 
-    &::placeholder { color: #c0c0c0; }
+    &::placeholder { color: var(--color-border-strong); }
   }
 }
 
@@ -77,7 +77,7 @@
   top: calc(100% + 0.375rem);
   right: 0;
   z-index: 200;
-  background: #fff;
+  background: var(--color-white-card);
   border-radius: 0.5rem;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
   padding: 0.375rem 0;
@@ -90,7 +90,7 @@
   bottom: calc(100% + 0.375rem);
   left: 0;
   z-index: 200;
-  background: #fff;
+  background: var(--color-white-card);
   border-radius: 0.5rem;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
   padding: 0.375rem 0;
@@ -110,7 +110,7 @@
   cursor: pointer;
   text-align: left;
 
-  &:hover  { background: #f5f5f5; }
+  &:hover  { background: var(--color-surface-subtle); }
   &.active { color: $orange-accent; font-weight: 700; }
 }
 
@@ -125,15 +125,15 @@
   gap: 0.625rem;
   height: 2.625rem;
   padding: 0 1.125rem;
-  border: 1px solid #dedede;
+  border: 1px solid var(--color-border);
   border-radius: 0.5rem;
-  background: #fff;
+  background: var(--color-white-card);
   color: #696969;
   font-family: var(--font-family-base);
   font-size: 0.875rem;
   cursor: pointer;
 
-  i { color: #888; }
+  i { color: var(--color-text-tertiary); }
 }
 
 .export-wrapper {
@@ -146,7 +146,7 @@
   border: 0;
   border-radius: 0.5rem;
   background: $orange-accent;
-  color: #fff;
+  color: var(--color-white-card);
   font-family: var(--font-family-base);
   font-size: 0.875rem;
   font-weight: 700;
@@ -161,7 +161,7 @@
   top: calc(100% + 0.375rem);
   right: 0;
   z-index: 200;
-  background: #fff;
+  background: var(--color-white-card);
   border-radius: 0.375rem;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
   padding: 0.375rem 0;
@@ -184,7 +184,7 @@
   text-align: left;
   white-space: nowrap;
 
-  &:hover { background: #f5f5f5; }
+  &:hover { background: var(--color-surface-subtle); }
 }
 
 .export-icon {
@@ -201,7 +201,7 @@
   .p-datatable-thead > tr > th {
     padding: 0.875rem 1.5rem;
     border-bottom: 1px solid #e0e0e0 !important;
-    background: #fff !important;
+    background: var(--color-white-card) !important;
     color: $text-primary !important;
     font-family: var(--font-family-base) !important;
     font-size: 0.875rem !important;
@@ -220,7 +220,7 @@
   }
 
   .p-datatable-tbody > tr:last-child > td { border-bottom: 0 !important; }
-  .p-datatable-tbody > tr:hover > td { background: #fafafa !important; }
+  .p-datatable-tbody > tr:hover > td { background: var(--color-surface-soft) !important; }
 }
 
 .empty-message {
@@ -248,14 +248,14 @@
   padding: 0 1rem;
   border: 0.09375rem solid $text-primary;
   border-radius: 0.4375rem;
-  background: #fff;
+  background: var(--color-white-card);
   color: $text-primary;
   font-family: var(--font-family-base);
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
 
-  &:hover { background: #f5f5f5; }
+  &:hover { background: var(--color-surface-subtle); }
 }
 
 .pagination {
@@ -290,7 +290,7 @@
     border-radius: 50%;
   }
 
-  &.active   { background: $text-primary; color: #fff; }
+  &.active   { background: $text-primary; color: var(--color-white-card); }
   &.outlined { border: 0.09375rem solid $text-primary; }
 }
 

@@ -17,7 +17,7 @@
 :host ::ng-deep .cuisine-dropdown {
   width: 100%;
   height: 2.875rem;
-  border: 1px solid #dedede;
+  border: 1px solid var(--color-border);
   border-radius: 0.5rem;
   font-family: var(--font-family-base);
   font-size: 0.875rem;
@@ -25,7 +25,7 @@
   .p-select-label {
     padding: 0 0.875rem;
     line-height: 2.875rem;
-    color: #c0c0c0;
+    color: var(--color-border-strong);
   }
 
   .p-select-dropdown {
@@ -51,7 +51,7 @@
 .balance-input {
   display: flex;
   height: 2.875rem;
-  border: 1px solid #dedede;
+  border: 1px solid var(--color-border);
   border-radius: 0.5rem;
   overflow: hidden;
   transition: border-color 0.2s;
@@ -71,7 +71,7 @@
   display: flex;
   align-items: center;
   padding: 0 0.875rem;
-  background: #f5f5f5;
+  background: var(--color-surface-subtle);
   color: $text-primary;
   font-family: var(--font-family-base);
   font-size: 0.875rem;
@@ -79,14 +79,14 @@
 }
 
 .phone-prefix {
-  border-right: 1px solid #dedede;
+  border-right: 1px solid var(--color-border);
   font-size: 0.9375rem;
   font-weight: 600;
 }
 
 .balance-suffix {
-  border-left: 1px solid #dedede;
-  color: #888;
+  border-left: 1px solid var(--color-border);
+  color: var(--color-text-tertiary);
 }
 
 .phone-number,

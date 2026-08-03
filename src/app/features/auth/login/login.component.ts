@@ -22,7 +22,7 @@ export class LoginComponent {
   private readonly auth = inject(AuthFacade);
   private readonly router = inject(Router);
 
-  form: LoginForm = { email: '', password: '', rememberMe: false };
+  form: LoginForm = { email: '', password: '' };
   showPassword = signal(false);
   loading = signal(false);
   error = signal('');

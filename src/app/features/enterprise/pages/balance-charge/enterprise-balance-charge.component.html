@@ -24,13 +24,13 @@
       <div class="step-content">
         <h3>Quels comptes souhaitez-vous charger ?</h3>
         <div class="scope-grid">
-          <label class="scope-card" [class.selected]="scope === 'all'">
-            <input type="radio" name="scope" value="all" [(ngModel)]="scope" />
+          <label class="scope-card" for="scope-all" [class.selected]="scope === 'all'">
+            <input id="scope-all" type="radio" name="scope" value="all" [(ngModel)]="scope" />
             <span class="scope-icon"><i class="pi pi-users"></i></span>
             <span><strong>Tous les salariés</strong><small>{{ employees().length }} comptes seront crédités</small></span>
           </label>
-          <label class="scope-card" [class.selected]="scope === 'selected'">
-            <input type="radio" name="scope" value="selected" [(ngModel)]="scope" />
+          <label class="scope-card" for="scope-selected" [class.selected]="scope === 'selected'">
+            <input id="scope-selected" type="radio" name="scope" value="selected" [(ngModel)]="scope" />
             <span class="scope-icon"><i class="pi pi-user"></i></span>
             <span><strong>Sélection personnalisée</strong><small>Choisissez les comptes à créditer</small></span>
           </label>
@@ -39,8 +39,9 @@
         @if (scope === 'selected') {
           <div class="employee-picker">
             @for (employee of employees(); track employee.id) {
-              <label>
+              <label [for]="'employee-' + employee.id">
                 <input
+                  [id]="'employee-' + employee.id"
                   type="checkbox"
                   [checked]="isSelected(employee.id)"
                   (change)="toggleEmployee(employee.id, $any($event.target).checked)" />
@@ -60,10 +61,11 @@
       <div class="step-content amount-step">
         <h3>Définissez le montant du chargement</h3>
         <p class="step-description">Ce montant sera ajouté au solde de chaque compte sélectionné.</p>
-        <label class="field">
+        <label class="field" for="charge-amount">
           <span>Montant par salarié <strong>*</strong></span>
           <div class="amount-input">
             <input
+              id="charge-amount"
               type="text"
               inputmode="numeric"
               name="amount"
@@ -76,9 +78,9 @@
             <small class="field-error">{{ amountError }}</small>
           }
         </label>
-        <label class="field">
+        <label class="field" for="charge-reason">
           <span>Motif <small>(facultatif)</small></span>
-          <textarea name="reason" [(ngModel)]="reason" rows="3" placeholder="Ex : Allocation repas — juillet 2026"></textarea>
+          <textarea id="charge-reason" name="reason" [(ngModel)]="reason" rows="3" placeholder="Ex : Allocation repas — juillet 2026"></textarea>
         </label>
       </div>
     }

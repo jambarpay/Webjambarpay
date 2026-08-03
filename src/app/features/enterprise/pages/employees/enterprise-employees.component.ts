@@ -86,9 +86,9 @@ export class EnterpriseEmployeesComponent {
     this.facade.exportEmployees();
   }
 
-  exportMonthlyReport(employee: Parameters<EnterpriseEmployeesFacade['exportMonthlyReport']>[0]): void {
+  async exportMonthlyReport(employee: Parameters<EnterpriseEmployeesFacade['exportMonthlyReport']>[0]): Promise<void> {
     try {
-      this.facade.exportMonthlyReport(employee);
+      await this.facade.exportMonthlyReport(employee);
     } catch (error) {
       this.facade.setErrorFeedback(error, 'Génération du rapport mensuel impossible.');
     }

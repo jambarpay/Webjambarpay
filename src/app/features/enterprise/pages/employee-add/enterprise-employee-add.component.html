@@ -3,49 +3,49 @@
     <h2>Ajouter un salari&eacute;</h2>
 
     <div class="form-grid">
-      <label class="field">
+      <label class="field" for="employee-name">
         <span>Nom du salari&eacute;<strong>*</strong></span>
-        <input type="text" name="name" [(ngModel)]="form.name" [class.input-invalid]="submitted() && !!nameError" placeholder="Ex : Awa Diop" />
+        <input id="employee-name" type="text" name="name" [(ngModel)]="form.name" [class.input-invalid]="submitted() && !!nameError" placeholder="Ex : Awa Diop" />
         @if (submitted() && !!nameError) {
           <small class="field-error">{{ nameError }}</small>
         }
       </label>
 
-      <label class="field">
+      <label class="field" for="employee-position">
         <span>Poste <strong>*</strong></span>
-        <input type="text" name="position" [(ngModel)]="form.position" [class.input-invalid]="submitted() && !!positionError" placeholder="Ex : Comptable" />
+        <input id="employee-position" type="text" name="position" [(ngModel)]="form.position" [class.input-invalid]="submitted() && !!positionError" placeholder="Ex : Comptable" />
         @if (submitted() && !!positionError) {
           <small class="field-error">{{ positionError }}</small>
         }
       </label>
 
-      <label class="field">
+      <label class="field" for="employee-email">
         <span>Adresse e-mail<strong>*</strong></span>
-        <input type="email" name="email" [(ngModel)]="form.email" [class.input-invalid]="submitted() && !!emailError" placeholder="Ex : awa.diop@entreprise.sn" />
+        <input id="employee-email" type="email" name="email" [(ngModel)]="form.email" [class.input-invalid]="submitted() && !!emailError" placeholder="Ex : awa.diop@entreprise.sn" />
         @if (submitted() && !!emailError) {
           <small class="field-error">{{ emailError }}</small>
         }
       </label>
 
-      <label class="field">
+      <label class="field" for="employee-phone">
         <span>Numero de t&eacute;l&eacute;phone<strong>*</strong></span>
-        <input type="tel" name="phone" [(ngModel)]="form.phone" [class.input-invalid]="submitted() && !!phoneError" placeholder="Ex : 77 123 45 67" />
+        <input id="employee-phone" type="tel" name="phone" [(ngModel)]="form.phone" [class.input-invalid]="submitted() && !!phoneError" placeholder="Ex : 77 123 45 67" />
         @if (submitted() && !!phoneError) {
           <small class="field-error">{{ phoneError }}</small>
         }
       </label>
 
-      <label class="field">
+      <label class="field" for="employee-address">
         <span>Adresse</span>
-        <input type="text" name="address" [(ngModel)]="form.address" [class.input-invalid]="submitted() && !!addressError" placeholder="Ex : Liberte 6, Dakar" />
+        <input id="employee-address" type="text" name="address" [(ngModel)]="form.address" [class.input-invalid]="submitted() && !!addressError" placeholder="Ex : Liberte 6, Dakar" />
         @if (submitted() && !!addressError) {
           <small class="field-error">{{ addressError }}</small>
         }
       </label>
 
-      <label class="field">
+      <label class="field" for="employee-initial-amount">
         <span>montant initiale</span>
-        <input type="text" name="initialAmount" [(ngModel)]="form.initialAmount" [class.input-invalid]="submitted() && !!initialAmountError" placeholder="Ex : 25000" />
+        <input id="employee-initial-amount" type="text" name="initialAmount" [(ngModel)]="form.initialAmount" [class.input-invalid]="submitted() && !!initialAmountError" placeholder="Ex : 25000" />
         @if (submitted() && !!initialAmountError) {
           <small class="field-error">{{ initialAmountError }}</small>
         }
@@ -57,9 +57,15 @@
       l'enregistrement.
     </p>
 
+    @if (errorMessage()) {
+      <p class="field-error" role="alert">{{ errorMessage() }}</p>
+    }
+
     <div class="form-actions">
       <a routerLink="/enterprise-employees" class="btn btn-cancel">Annuler</a>
-      <button type="submit" class="btn btn-save">Enr&eacute;gister le salari&eacute;</button>
+      <button type="submit" class="btn btn-save" [disabled]="submitting()">
+        {{ submitting() ? 'Enregistrement…' : 'Enregistrer le salarié' }}
+      </button>
     </div>
   </form>
 </section>

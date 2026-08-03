@@ -4,6 +4,7 @@ import { AuthSession, LoginCredentials } from '../domain/auth.models';
 
 export interface AuthRepository {
   login(credentials: LoginCredentials): Observable<AuthSession | null>;
+  logout(): Observable<void>;
 }
 
 export const AUTH_REPOSITORY = new InjectionToken<AuthRepository>('AUTH_REPOSITORY');

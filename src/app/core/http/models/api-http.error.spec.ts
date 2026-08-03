@@ -1,8 +1,8 @@
 import { HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-import { mapBffHttpError } from './bff-http.error';
+import { mapApiHttpError } from './api-http.error';
 
-describe('mapBffHttpError', () => {
-  it('maps a structured BFF error without losing traceability', () => {
+describe('mapApiHttpError', () => {
+  it('maps a structured API error without losing traceability', () => {
     const source = new HttpErrorResponse({
       status: 422,
       error: {
@@ -13,9 +13,9 @@ describe('mapBffHttpError', () => {
       },
     });
 
-    const error = mapBffHttpError(source);
+    const error = mapApiHttpError(source);
 
-    expect(error.name).toBe('BffHttpError');
+    expect(error.name).toBe('ApiHttpError');
     expect(error.status).toBe(422);
     expect(error.code).toBe('VALIDATION_FAILED');
     expect(error.message).toBe('Données invalides.');
@@ -31,7 +31,7 @@ describe('mapBffHttpError', () => {
       headers: new HttpHeaders({ 'x-correlation-id': 'corr-header' }),
     });
 
-    const error = mapBffHttpError(source);
+    const error = mapApiHttpError(source);
 
     expect(error.code).toBe('HTTP_503');
     expect(error.correlationId).toBe('corr-header');

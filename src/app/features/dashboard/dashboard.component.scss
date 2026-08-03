@@ -13,7 +13,7 @@
   padding: 1.25rem 1.5rem;
   border: 1px solid rgba(0, 0, 0, 0.14);
   border-radius: 0.6875rem;
-  background: #fff;
+  background: var(--color-white-card);
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.18);
 }
 
@@ -33,7 +33,7 @@
 
   p {
     margin: 0.25rem 0 0;
-    color: #888;
+    color: var(--color-text-tertiary);
     font-size: 0.78rem;
   }
 }
@@ -74,7 +74,7 @@
   }
 
   span {
-    color: #888;
+    color: var(--color-text-tertiary);
     font-size: 0.7rem;
   }
 }
@@ -97,7 +97,7 @@
   display: flex;
   justify-content: space-between;
   margin-top: 0.55rem;
-  color: #888;
+  color: var(--color-text-tertiary);
   font-size: 0.68rem;
 }
 
@@ -121,7 +121,7 @@
 
 // ── Shared Panel ──────────────────────────────────────────────────────────────
 .panel {
-  background: #fff;
+  background: var(--color-white-card);
   border: 1px solid rgba(0, 0, 0, 0.14);
   border-radius: 0.6875rem;
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.24);
@@ -247,7 +247,7 @@
   height: 2.375rem;
   border-radius: 0.5rem;
   background: $text-primary;
-  color: #fff;
+  color: var(--color-white-card);
   font-size: 1rem;
   font-weight: 700;
   flex-shrink: 0;
@@ -272,7 +272,7 @@
 
 .restaurant-transactions {
   margin-top: 0.125rem;
-  color: #888;
+  color: var(--color-text-tertiary);
   font-size: 0.75rem;
   font-weight: 500;
   white-space: nowrap;
@@ -358,7 +358,7 @@
 
   .p-datatable-thead > tr > th {
     padding: 0.8125rem 1.75rem;
-    background: #fff !important;
+    background: var(--color-white-card) !important;
     border-top: 0 !important;
     border-bottom: 1px solid rgba(113, 113, 113, 0.26) !important;
     color: $text-primary !important;
@@ -373,7 +373,7 @@
     padding: 0.6875rem 1.75rem;
     border: 0 !important;
     border-bottom: 0 !important;
-    color: #444 !important;
+    color: var(--color-text-muted) !important;
     font-family: var(--font-family-base) !important;
     font-size: 0.875rem !important;
     font-weight: 500 !important;
@@ -384,7 +384,7 @@
   }
 
   .p-datatable-tbody > tr:hover > td {
-    background: #fafafa !important;
+    background: var(--color-surface-soft) !important;
   }
 }
 

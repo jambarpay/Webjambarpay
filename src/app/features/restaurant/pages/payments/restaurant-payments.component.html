@@ -8,19 +8,19 @@
         </div>
 
         <div class="payment-grid">
-          <label class="field">
+          <label class="field" for="payment-phone">
             <span>Téléphone du mobile</span>
-            <input [(ngModel)]="customerPhone" type="text" placeholder="Ex : 77 123 45 67" />
+            <input id="payment-phone" [(ngModel)]="customerPhone" type="text" placeholder="Ex : 77 123 45 67" />
           </label>
 
-          <label class="field">
+          <label class="field" for="payment-table">
             <span>Numero de table</span>
-            <input [(ngModel)]="tableNumber" type="text" placeholder="Ex : Table 4" />
+            <input id="payment-table" [(ngModel)]="tableNumber" type="text" placeholder="Ex : Table 4" />
           </label>
 
-          <label class="field field-full">
+          <label class="field field-full" for="payment-amount">
             <span>Montant</span>
-            <input [(ngModel)]="amount" type="text" placeholder="Ex : 14 500 FCFA" />
+            <input id="payment-amount" [(ngModel)]="amount" type="text" placeholder="Ex : 14 500 FCFA" />
           </label>
         </div>
 

@@ -1,10 +1,28 @@
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 import { StorageService } from '../../services/storage.service';
-import { MockAuthRepository } from '../data-access/mock-auth.repository';
+import { AuthRepository } from './auth.repository';
 import { AuthFacade } from './auth.facade';
 import { AUTH_REPOSITORY } from './auth.repository';
+import { LoginCredentials, USER_ROLES } from '../domain/auth.models';
+
+class FakeAuthRepository implements AuthRepository {
+  login(credentials: LoginCredentials) {
+    return of({
+      profile: {
+        id: 'admin-test',
+        name: 'Admin Test',
+        email: credentials.email,
+        role: USER_ROLES.admin,
+      },
+    });
+  }
+
+  logout() {
+    return of(undefined);
+  }
+}
 
 describe('AuthFacade', () => {
   const router = {
@@ -16,9 +34,9 @@ describe('AuthFacade', () => {
     TestBed.configureTestingModule({
       providers: [
         AuthFacade,
-        MockAuthRepository,
+        FakeAuthRepository,
         StorageService,
-        { provide: AUTH_REPOSITORY, useExisting: MockAuthRepository },
+        { provide: AUTH_REPOSITORY, useExisting: FakeAuthRepository },
         { provide: Router, useValue: router },
       ],
     });
@@ -32,43 +50,26 @@ describe('AuthFacade', () => {
     router.navigate.calls.reset();
   });
 
-  it('stores the session in localStorage when rememberMe is enabled', async () => {
+  it('stores only the profile in sessionStorage after login', async () => {
     const service = setup();
 
     const authenticated = await firstValueFrom(service.login({
       email: 'admin@jambaarpay.com',
       password: 'Admin@1234',
-      rememberMe: true,
     }));
 
     expect(authenticated).toBeTrue();
-    expect(localStorage.getItem('jp_token')).toContain('mock-jwt-token-');
-    expect(sessionStorage.getItem('jp_token')).toBeNull();
-  });
-
-  it('stores the session in sessionStorage when rememberMe is disabled', async () => {
-    const service = setup();
-
-    const authenticated = await firstValueFrom(service.login({
-      email: 'admin@jambaarpay.com',
-      password: 'Admin@1234',
-      rememberMe: false,
-    }));
-
-    expect(authenticated).toBeTrue();
-    expect(sessionStorage.getItem('jp_token')).toContain('mock-jwt-token-');
-    expect(localStorage.getItem('jp_token')).toBeNull();
+    expect(sessionStorage.getItem('jp_user')).toContain('admin-test');
+    expect(localStorage.length).toBe(0);
   });
 
   it('ignores corrupted persisted profiles without crashing', () => {
-    localStorage.setItem('jp_token', 'stale-token');
-    localStorage.setItem('jp_user', '{bad json');
+    sessionStorage.setItem('jp_user', '{bad json');
 
     const service = setup();
 
     expect(service.isAuthenticated()).toBeFalse();
     expect(service.getProfile()).toBeNull();
-    expect(localStorage.getItem('jp_token')).toBeNull();
-    expect(localStorage.getItem('jp_user')).toBeNull();
+    expect(sessionStorage.getItem('jp_user')).toBeNull();
   });
 });

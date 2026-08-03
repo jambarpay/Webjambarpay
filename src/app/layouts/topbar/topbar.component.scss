@@ -9,7 +9,7 @@
   height: 11vh;
   max-height: $topbar-height;
   padding: 0 2.25rem 0 3.5625rem;
-  background: #fff;
+  background: var(--color-white-card);
   flex-shrink: 0;
 }
 
@@ -44,7 +44,7 @@
   padding: 0 1.125rem;
   border: 1px solid #959595;
   border-radius: 0.5rem;
-  background: #fff;
+  background: var(--color-white-card);
 
   .search-icon {
     width: 1.125rem;

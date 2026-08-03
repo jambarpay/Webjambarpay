@@ -47,11 +47,9 @@
             ],
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
-            "allowedCommonJsDependencies": [
-              "qrcode"
-            ],
             "assets": [
               "src/favicon.ico",
+              "src/robots.txt",
               "src/assets"
             ],
             "styles": [

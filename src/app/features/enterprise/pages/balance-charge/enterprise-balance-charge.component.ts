@@ -78,11 +78,11 @@ export class EnterpriseBalanceChargeComponent {
     this.step.update(current => current === 3 ? 2 : 1);
   }
 
-  confirmCharge(): void {
+  async confirmCharge(): Promise<void> {
     try {
       const ids = this.selectedEmployees.map(employee => employee.id);
-      const result = this.facade.chargeBalances(ids, this.amountValue);
-      void this.router.navigate(['/enterprise-employees'], {
+      const result = await this.facade.chargeBalances(ids, this.amountValue);
+      await this.router.navigate(['/enterprise-employees'], {
         state: {
           balanceChargeSuccess:
             `${result.employeeCount} compte(s) chargé(s) pour un total de ${this.formatAmount(result.totalAmount)}.`,

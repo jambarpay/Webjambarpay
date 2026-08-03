@@ -1,7 +1,6 @@
-import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { forkJoin, map, Observable, of, switchMap, throwError } from 'rxjs';
-import { BACKEND_API_URL } from '../../../core/http/backend-api.config';
+import { BackendApiClient } from '../../../core/http/backend-api.client';
 import { RestaurantsRepository } from '../application/restaurants.repository';
 import { Restaurant } from '../domain/restaurant.model';
 
@@ -63,11 +62,10 @@ interface UpdateRestaurantDto {
 
 @Injectable({ providedIn: 'root' })
 export class BackendRestaurantsRepository implements RestaurantsRepository {
-  private readonly http = inject(HttpClient);
-  private readonly baseUrl = inject(BACKEND_API_URL).replace(/\/+$/, '');
+  private readonly api = inject(BackendApiClient);
 
   list(): Observable<Restaurant[]> {
-    return this.http.get<BackendRestaurantDto[]>(`${this.baseUrl}/restaurants`).pipe(
+    return this.api.get<BackendRestaurantDto[]>('restaurants').pipe(
       map(restaurants => restaurants.map(restaurant => this.toDomain(restaurant))),
     );
   }
@@ -84,8 +82,8 @@ export class BackendRestaurantsRepository implements RestaurantsRepository {
 
   upsert(restaurant: Restaurant): Observable<Restaurant> {
     if (restaurant.source === 'backend') {
-      return this.http.put<BackendRestaurantDto>(
-        `${this.baseUrl}/restaurants/${encodeURIComponent(restaurant.id)}`,
+      return this.api.put<BackendRestaurantDto, UpdateRestaurantDto>(
+        `restaurants/${encodeURIComponent(restaurant.id)}`,
         this.toUpdateDto(restaurant),
       ).pipe(map(response => this.toDomain(response)));
     }
@@ -97,8 +95,8 @@ export class BackendRestaurantsRepository implements RestaurantsRepository {
     }
 
     return this.resolveOwnerUserId(restaurant).pipe(
-      switchMap(ownerUserId => this.http.post<BackendRestaurantDto>(
-        `${this.baseUrl}/restaurants`,
+      switchMap(ownerUserId => this.api.post<BackendRestaurantDto, CreateRestaurantDto>(
+        'restaurants',
         this.toCreateDto(restaurant, ownerUserId),
       )),
       map(response => this.toDomain(response)),
@@ -191,8 +189,8 @@ export class BackendRestaurantsRepository implements RestaurantsRepository {
       role: 'RESTAURANT',
     };
 
-    return this.http.post<CreateRestaurantOwnerResponse>(
-      `${this.baseUrl}/users/restaurant`,
+    return this.api.post<CreateRestaurantOwnerResponse, CreateRestaurantOwnerDto>(
+      'users/restaurant',
       request,
     ).pipe(
       map(response => {

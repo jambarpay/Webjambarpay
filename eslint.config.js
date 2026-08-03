@@ -42,6 +42,7 @@ module.exports = tseslint.config(
   },
   {
     files: ["src/app/features/**/*.ts"],
+    ignores: ["**/*.spec.ts"],
     rules: {
       "no-restricted-imports": [
         "error",

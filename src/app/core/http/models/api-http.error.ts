@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ApiErrorPayload } from './api-response';
 
-export class BffHttpError extends Error {
+export class ApiHttpError extends Error {
   constructor(
     message: string,
     readonly status: number,
@@ -11,17 +11,17 @@ export class BffHttpError extends Error {
     readonly originalError?: unknown,
   ) {
     super(message);
-    this.name = 'BffHttpError';
+    this.name = 'ApiHttpError';
   }
 }
 
-export function mapBffHttpError(response: HttpErrorResponse): BffHttpError {
+export function mapApiHttpError(response: HttpErrorResponse): ApiHttpError {
   const payload = isApiErrorPayload(response.error) ? response.error : {};
   const correlationId = payload.correlationId
     ?? response.headers?.get('x-correlation-id')
     ?? null;
 
-  return new BffHttpError(
+  return new ApiHttpError(
     payload.message ?? defaultMessage(response.status),
     response.status,
     payload.code ?? `HTTP_${response.status || 'NETWORK'}`,

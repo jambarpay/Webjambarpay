@@ -14,15 +14,12 @@ export function isUserRole(value: unknown): value is UserRole {
 export interface LoginForm {
   email: string;
   password: string;
-  rememberMe: boolean;
 }
 
 export type LoginCredentials = Pick<LoginForm, 'email' | 'password'>;
 
 export interface AuthSession {
   profile: AdminProfile;
-  /** Optional during cookie-based BFF sessions; refresh tokens are never exposed to Angular. */
-  accessToken?: string;
 }
 
 export interface AdminProfile {
@@ -35,7 +32,6 @@ export interface AdminProfile {
 
 export interface AuthState {
   userId: string | null;
-  token: string | null;
   role: UserRole | null;
   profile: AdminProfile | null;
   isAuthenticated: boolean;

@@ -1,11 +1,11 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { BFF_API_URL, isBffRequest } from '../bff-api.config';
+import { BACKEND_API_URL, isBackendRequest } from '../backend-api.config';
 
 export const correlationInterceptor: HttpInterceptorFn = (request, next) => {
-  const bffApiUrl = inject(BFF_API_URL);
+  const backendApiUrl = inject(BACKEND_API_URL);
 
-  if (!isBffRequest(request.url, bffApiUrl)) {
+  if (!isBackendRequest(request.url, backendApiUrl)) {
     return next(request);
   }
 

@@ -1,16 +1,18 @@
-import { Injectable, computed, signal, inject } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
+import { catchError, firstValueFrom, forkJoin, map, of } from 'rxjs';
+import { BackendApiClient } from '../../../core/http/backend-api.client';
+import { ApiEnvelope } from '../../../core/http/models/api-response';
 import { DataTransferService, ExportColumn, ImportedRecord } from '../../../core/services/data-transfer.service';
-import { DatasetStorageService } from '../../../core/services/dataset-storage.service';
 import { sliceCurrentPage } from '../../../core/utils/pagination';
-import { EMPLOYEE_NAMES, createEnterpriseDemoTransactions } from '../domain/enterprise-demo-data';
 
 export interface EmployeeRow {
   id: string;
+  walletId: string | null;
   name: string;
   email: string;
   phone: string;
   balance: string;
-  status: 'Validé';
+  status: 'Validé' | 'Inactif';
 }
 
 export interface BalanceChargeResult {
@@ -18,19 +20,50 @@ export interface BalanceChargeResult {
   totalAmount: number;
 }
 
-export type EmployeeStatusFilter = 'Tous' | 'Validé';
+interface BackendUserDto {
+  id: string;
+  phoneNumber: string;
+  firstName: string;
+  lastName: string;
+  status: 'PENDING_OTP' | 'ACTIVE' | 'BLOCKED' | 'DISABLED';
+}
+
+interface BackendWalletDto {
+  id: string;
+  balance: number;
+  currency: string;
+  active: boolean;
+}
+
+interface BackendTransactionDto {
+  payerUserId: string;
+  restaurantId: string;
+  amount: number;
+  currency: string;
+  status: string;
+  createdAt: string;
+}
+
+interface BackendTransactionPage {
+  data: BackendTransactionDto[];
+}
+
+interface BulkTopUpResponse {
+  walletCount: number;
+  totalAmount: number;
+}
+
+export type EmployeeStatusFilter = 'Tous' | EmployeeRow['status'];
 export type EmployeeFeedbackState = { type: 'success' | 'error'; message: string } | null;
 
-const EMPLOYEES_STORAGE_KEY = 'jp_enterprise_employees_dataset';
 const DEFAULT_PAGE_SIZE = 5;
 const PAGE_SIZE_OPTIONS = [5, 10];
-const STATUS_OPTIONS: EmployeeStatusFilter[] = ['Tous', 'Validé'];
+const STATUS_OPTIONS: EmployeeStatusFilter[] = ['Tous', 'Validé', 'Inactif'];
 
 @Injectable()
 export class EnterpriseEmployeesFacade {
+  private readonly api = inject(BackendApiClient);
   private readonly dataTransfer = inject(DataTransferService);
-  private readonly datasetStorage = inject(DatasetStorageService);
-
   private readonly allEmployees = signal<EmployeeRow[]>([]);
   private readonly exportColumns: ExportColumn<EmployeeRow>[] = [
     { header: 'ID', value: employee => employee.id },
@@ -46,55 +79,25 @@ export class EnterpriseEmployeesFacade {
   readonly pageSize = signal(DEFAULT_PAGE_SIZE);
   readonly currentPage = signal(1);
   readonly feedback = signal<EmployeeFeedbackState>(null);
-
+  readonly loading = signal(true);
   readonly statusOptions = STATUS_OPTIONS;
   readonly pageSizeOptions = PAGE_SIZE_OPTIONS;
 
   readonly filteredEmployees = computed(() => {
     const query = this.searchTerm().trim().toLowerCase();
     const status = this.statusFilter();
-
     return this.allEmployees().filter(employee => {
-      const matchesSearch = !query || [
-        employee.name,
-        employee.email,
-        employee.phone,
-        employee.balance,
-      ].some(value => value.toLowerCase().includes(query));
-      const matchesStatus = status === 'Tous' || employee.status === status;
-      return matchesSearch && matchesStatus;
+      const matchesSearch = !query || [employee.name, employee.email, employee.phone, employee.balance]
+        .some(value => value.toLowerCase().includes(query));
+      return matchesSearch && (status === 'Tous' || employee.status === status);
     });
   });
-
-  readonly totalPages = computed(() =>
-    Math.max(1, Math.ceil(this.filteredEmployees().length / this.pageSize()))
-  );
-
-  readonly employees = computed(() => {
-    return sliceCurrentPage(this.filteredEmployees(), this.currentPage(), this.pageSize());
-  });
+  readonly totalPages = computed(() => Math.max(1, Math.ceil(this.filteredEmployees().length / this.pageSize())));
+  readonly employees = computed(() => sliceCurrentPage(this.filteredEmployees(), this.currentPage(), this.pageSize()));
   readonly employeeOptions = computed(() => this.allEmployees());
 
   constructor() {
-    const defaults = Array.from({ length: 144 }, (_, index) => ({
-      id: `employee-${index + 1}`,
-      name: index < EMPLOYEE_NAMES.length
-        ? EMPLOYEE_NAMES[index]
-        : `Salarié ${index + 1}`,
-      email: `salarie${index + 1}@gmail.com`,
-      phone: `77${String(7000000 + index).slice(-7)}`,
-      balance: '2 000 Fcfa',
-      status: 'Validé' as const,
-    }));
-
-    const storedEmployees = this.datasetStorage.readArray(EMPLOYEES_STORAGE_KEY, defaults);
-    const migratedEmployees = storedEmployees.map((employee, index) => ({
-      ...employee,
-      name: /^#\d+$/.test(employee.name)
-        ? (EMPLOYEE_NAMES[index] ?? `Salarié ${index + 1}`)
-        : employee.name,
-    }));
-    this.persistEmployees(migratedEmployees);
+    this.loadEmployees();
   }
 
   setSearchTerm(value: string): void {
@@ -113,85 +116,70 @@ export class EnterpriseEmployeesFacade {
   }
 
   setPage(page: number): void {
-    if (page >= 1 && page <= this.totalPages()) {
-      this.currentPage.set(page);
-    }
+    if (page >= 1 && page <= this.totalPages()) this.currentPage.set(page);
   }
 
   async importEmployees(file: File): Promise<void> {
     const records = await this.dataTransfer.readRecords(file);
-    const imported = records
-      .map((record, index) => this.mapImportedEmployee(record, index))
-      .filter((employee): employee is EmployeeRow => employee !== null);
+    const requests = records.map(record => this.toRegistrationRequest(record)).filter(isRegistrationRequest);
+    if (!requests.length) throw new Error('Aucun salarié exploitable dans le fichier.');
 
-    if (!imported.length) {
-      throw new Error('Aucune ligne salarie exploitable n’a ete trouvee dans le fichier.');
-    }
-
-    const merged = this.mergeEmployees(this.allEmployees(), imported);
-    this.persistEmployees(merged);
-    this.setFeedback('success', `${imported.length} salarie(s) importe(s) avec succes.`);
+    await firstValueFrom(forkJoin(requests.map(request =>
+      this.api.post<ApiEnvelope<BackendUserDto>, RegistrationRequest>('users/register/employee', request),
+    )));
+    this.setFeedback('success', `${requests.length} salarié(s) transmis au user-service.`);
+    this.loadEmployees();
   }
 
-  async importBalances(file: File): Promise<void> {
-    const records = await this.dataTransfer.readRecords(file);
-    const updated = this.applyImportedBalances(records);
-    this.persistEmployees(updated);
-    this.setFeedback('success', 'Soldes mis a jour a partir du fichier importe.');
+  async importBalances(): Promise<void> {
+    throw new Error('L’import direct de soldes est désactivé. Utilisez le chargement sécurisé des comptes.');
   }
 
-  chargeBalances(employeeIds: string[], amount: number): BalanceChargeResult {
+  async chargeBalances(employeeIds: string[], amount: number): Promise<BalanceChargeResult> {
+    if (!employeeIds.length) throw new Error('Sélectionnez au moins un salarié.');
+    if (!Number.isFinite(amount) || amount <= 0) throw new Error('Le montant doit être supérieur à zéro.');
+
     const selectedIds = new Set(employeeIds);
+    const selected = this.allEmployees().filter(employee => selectedIds.has(employee.id));
+    const walletIds = selected.map(employee => employee.walletId).filter((id): id is string => !!id);
+    if (walletIds.length !== selected.length) throw new Error('Un ou plusieurs salariés ne possèdent pas de portefeuille actif.');
 
-    if (!selectedIds.size) {
-      throw new Error('Selectionnez au moins un salarie.');
-    }
-
-    if (!Number.isFinite(amount) || amount <= 0) {
-      throw new Error('Le montant doit etre superieur a zero.');
-    }
-
-    let employeeCount = 0;
-    const updated = this.allEmployees().map(employee => {
-      if (!selectedIds.has(employee.id)) {
-        return employee;
-      }
-
-      employeeCount += 1;
-      const currentBalance = this.parseBalance(employee.balance);
-      return { ...employee, balance: this.formatBalance(currentBalance + amount) };
-    });
-
-    if (!employeeCount) {
-      throw new Error('Aucun salarie valide n’a ete selectionne.');
-    }
-
-    this.persistEmployees(updated);
-    return { employeeCount, totalAmount: employeeCount * amount };
+    const response = await firstValueFrom(this.api.post<BulkTopUpResponse, {
+      walletIds: string[];
+      amount: number;
+      currency: string;
+    }>('payments/wallets/bulk-top-up', { walletIds, amount, currency: 'XOF' }, {
+      headers: { 'Idempotency-Key': createIdempotencyKey() },
+    }));
+    this.loadEmployees();
+    return { employeeCount: response.walletCount, totalAmount: response.totalAmount };
   }
 
   exportEmployees(): void {
     this.dataTransfer.exportCsv('salaries-entreprise-jambaarpay', this.filteredEmployees(), this.exportColumns);
-    this.setFeedback('success', 'Export Excel prepare pour la liste des salaries.');
+    this.setFeedback('success', 'Export préparé pour la liste des salariés.');
   }
 
-  exportMonthlyReport(employee: EmployeeRow, referenceDate = new Date()): void {
-    const month = `${referenceDate.getFullYear()}-${String(referenceDate.getMonth() + 1).padStart(2, '0')}`;
-    const transactions = createEnterpriseDemoTransactions(referenceDate)
-      .filter(transaction => transaction.employee === employee.name && transaction.date.startsWith(month));
-    const columns: ExportColumn<(typeof transactions)[number]>[] = [
+  async exportMonthlyReport(employee: EmployeeRow, referenceDate = new Date()): Promise<void> {
+    const from = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), 1).toISOString();
+    const to = new Date(referenceDate.getFullYear(), referenceDate.getMonth() + 1, 1).toISOString();
+    const response = await firstValueFrom(this.api.get<BackendTransactionPage>('payments/transactions', {
+      params: { page: 0, pageSize: 100, payerUserIds: employee.id, from, to },
+    }));
+    const rows = response.data.map(transaction => ({
+      date: transaction.createdAt,
+      restaurant: transaction.restaurantId,
+      amount: `${new Intl.NumberFormat('fr-FR').format(transaction.amount)} ${transaction.currency}`,
+      status: transaction.status,
+    }));
+    const columns: ExportColumn<(typeof rows)[number]>[] = [
       { header: 'Date', value: transaction => transaction.date },
       { header: 'Restaurant', value: transaction => transaction.restaurant },
-      { header: 'Montant', value: transaction => `${this.formatBalance(transaction.amount)}` },
+      { header: 'Montant', value: transaction => transaction.amount },
       { header: 'Statut', value: transaction => transaction.status },
     ];
     const period = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(referenceDate);
-
-    this.dataTransfer.exportPdf(
-      `Rapport mensuel — ${employee.name} — ${period}`,
-      transactions,
-      columns,
-    );
+    this.dataTransfer.exportPdf(`Rapport mensuel — ${employee.name} — ${period}`, rows, columns);
     this.setFeedback('success', `Rapport mensuel de ${employee.name} préparé.`);
   }
 
@@ -203,78 +191,74 @@ export class EnterpriseEmployeesFacade {
     this.setFeedback('success', message);
   }
 
-  private mapImportedEmployee(record: ImportedRecord, index: number): EmployeeRow | null {
-    const name = this.dataTransfer.getValue(record, ['name', 'nom', 'employee', 'salarie']);
-    const email = this.dataTransfer.getValue(record, ['email', 'mail']);
-    const phone = this.dataTransfer.getValue(record, ['phone', 'telephone']);
+  private loadEmployees(): void {
+    this.loading.set(true);
+    this.api.get<ApiEnvelope<BackendUserDto[]>>('users/role/EMPLOYE').pipe(
+      map(response => response.data),
+      map(users => users.map(user => this.loadEmployeeWallet(user))),
+      map(requests => requests.length ? forkJoin(requests) : of([])),
+    ).subscribe({
+      next: employeesRequest => employeesRequest.subscribe({
+        next: employees => {
+          this.allEmployees.set(employees);
+          this.loading.set(false);
+        },
+        error: error => this.handleLoadError(error),
+      }),
+      error: error => this.handleLoadError(error),
+    });
+  }
 
-    if (!name && !email && !phone) {
-      return null;
-    }
+  private loadEmployeeWallet(user: BackendUserDto) {
+    return this.api.get<BackendWalletDto>(`payments/wallets/owners/${encodeURIComponent(user.id)}`).pipe(
+      map(wallet => this.toEmployee(user, wallet)),
+      catchError(() => of(this.toEmployee(user, null))),
+    );
+  }
 
+  private toEmployee(user: BackendUserDto, wallet: BackendWalletDto | null): EmployeeRow {
     return {
-      id: this.dataTransfer.getValue(record, ['id', 'identifiant']) || `import-employee-${Date.now()}-${index}`,
-      name: name || email || phone,
-      email: email || `inconnu${index + 1}@jambaarpay.local`,
-      phone: phone || 'Non renseigne',
-      balance: this.dataTransfer.getValue(record, ['balance', 'solde']) || '0 Fcfa',
-      status: 'Validé',
+      id: user.id,
+      walletId: wallet?.id ?? null,
+      name: [user.firstName, user.lastName].filter(Boolean).join(' '),
+      email: '—',
+      phone: user.phoneNumber,
+      balance: wallet ? `${new Intl.NumberFormat('fr-FR').format(wallet.balance)} ${wallet.currency}` : 'Indisponible',
+      status: user.status === 'ACTIVE' && (wallet?.active ?? true) ? 'Validé' : 'Inactif',
     };
   }
 
-  private mergeEmployees(current: EmployeeRow[], imported: EmployeeRow[]): EmployeeRow[] {
-    const byId = new Map(current.map(employee => [employee.id, employee]));
-    imported.forEach(employee => byId.set(employee.id, employee));
-    return Array.from(byId.values());
+  private toRegistrationRequest(record: ImportedRecord): RegistrationRequest | null {
+    const name = this.dataTransfer.getValue(record, ['name', 'nom', 'employee', 'salarie']).trim();
+    const phoneNumber = this.dataTransfer.getValue(record, ['phone', 'telephone']).replace(/\D/g, '').replace(/^221/, '');
+    const [firstName, ...lastNameParts] = name.split(/\s+/);
+    if (!firstName || !lastNameParts.length || !/^\d{9}$/.test(phoneNumber)) return null;
+    return { phoneNumber, firstName, lastName: lastNameParts.join(' ') };
   }
 
-  private applyImportedBalances(records: ImportedRecord[]): EmployeeRow[] {
-    const balances = new Map<string, string>();
-
-    records.forEach(record => {
-      const balance = this.dataTransfer.getValue(record, ['balance', 'solde', 'montant']);
-      if (!balance) {
-        return;
-      }
-
-      const aliases = [
-        this.dataTransfer.getValue(record, ['id', 'identifiant']),
-        this.dataTransfer.getValue(record, ['email', 'mail']),
-        this.dataTransfer.getValue(record, ['phone', 'telephone']),
-        this.dataTransfer.getValue(record, ['name', 'nom', 'employee', 'salarie']),
-      ].filter(Boolean);
-
-      aliases.forEach(alias => balances.set(alias.toLowerCase(), balance));
-    });
-
-    return this.allEmployees().map(employee => {
-      const match = [
-        employee.id,
-        employee.email,
-        employee.phone,
-        employee.name,
-      ].map(value => balances.get(value.toLowerCase())).find(Boolean);
-
-      return match ? { ...employee, balance: match } : employee;
-    });
-  }
-
-  private persistEmployees(employees: EmployeeRow[]): void {
-    this.allEmployees.set(employees);
-    this.datasetStorage.writeArray(EMPLOYEES_STORAGE_KEY, employees);
-  }
-
-  private parseBalance(value: string): number {
-    const normalized = value.replace(/[^\d,.-]/g, '').replace(',', '.');
-    const amount = Number(normalized);
-    return Number.isFinite(amount) ? amount : 0;
-  }
-
-  private formatBalance(value: number): string {
-    return `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(value)} Fcfa`;
+  private handleLoadError(error: unknown): void {
+    this.allEmployees.set([]);
+    this.loading.set(false);
+    this.setErrorFeedback(error, 'Le user-service est indisponible.');
   }
 
   private setFeedback(type: 'success' | 'error', message: string): void {
     this.feedback.set({ type, message });
   }
+}
+
+interface RegistrationRequest {
+  phoneNumber: string;
+  firstName: string;
+  lastName: string;
+}
+
+function isRegistrationRequest(value: RegistrationRequest | null): value is RegistrationRequest {
+  return value !== null;
+}
+
+function createIdempotencyKey(): string {
+  return typeof crypto !== 'undefined' && 'randomUUID' in crypto
+    ? crypto.randomUUID()
+    : `web-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }

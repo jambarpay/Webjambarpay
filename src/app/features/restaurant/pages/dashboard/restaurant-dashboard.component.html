@@ -7,7 +7,7 @@
       </div>
 
       <div class="payment-list">
-        @for (payment of recentPayments; track payment) {
+        @for (payment of recentPayments(); track payment) {
           <article class="payment-row">
             <div class="payment-identity">
               <span class="payment-avatar" [class]="'payment-avatar tone-' + payment.tone">{{ payment.initials }}</span>

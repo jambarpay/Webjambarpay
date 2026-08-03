@@ -13,7 +13,7 @@ $border: #c9c9c9;
   min-height: 100dvh;
   padding: 2.6vh 1.25rem;
   overflow: auto;
-  background: #fff;
+  background: var(--color-white-card);
 }
 
 .login-card {
@@ -24,7 +24,7 @@ $border: #c9c9c9;
   width: 100%;
   min-height: calc(100vh - 5.2vh);
   min-height: calc(100dvh - 5.2vh);
-  background: #fff;
+  background: var(--color-white-card);
 }
 
 .login-left {
@@ -152,7 +152,7 @@ $border: #c9c9c9;
   top: 50%;
   left: 1.875rem;
   z-index: 1;
-  color: #777;
+  color: var(--color-text-secondary);
   font-size: 1.3125rem;
   transform: translateY(-50%);
   pointer-events: none;
@@ -208,7 +208,7 @@ $border: #c9c9c9;
   padding: 0;
   border: 0;
   background: transparent;
-  color: #777;
+  color: var(--color-text-secondary);
   cursor: pointer;
   transform: translateY(-50%);
 }
@@ -241,14 +241,14 @@ $border: #c9c9c9;
   height: 1.125rem;
   flex: 0 0 1.5rem;
   border: 0.0875rem solid #9d9d9d;
-  background: #fff;
+  background: var(--color-white-card);
   cursor: pointer;
 }
 
 .remember-me input:checked {
   border-color: $navy;
   background: $navy;
-  box-shadow: inset 0 0 0 0.3125rem #fff;
+  box-shadow: inset 0 0 0 0.3125rem var(--color-white-card);
 }
 
 .forgot-link,
@@ -271,7 +271,7 @@ $border: #c9c9c9;
   border: 0.0875rem solid #9a9a9a;
   border-radius: 0.875rem;
   background: $navy;
-  color: #fff;
+  color: var(--color-white-card);
   font-size: 1.125rem;
   font-weight: 800;
   cursor: pointer;

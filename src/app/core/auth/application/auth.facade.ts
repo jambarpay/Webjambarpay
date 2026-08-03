@@ -5,7 +5,6 @@ import { StorageService } from '../../services/storage.service';
 import { AdminProfile, AuthState, isUserRole, LoginForm, UserRole, USER_ROLES } from '../domain/auth.models';
 import { AUTH_REPOSITORY, AuthRepository } from './auth.repository';
 
-const TOKEN_KEY = 'jp_token';
 const USER_KEY  = 'jp_user';
 @Injectable({ providedIn: 'root' })
 export class AuthFacade {
@@ -15,7 +14,6 @@ export class AuthFacade {
 
   private readonly state = signal<AuthState>({
     userId: null,
-    token: null,
     role: null,
     profile: null,
     isAuthenticated: false,
@@ -33,12 +31,8 @@ export class AuthFacade {
       map(session => {
         if (!session) return false;
 
-        const useSessionStorage = !form.rememberMe;
-        if (session.accessToken) {
-          this.storage.set(TOKEN_KEY, session.accessToken, useSessionStorage);
-        }
-        this.storage.set(USER_KEY, JSON.stringify(session.profile), useSessionStorage);
-        this.setAuthenticatedState(session.profile, session.accessToken ?? null);
+        this.storage.set(USER_KEY, JSON.stringify(session.profile));
+        this.setAuthenticatedState(session.profile);
         return true;
       }),
     );
@@ -71,12 +65,14 @@ export class AuthFacade {
   }
 
   logout(): void {
-    this.clearSession();
-    this.router.navigate(['/login']);
-  }
-
-  getToken(): string | null {
-    return this.storage.get(TOKEN_KEY) ?? this.storage.get(TOKEN_KEY, true);
+    const finishLogout = () => {
+      this.clearSession();
+      void this.router.navigate(['/login']);
+    };
+    this.repository.logout().subscribe({
+      next: finishLogout,
+      error: finishLogout,
+    });
   }
 
   getProfile(): AdminProfile | null {
@@ -84,21 +80,19 @@ export class AuthFacade {
   }
 
   private restoreSession(): void {
-    const token = this.getToken();
     const profile = this.readStoredProfile();
 
-    if (!token || !profile) {
+    if (!profile) {
       this.clearSession();
       return;
     }
 
-    this.setAuthenticatedState(profile, token);
+    this.setAuthenticatedState(profile);
   }
 
-  private setAuthenticatedState(profile: AdminProfile, token: string | null): void {
+  private setAuthenticatedState(profile: AdminProfile): void {
     this.state.set({
       userId: profile.id,
-      token,
       role: profile.role,
       profile,
       isAuthenticated: true,
@@ -106,11 +100,9 @@ export class AuthFacade {
   }
 
   private clearSession(): void {
-    this.storage.remove(TOKEN_KEY);
     this.storage.remove(USER_KEY);
     this.state.set({
       userId: null,
-      token: null,
       role: null,
       profile: null,
       isAuthenticated: false,
@@ -118,7 +110,7 @@ export class AuthFacade {
   }
 
   private readStoredProfile(): AdminProfile | null {
-    const raw = this.storage.get(USER_KEY) ?? this.storage.get(USER_KEY, true);
+    const raw = this.storage.get(USER_KEY);
 
     if (!raw) {
       return null;

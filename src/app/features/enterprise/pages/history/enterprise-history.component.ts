@@ -5,9 +5,9 @@ import { ActivatedRoute } from '@angular/router';
 import { TableModule } from 'primeng/table';
 import { EmptyStateComponent } from '../../../../design-system/components/empty-state/empty-state.component';
 import { PaginationComponent } from '../../../../design-system/components/pagination/pagination.component';
+import { BackendApiClient } from '../../../../core/http/backend-api.client';
 import { DataTransferService, ExportColumn } from '../../../../core/services/data-transfer.service';
 import { sliceCurrentPage } from '../../../../core/utils/pagination';
-import { createEnterpriseDemoTransactions } from '../../domain/enterprise-demo-data';
 
 interface HistoryTransaction {
   employee: string;
@@ -15,7 +15,18 @@ interface HistoryTransaction {
   restaurant: string;
   amount: string;
   date: string;
-  status: 'Validé';
+  status: 'Validé' | 'En attente' | 'Échoué';
+}
+
+interface BackendTransactionPage {
+  data: {
+    payerUserId: string;
+    restaurantId: string;
+    amount: number;
+    currency: string;
+    status: string;
+    createdAt: string;
+  }[];
 }
 
 type PeriodMode = 'week' | 'month';
@@ -30,20 +41,17 @@ type PeriodMode = 'week' | 'month';
 export class EnterpriseHistoryComponent {
   private readonly dataTransfer = inject(DataTransferService);
   private readonly route = inject(ActivatedRoute);
+  private readonly api = inject(BackendApiClient);
 
   private readonly referenceDate = new Date();
-  readonly transactions: HistoryTransaction[] = createEnterpriseDemoTransactions(this.referenceDate)
-    .map(transaction => ({
-      ...transaction,
-      amount: `${new Intl.NumberFormat('fr-FR').format(transaction.amount)} Fcfa`,
-    }));
+  readonly transactions = signal<HistoryTransaction[]>([]);
 
-  readonly employeeOptions = Array.from(
-    new Map(this.transactions.map(transaction => [
+  readonly employeeOptions = computed(() => Array.from(
+    new Map(this.transactions().map(transaction => [
       transaction.employee,
       { name: transaction.employee, email: transaction.employeeEmail },
     ])).values()
-  );
+  ));
   readonly employeeSearch = signal(this.initialEmployeeSearch());
   readonly employeeMenuOpen = signal(false);
   readonly periodMode = signal<PeriodMode>('month');
@@ -67,7 +75,7 @@ export class EnterpriseHistoryComponent {
     const month = this.selectedMonth();
     const week = this.selectedWeek();
 
-    return this.transactions.filter(transaction => {
+    return this.transactions().filter(transaction => {
       if (
         employeeQuery
         && !transaction.employee.toLowerCase().includes(employeeQuery)
@@ -85,7 +93,7 @@ export class EnterpriseHistoryComponent {
   });
   readonly employeeSuggestions = computed(() => {
     const query = this.employeeSearch().trim().toLowerCase();
-    return this.employeeOptions.filter(employee =>
+    return this.employeeOptions().filter(employee =>
       !query
       || employee.name.toLowerCase().includes(query)
       || employee.email.toLowerCase().includes(query)
@@ -102,6 +110,22 @@ export class EnterpriseHistoryComponent {
   paginatedTransactions = computed(() => {
     return sliceCurrentPage(this.filteredTransactions(), this.currentPage(), this.pageSize());
   });
+
+  constructor() {
+    this.api.get<BackendTransactionPage>('payments/transactions', {
+      params: { page: 0, pageSize: 100 },
+    }).subscribe({
+      next: response => this.transactions.set(response.data.map(transaction => ({
+        employee: transaction.payerUserId,
+        employeeEmail: '—',
+        restaurant: transaction.restaurantId,
+        amount: `${new Intl.NumberFormat('fr-FR').format(transaction.amount)} ${transaction.currency}`,
+        date: transaction.createdAt,
+        status: this.toStatus(transaction.status),
+      }))),
+      error: () => this.transactions.set([]),
+    });
+  }
 
   setEmployeeSearch(value: string): void {
     this.employeeSearch.set(value);
@@ -176,6 +200,12 @@ export class EnterpriseHistoryComponent {
   private parseAmount(value: string): number {
     const amount = Number(value.replace(/[^\d,.-]/g, '').replace(',', '.'));
     return Number.isFinite(amount) ? amount : 0;
+  }
+
+  private toStatus(status: string): HistoryTransaction['status'] {
+    if (status === 'COMPLETED' || status === 'SUCCESS') return 'Validé';
+    if (status === 'FAILED' || status === 'REJECTED') return 'Échoué';
+    return 'En attente';
   }
 
   private parseLocalDate(value: string): Date {

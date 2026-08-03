@@ -22,11 +22,12 @@
 </div>
 
 <section class="history-filters" aria-label="Filtres de l'historique">
-  <label class="filter-field">
+  <div class="filter-field">
     <span>Salarié (nom ou email)</span>
     <div class="employee-search" (focusout)="closeEmployeeMenu()">
       <i class="pi pi-search" aria-hidden="true"></i>
       <input
+        aria-label="Salarié, nom ou email"
         type="search"
         [ngModel]="employeeSearch()"
         (ngModelChange)="setEmployeeSearch($event)"
@@ -58,7 +59,7 @@
         </div>
       }
     </div>
-  </label>
+  </div>
 
   <div class="filter-field">
     <span>Période</span>
@@ -68,14 +69,14 @@
     </div>
   </div>
 
-  <label class="filter-field period-value">
+  <div class="filter-field period-value">
     <span>{{ periodMode() === 'week' ? 'Semaine' : 'Mois' }}</span>
     @if (periodMode() === 'week') {
-      <input type="week" [ngModel]="selectedWeek()" (ngModelChange)="setSelectedWeek($event)" />
+      <input type="week" aria-label="Semaine" [ngModel]="selectedWeek()" (ngModelChange)="setSelectedWeek($event)" />
     } @else {
-      <input type="month" [ngModel]="selectedMonth()" (ngModelChange)="setSelectedMonth($event)" />
+      <input type="month" aria-label="Mois" [ngModel]="selectedMonth()" (ngModelChange)="setSelectedMonth($event)" />
     }
-  </label>
+  </div>
 
   <div class="history-summary">
     <span><strong>{{ transactionCount() }}</strong> transaction(s)</span>

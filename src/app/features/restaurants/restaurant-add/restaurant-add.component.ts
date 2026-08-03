@@ -14,7 +14,6 @@ import {
   isValidNinea,
   isValidSenegalPhone,
 } from '../../../core/utils/form-validation';
-import { APP_RUNTIME_CONFIG } from '../../../core/config/runtime-config';
 
 @Component({
     selector: 'app-restaurant-add',
@@ -26,9 +25,7 @@ import { APP_RUNTIME_CONFIG } from '../../../core/config/runtime-config';
 export class RestaurantAddComponent {
   private readonly router = inject(Router);
   private readonly restaurantsRepository = inject<RestaurantsRepository>(RESTAURANTS_REPOSITORY);
-  private readonly runtimeConfig = inject(APP_RUNTIME_CONFIG);
-
-  readonly backendMode = this.runtimeConfig.dataSource === 'backend';
+  readonly backendMode = true;
 
   submitted = signal(false);
   submitting = signal(false);

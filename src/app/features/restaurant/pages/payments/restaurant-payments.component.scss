@@ -13,7 +13,7 @@
   padding: 1.6rem;
   border: 1px solid rgba(25, 24, 49, 0.08);
   border-radius: 1.1rem;
-  background: #fff;
+  background: var(--color-white-card);
   box-shadow: 0 10px 24px rgba(24, 23, 47, 0.08);
 }
 
@@ -97,7 +97,7 @@
 .quick-amount-list button {
   padding: 0.7rem 1rem;
   border: 1px solid #d7d9e0;
-  background: #fff;
+  background: var(--color-white-card);
   color: #2a2940;
 }
 
@@ -116,7 +116,7 @@
   padding: 1.15rem;
   border: 1px solid rgba(25, 24, 49, 0.08);
   border-radius: 1rem;
-  background: linear-gradient(180deg, #ffffff 0%, #fbfbfd 100%);
+  background: linear-gradient(180deg, var(--color-white-card) 0%, #fbfbfd 100%);
 }
 
 .payment-qr-frame {
@@ -168,7 +168,7 @@
 
 .primary-btn {
   background: #f07a2a;
-  color: #fff;
+  color: var(--color-white-card);
 }
 
 .primary-btn:disabled {

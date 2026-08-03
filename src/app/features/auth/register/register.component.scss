@@ -13,7 +13,7 @@ $border: #b9b9b9;
   min-height: 100dvh;
   padding: 2.6vh 1.25rem;
   overflow: auto;
-  background: #fff;
+  background: var(--color-white-card);
 }
 
 .register-shell {
@@ -24,7 +24,7 @@ $border: #b9b9b9;
   width: 100%;
   min-height: calc(100vh - 5.2vh);
   min-height: calc(100dvh - 5.2vh);
-  background: #fff;
+  background: var(--color-white-card);
 }
 
 .register-left {
@@ -144,7 +144,7 @@ $border: #b9b9b9;
   top: 50%;
   left: 1.875rem;
   z-index: 1;
-  color: #777;
+  color: var(--color-text-secondary);
   font-size: 1.625rem;
   transform: translateY(-50%);
   pointer-events: none;
@@ -173,7 +173,7 @@ $border: #b9b9b9;
 }
 
 .field input::placeholder {
-  color: #777;
+  color: var(--color-text-secondary);
   opacity: 1;
 }
 
@@ -198,7 +198,7 @@ $border: #b9b9b9;
   top: 50%;
   left: 3.375rem;
   z-index: 1;
-  color: #777;
+  color: var(--color-text-secondary);
   font-size: 1.25rem;
   font-weight: 500;
   transform: translateY(-50%);
@@ -249,7 +249,7 @@ $border: #b9b9b9;
   border: 0.0875rem solid #9a9a9a;
   border-radius: 0.875rem;
   background: $navy;
-  color: #fff;
+  color: var(--color-white-card);
   font-size: 1.875rem;
   font-weight: 400;
   cursor: pointer;
@@ -315,7 +315,7 @@ $border: #b9b9b9;
     height: 100dvh;
     overflow-x: hidden;
     overflow-y: auto;
-    background: #fff;
+    background: var(--color-white-card);
     -webkit-overflow-scrolling: touch;
   }
 

@@ -1,5 +1,7 @@
 # Audit frontend Angular — Jambaar Pay Admin
 
+> Archive : ce document décrit l’état du 29 juillet 2026, avant la migration backend stricte, la suppression des mocks et l’ajout de la CI. Consultez le README pour l’état actuel.
+
 Date : 29 juillet 2026  
 Périmètre : `src/app`, styles globaux, configuration Angular/TypeScript/ESLint, routage, sécurité frontend, tests et déploiement Vercel.  
 Méthode : lecture statique du dépôt, inventaire des composants/services/repositories, recherche de duplications et de valeurs codées en dur, compilation de production, lint et tests unitaires.
@@ -357,9 +359,9 @@ Objectif recommandé : WCAG 2.2 niveau AA.
 
 ### Risques
 
-- Le frontend est actuellement en mode `local`.
+- Le frontend doit rester en mode backend strict.
 - `connect-src 'self'` interdit une API externe.
-- La rewrite globale vers `index.html` ne proxyfie pas réellement `/bff`.
+- La rewrite globale vers `index.html` ne proxyfie pas réellement `/api/v1` sur Vercel.
 - Aucun environnement de staging explicite n’est visible.
 - Pas de pipeline CI visible dans le dépôt.
 
@@ -367,7 +369,7 @@ Objectif recommandé : WCAG 2.2 niveau AA.
 
 - Environnements local, staging et production.
 - Configuration runtime injectée au déploiement.
-- BFF servi sur le même domaine ou CSP/CORS configurés précisément.
+- API Gateway servie sur le même domaine ou CSP/CORS configurés précisément.
 - Health check backend.
 - Monitoring des erreurs frontend.
 - Source maps privées en production.

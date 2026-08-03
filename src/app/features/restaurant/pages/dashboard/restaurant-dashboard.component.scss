@@ -14,7 +14,7 @@
 }
 
 .panel {
-  background: #fff;
+  background: var(--color-white-card);
   border: 1px solid rgba(25, 24, 49, 0.08);
   border-radius: 1.1rem;
   box-shadow: 0 10px 24px rgba(24, 23, 47, 0.08);
@@ -182,7 +182,7 @@
   padding: 0.75rem 0.9rem;
   border-radius: 0.8rem;
   background: #23223b;
-  color: #fff;
+  color: var(--color-white-card);
   font-size: 0.8rem;
   font-weight: 700;
 }

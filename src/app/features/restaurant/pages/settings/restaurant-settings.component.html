@@ -6,39 +6,41 @@
     </div>
 
     <div class="settings-grid">
-      <label class="field">
+      <label class="field" for="restaurant-name">
         <span>Nom</span>
-        <input [(ngModel)]="restaurantName" type="text" />
+        <input id="restaurant-name" [(ngModel)]="restaurantName" type="text" />
       </label>
 
-      <label class="field">
+      <label class="field" for="restaurant-manager">
         <span>Responsable</span>
-        <input [(ngModel)]="managerName" type="text" />
+        <input id="restaurant-manager" [(ngModel)]="managerName" type="text" />
       </label>
 
-      <label class="field">
+      <label class="field" for="restaurant-email">
         <span>Email</span>
-        <input [(ngModel)]="email" type="email" />
+        <input id="restaurant-email" [(ngModel)]="email" type="email" />
       </label>
 
-      <label class="field">
+      <label class="field" for="restaurant-phone">
         <span>Téléphone</span>
-        <input [(ngModel)]="phone" type="text" />
+        <input id="restaurant-phone" [(ngModel)]="phone" type="text" />
       </label>
 
-      <label class="field">
+      <label class="field" for="restaurant-address">
         <span>Adresse</span>
-        <input [(ngModel)]="address" type="text" />
+        <input id="restaurant-address" [(ngModel)]="address" type="text" />
       </label>
 
-      <label class="field">
+      <label class="field" for="restaurant-ninea">
         <span>NINEA</span>
-        <input [(ngModel)]="ninea" type="text" />
+        <input id="restaurant-ninea" [(ngModel)]="ninea" type="text" />
       </label>
     </div>
 
     <div class="settings-actions settings-actions-right">
-      <button type="button" class="primary-btn">Sauvegarder</button>
+      <button type="button" class="primary-btn" [disabled]="saving()" (click)="saveRestaurant()">
+        {{ saving() ? 'Sauvegarde…' : 'Sauvegarder' }}
+      </button>
     </div>
   </article>
 
@@ -79,25 +81,29 @@
       </div>
 
       <div class="settings-grid settings-grid-single">
-        <label class="field">
+        <label class="field" for="current-password">
           <span>Mot de passe actuel</span>
-          <input [(ngModel)]="currentPassword" type="password" />
+          <input id="current-password" [(ngModel)]="currentPassword" type="password" autocomplete="current-password" />
         </label>
 
-        <label class="field">
+        <label class="field" for="new-password">
           <span>Nouveau mot de passe</span>
-          <input [(ngModel)]="newPassword" type="password" />
+          <input id="new-password" [(ngModel)]="newPassword" type="password" autocomplete="new-password" />
         </label>
 
-        <label class="field">
+        <label class="field" for="confirm-password">
           <span>Confirmer</span>
-          <input [(ngModel)]="confirmPassword" type="password" />
+          <input id="confirm-password" [(ngModel)]="confirmPassword" type="password" autocomplete="new-password" />
         </label>
       </div>
 
       <div class="settings-actions settings-actions-right">
-        <button type="button" class="primary-btn">Mettre à jour</button>
+        <button type="button" class="primary-btn" (click)="updatePassword()">Mettre à jour</button>
       </div>
     </article>
   </section>
+
+  @if (feedback()) {
+    <p role="status">{{ feedback() }}</p>
+  }
 </section>

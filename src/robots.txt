@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+Disallow: /dashboard
+Disallow: /companies
+Disallow: /restaurants
+Disallow: /monitoring
+Disallow: /audit
+Disallow: /settings
+Disallow: /enterprise-
+Disallow: /restaurant-

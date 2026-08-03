@@ -2,6 +2,9 @@ import { ChangeDetectionStrategy, Component, signal, inject } from '@angular/cor
 
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { firstValueFrom, switchMap } from 'rxjs';
+import { BackendApiClient } from '../../../../core/http/backend-api.client';
+import { ApiEnvelope } from '../../../../core/http/models/api-response';
 import {
   hasMinLength,
   hasValue,
@@ -27,9 +30,12 @@ interface EmployeeForm {
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EnterpriseEmployeeAddComponent {
-  private router = inject(Router);
+  private readonly router = inject(Router);
+  private readonly api = inject(BackendApiClient);
 
   submitted = signal(false);
+  submitting = signal(false);
+  errorMessage = signal('');
 
   form: EmployeeForm = {
     name: '',
@@ -40,14 +46,43 @@ export class EnterpriseEmployeeAddComponent {
     initialAmount: '',
   };
 
-  onSubmit(): void {
+  async onSubmit(): Promise<void> {
     this.submitted.set(true);
+    this.errorMessage.set('');
 
-    if (!this.isFormValid()) {
+    if (!this.isFormValid() || this.submitting()) {
       return;
     }
 
-    this.router.navigate(['/enterprise-employees']);
+    const [firstName, ...lastNameParts] = this.form.name.trim().split(/\s+/);
+    this.submitting.set(true);
+    try {
+      await firstValueFrom(this.api.post<ApiEnvelope<{ id: string }>, {
+        phoneNumber: string;
+        firstName: string;
+        lastName: string;
+      }>('users/register/employee', {
+        phoneNumber: this.form.phone.replace(/\D/g, '').replace(/^221/, ''),
+        firstName,
+        lastName: lastNameParts.join(' ') || firstName,
+      }).pipe(
+        switchMap(response => {
+          const amount = Number(this.form.initialAmount.replace(/[^\d.-]/g, ''));
+          if (!Number.isFinite(amount) || amount <= 0) return [response];
+          return this.api.get<{ id: string }>(`payments/wallets/owners/${encodeURIComponent(response.data.id)}`).pipe(
+            switchMap(wallet => this.api.patch(`payments/wallets/${encodeURIComponent(wallet.id)}/top-up`, {
+              amount,
+              currency: 'XOF',
+            })),
+          );
+        }),
+      ));
+      await this.router.navigate(['/enterprise-employees']);
+    } catch (error) {
+      this.errorMessage.set(error instanceof Error ? error.message : 'Le salarié n’a pas pu être créé.');
+    } finally {
+      this.submitting.set(false);
+    }
   }
 
   private isFormValid(): boolean {

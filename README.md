@@ -1,35 +1,28 @@
 # JambaarPayAdmin
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 17.3.17.
+Frontend Angular 20 des portails administrateur, entreprise et restaurant de Jambaar Pay.
 
 ## Development server
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+Run `npm start` puis ouvrez `http://localhost:4200/`. Le proxy de développement transmet `/api/v1` à l’API Gateway sur `http://localhost:8080`.
 
 ## Sources de données
 
-Les données mockées restent le mode par défaut :
+Le frontend fonctionne exclusivement en mode backend strict :
 
 ```html
-<meta name="jambaar-data-source" content="local">
+<meta name="jambaar-backend-api-url" content="/api/v1">
 ```
 
-Trois modes sont disponibles dans `src/index.html` :
+Il n’existe aucun repli vers des données locales. Une route backend absente produit une erreur explicite. Les appels passent par le client HTTP commun, avec cookies, délai maximal, corrélation et erreurs structurées.
 
-- `local` : jeux de données de démonstration conservés dans le navigateur ;
-- `bff` : contrats historiques sous `/bff` ;
-- `backend` : contrats directs des microservices Java sous `/api/v1`.
+Contrats backend encore requis pour rendre tous les écrans opérationnels :
 
-Pour charger les restaurants du backend :
-
-```html
-<meta name="jambaar-data-source" content="backend">
-<meta name="jambaar-backend-api-url" content="http://localhost:8080/api/v1">
-```
-
-Le mode backend aligne la liste et la création des restaurants sur `RestaurantResponse` et `CreateRestaurantRequest`. Les entreprises, l'audit, les paramètres, l'authentification administrateur et le monitoring restent en local, car aucun endpoint correspondant n'existe encore dans les microservices.
-
-La gateway présente dans le dépôt doit conserver les chemins `/api/v1/...` et autoriser l'origine Angular avant qu'un test bout en bout soit possible.
+- `POST /api/v1/auth/login` et `POST /api/v1/auth/logout` avec cookie `HttpOnly` ;
+- création et modification d’une entreprise ;
+- `/api/v1/audit/logs` ;
+- `/api/v1/settings/platform` ;
+- génération du QR marchand avec accès au point de vente du restaurant.
 
 ## Code scaffolding
 
@@ -37,15 +30,19 @@ Run `ng generate component component-name` to generate a new component. You can 
 
 ## Build
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+Run `npm run build`. Les fichiers sont générés dans `dist/jambaar-pay-admin/browser`.
 
 ## Running unit tests
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+Run `npm run test:ci` pour les tests Karma avec couverture.
 
 ## Running end-to-end tests
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+Run `npm run e2e` pour les scénarios Playwright desktop et mobile.
+
+## Quality checks
+
+Run `npm run check` pour exécuter lint, tests unitaires, build de production et E2E. La même chaîne est exécutée par GitHub Actions sur chaque push et pull request vers `main`.
 
 ## Further help
 

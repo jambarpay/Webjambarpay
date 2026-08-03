@@ -1,5 +1,5 @@
 <div class="pagination-shell">
-  <label class="page-size-field">
+  <div class="page-size-field">
     <span>Lignes par page</span>
     <select
       [value]="pageSize()"
@@ -9,7 +9,7 @@
         <option [value]="size">{{ size }}</option>
       }
     </select>
-  </label>
+  </div>
 
   <nav class="page-navigation" [attr.aria-label]="ariaLabel()">
     <button
