@@ -7,6 +7,7 @@ import { ChartData, ChartOptions, ScriptableContext, TooltipItem } from 'chart.j
 import { KpiCardComponent } from '../../design-system/components/kpi-card/kpi-card.component';
 import { FcfaCurrencyPipe } from '../../shared/pipes/fcfa-currency.pipe';
 import { DashboardKpi, RecentActivity, TopRestaurant } from './domain/dashboard.models';
+import { percentageChange } from '../../core/utils/percentage-change';
 
 @Component({
     selector: 'app-dashboard',
@@ -16,33 +17,48 @@ import { DashboardKpi, RecentActivity, TopRestaurant } from './domain/dashboard.
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DashboardComponent implements OnInit {
+  private readonly monthlyMetrics = {
+    companies: { current: 47, previous: 41 },
+    restaurants: { current: 20, previous: 18 },
+    transactions: { current: 390, previous: 342 },
+    volume: { current: 21_000_000, previous: 18_600_000 },
+  };
+
+  readonly displayedPeriod = new Intl.DateTimeFormat('fr-FR', {
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date());
+  readonly monthlyTransactionTarget = 500;
+  readonly monthlyActivityRate = Math.round(
+    (this.monthlyMetrics.transactions.current / this.monthlyTransactionTarget) * 100
+  );
+
   kpis: DashboardKpi[] = [
     {
-      label: 'Entreprises',
+      label: 'Entreprises actives',
       value: 47,
-      change: 15,
+      change: percentageChange(this.monthlyMetrics.companies.current, this.monthlyMetrics.companies.previous),
       icon: 'pi pi-building',
       iconSrc: 'assets/icons/icon-business.svg',
     },
     {
-      label: 'Restaurants',
+      label: 'Restaurants actifs',
       value: '+20',
-      change: 15,
+      change: percentageChange(this.monthlyMetrics.restaurants.current, this.monthlyMetrics.restaurants.previous),
       icon: 'pi pi-home',
       iconSrc: 'assets/icons/icon-restaurant-kpi.svg',
     },
     {
-      label: 'Transactions',
+      label: 'Transactions globales',
       value: 390,
-      change: 15,
+      change: percentageChange(this.monthlyMetrics.transactions.current, this.monthlyMetrics.transactions.previous),
       icon: 'pi pi-chart-line',
       iconSrc: 'assets/icons/icon-transactions.svg',
     },
     {
-      label: 'Volumes en Fcfa',
+      label: 'Volume global',
       value: '21M',
-      change: 0,
-      changeLabel: 'ce mois',
+      change: percentageChange(this.monthlyMetrics.volume.current, this.monthlyMetrics.volume.previous),
       icon: 'pi pi-wallet',
       iconSrc: 'assets/icons/icon-volumes.svg',
     },
@@ -57,7 +73,7 @@ export class DashboardComponent implements OnInit {
   ];
 
   recentActivities: RecentActivity[] = Array.from({ length: 6 }, () => ({
-    transactionId: '#38932987',
+    transactionId: `JP-${new Date().getFullYear()}-0001`,
     company: 'Entreprise 1',
     restaurant: 'Restaurant 2',
     amount: 2_000,

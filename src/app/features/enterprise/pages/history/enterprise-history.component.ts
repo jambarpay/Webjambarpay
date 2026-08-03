@@ -7,6 +7,7 @@ import { EmptyStateComponent } from '../../../../design-system/components/empty-
 import { PaginationComponent } from '../../../../design-system/components/pagination/pagination.component';
 import { DataTransferService, ExportColumn } from '../../../../core/services/data-transfer.service';
 import { sliceCurrentPage } from '../../../../core/utils/pagination';
+import { createEnterpriseDemoTransactions } from '../../domain/enterprise-demo-data';
 
 interface HistoryTransaction {
   employee: string;
@@ -30,28 +31,12 @@ export class EnterpriseHistoryComponent {
   private readonly dataTransfer = inject(DataTransferService);
   private readonly route = inject(ActivatedRoute);
 
-  private readonly restaurants = [
-    'Restaurant Le Djolof',
-    'La Téranga',
-    'Dakar Bistro',
-    'Le Plat',
-    'Chez Lamine',
-    'Saveur d’Afrique',
-  ];
-
   private readonly referenceDate = new Date();
-  readonly transactions: HistoryTransaction[] = Array.from({ length: 120 }, (_, index) => ({
-    employee: `#${38932987 + (index % 8)}`,
-    employeeEmail: `salarie${(index % 8) + 1}@gmail.com`,
-    restaurant: this.restaurants[index % this.restaurants.length],
-    amount: `${new Intl.NumberFormat('fr-FR').format(2_000 + (index % 8) * 500)} Fcfa`,
-    date: this.toDateInputValue(new Date(
-      this.referenceDate.getFullYear(),
-      this.referenceDate.getMonth(),
-      this.referenceDate.getDate() - index,
-    )),
-    status: 'Validé',
-  }));
+  readonly transactions: HistoryTransaction[] = createEnterpriseDemoTransactions(this.referenceDate)
+    .map(transaction => ({
+      ...transaction,
+      amount: `${new Intl.NumberFormat('fr-FR').format(transaction.amount)} Fcfa`,
+    }));
 
   readonly employeeOptions = Array.from(
     new Map(this.transactions.map(transaction => [

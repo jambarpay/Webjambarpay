@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { RouterModule } from '@angular/router';
 import { InputTextModule } from 'primeng/inputtext';
-import { SelectModule } from 'primeng/select';
 import { firstValueFrom } from 'rxjs';
 import { FeedbackMessage, FeedbackMessageComponent } from '../../../design-system/components/feedback-message/feedback-message.component';
 import { RESTAURANTS_REPOSITORY, RestaurantsRepository } from '../application/restaurants.repository';
@@ -12,15 +11,14 @@ import { Restaurant } from '../domain/restaurant.model';
 import {
   hasMinLength,
   hasValue,
-  isPositiveNumber,
-  isValidEmail,
   isValidNinea,
   isValidSenegalPhone,
 } from '../../../core/utils/form-validation';
+import { APP_RUNTIME_CONFIG } from '../../../core/config/runtime-config';
 
 @Component({
     selector: 'app-restaurant-add',
-    imports: [FormsModule, RouterModule, InputTextModule, SelectModule, FeedbackMessageComponent],
+    imports: [FormsModule, RouterModule, InputTextModule, FeedbackMessageComponent],
     templateUrl: './restaurant-add.component.html',
     styleUrls: ['./restaurant-add.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
@@ -28,6 +26,9 @@ import {
 export class RestaurantAddComponent {
   private readonly router = inject(Router);
   private readonly restaurantsRepository = inject<RestaurantsRepository>(RESTAURANTS_REPOSITORY);
+  private readonly runtimeConfig = inject(APP_RUNTIME_CONFIG);
+
+  readonly backendMode = this.runtimeConfig.dataSource === 'backend';
 
   submitted = signal(false);
   submitting = signal(false);
@@ -35,21 +36,16 @@ export class RestaurantAddComponent {
 
   form = {
     name: '',
-    cuisineType: null as string | null,
-    managerName: '',
-    email: '',
-    phone: '',
-    ninea: '',
-    address: '',
+    registrationNumber: '',
+    ownerFirstName: '',
+    ownerLastName: '',
+    ownerPhoneNumber: '',
+    phoneNumber: '',
+    country: 'Sénégal',
+    city: 'Dakar',
+    district: '',
+    street: '',
   };
-
-  cuisineOptions = [
-    { label: 'Sénégalaise',   value: 'senegalaise'  },
-    { label: 'Française',     value: 'francaise'    },
-    { label: 'Asiatique',     value: 'asiatique'    },
-    { label: 'Fast Food',     value: 'fastfood'     },
-    { label: 'Internationale',value: 'internationale'},
-  ];
 
   onCancel(): void {
     this.router.navigate(['/restaurants']);
@@ -67,10 +63,12 @@ export class RestaurantAddComponent {
     try {
       await firstValueFrom(this.restaurantsRepository.upsert(this.buildRestaurant()));
       await this.router.navigate(['/restaurants']);
-    } catch {
+    } catch (error) {
       this.feedback.set({
         type: 'error',
-        message: 'Le restaurant n’a pas pu être enregistré. Veuillez réessayer.',
+        message: error instanceof Error
+          ? error.message
+          : 'Le restaurant n’a pas pu être enregistré. Veuillez réessayer.',
       });
     } finally {
       this.submitting.set(false);
@@ -79,12 +77,14 @@ export class RestaurantAddComponent {
 
   isFormValid(): boolean {
     return !this.nameError
-      && !this.cuisineTypeError
-      && !this.managerNameError
-      && !this.emailError
-      && !this.phoneError
-      && !this.nineaError
-      && !this.addressError;
+      && !this.registrationNumberError
+      && !this.ownerFirstNameError
+      && !this.ownerLastNameError
+      && !this.ownerPhoneNumberError
+      && !this.phoneNumberError
+      && !this.countryError
+      && !this.cityError
+      && !this.streetError;
   }
 
   get nameError(): string {
@@ -93,57 +93,76 @@ export class RestaurantAddComponent {
     return '';
   }
 
-  get cuisineTypeError(): string {
-    if (!this.form.cuisineType) return 'Le type de cuisine est requis.';
+  get registrationNumberError(): string {
+    if (!hasValue(this.form.registrationNumber)) return 'Le numéro d’immatriculation/NINEA est requis.';
+    if (!isValidNinea(this.form.registrationNumber)) return 'Le numéro doit contenir entre 6 et 20 caractères valides.';
     return '';
   }
 
-  get managerNameError(): string {
-    if (!hasValue(this.form.managerName)) return 'Le nom du responsable est requis.';
-    if (!hasMinLength(this.form.managerName, 3)) return 'Le nom du responsable doit contenir au moins 3 caracteres.';
+  get ownerFirstNameError(): string {
+    if (!hasValue(this.form.ownerFirstName)) return 'Le prénom du propriétaire est requis.';
+    if (!hasMinLength(this.form.ownerFirstName, 2)) return 'Le prénom doit contenir au moins 2 caractères.';
     return '';
   }
 
-  get emailError(): string {
-    if (!hasValue(this.form.email)) return 'L’adresse email est requise.';
-    if (!isValidEmail(this.form.email)) return 'Veuillez saisir une adresse email valide.';
+  get ownerLastNameError(): string {
+    if (!hasValue(this.form.ownerLastName)) return 'Le nom du propriétaire est requis.';
+    if (!hasMinLength(this.form.ownerLastName, 2)) return 'Le nom doit contenir au moins 2 caractères.';
     return '';
   }
 
-  get phoneError(): string {
-    if (!hasValue(this.form.phone)) return 'Le numero de telephone est requis.';
-    if (!isValidSenegalPhone(this.form.phone)) return 'Veuillez saisir un numero senegalais valide sur 9 chiffres.';
+  get ownerPhoneNumberError(): string {
+    if (!hasValue(this.form.ownerPhoneNumber)) return 'Le téléphone du propriétaire est requis.';
+    if (!isValidSenegalPhone(this.form.ownerPhoneNumber)) return 'Saisissez un numéro sénégalais valide sur 9 chiffres.';
     return '';
   }
 
-  get nineaError(): string {
-    if (!this.form.ninea.trim()) return '';
-    if (!isValidNinea(this.form.ninea)) return 'Le NINEA doit contenir entre 6 et 20 caracteres valides.';
+  get phoneNumberError(): string {
+    if (!hasValue(this.form.phoneNumber)) return 'Le téléphone du restaurant est requis.';
+    if (!isValidSenegalPhone(this.form.phoneNumber)) return 'Saisissez un numéro sénégalais valide sur 9 chiffres.';
     return '';
   }
 
-  get addressError(): string {
-    if (!this.form.address.trim()) return '';
-    if (!hasMinLength(this.form.address, 5)) return 'L’adresse doit contenir au moins 5 caracteres.';
+  get countryError(): string {
+    if (!hasValue(this.form.country)) return 'Le pays est requis.';
+    return '';
+  }
+
+  get cityError(): string {
+    if (!hasValue(this.form.city)) return 'La ville est requise.';
+    return '';
+  }
+
+  get streetError(): string {
+    if (!hasValue(this.form.street)) return 'La rue ou l’adresse est requise.';
     return '';
   }
 
   private buildRestaurant(): Restaurant {
+    const address = [this.form.street, this.form.district, this.form.city, this.form.country]
+      .map(value => value.trim())
+      .filter(Boolean)
+      .join(', ');
+
     return {
       id: `restaurant-${Date.now()}`,
       name: this.form.name.trim(),
-      address: this.form.address.trim() || 'Non renseignee',
-      phone: this.form.phone.trim() || undefined,
+      address,
+      phone: this.form.phoneNumber.trim(),
       totalTransactions: 0,
       totalVolume: 0,
       registrationDate: new Date().toISOString().slice(0, 10),
-      status: 'Actif',
+      status: this.backendMode ? 'En attente' : 'Actif',
+      registrationNumber: this.form.registrationNumber.trim(),
+      country: this.form.country.trim(),
+      city: this.form.city.trim(),
+      district: this.form.district.trim() || undefined,
+      street: this.form.street.trim(),
+      paymentEligibilityStatus: this.backendMode ? 'NOT_ELIGIBLE' : undefined,
+      ownerFirstName: this.form.ownerFirstName.trim(),
+      ownerLastName: this.form.ownerLastName.trim(),
+      ownerPhoneNumber: this.form.ownerPhoneNumber.trim(),
+      source: this.backendMode ? 'new' : 'local',
     };
-  }
-
-  private toNumber(value: string): number {
-    const normalized = value.replace(/[^\d.-]/g, '');
-    const parsed = Number(normalized);
-    return Number.isFinite(parsed) ? parsed : 0;
   }
 }

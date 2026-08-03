@@ -6,6 +6,31 @@ This project was generated with [Angular CLI](https://github.com/angular/angular
 
 Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
 
+## Sources de données
+
+Les données mockées restent le mode par défaut :
+
+```html
+<meta name="jambaar-data-source" content="local">
+```
+
+Trois modes sont disponibles dans `src/index.html` :
+
+- `local` : jeux de données de démonstration conservés dans le navigateur ;
+- `bff` : contrats historiques sous `/bff` ;
+- `backend` : contrats directs des microservices Java sous `/api/v1`.
+
+Pour charger les restaurants du backend :
+
+```html
+<meta name="jambaar-data-source" content="backend">
+<meta name="jambaar-backend-api-url" content="http://localhost:8080/api/v1">
+```
+
+Le mode backend aligne la liste et la création des restaurants sur `RestaurantResponse` et `CreateRestaurantRequest`. Les entreprises, l'audit, les paramètres, l'authentification administrateur et le monitoring restent en local, car aucun endpoint correspondant n'existe encore dans les microservices.
+
+La gateway présente dans le dépôt doit conserver les chemins `/api/v1/...` et autoriser l'origine Angular avant qu'un test bout en bout soit possible.
+
 ## Code scaffolding
 
 Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
@@ -25,3 +50,5 @@ Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To u
 ## Further help
 
 To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+
+# Webjambarpay

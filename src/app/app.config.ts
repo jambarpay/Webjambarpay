@@ -18,6 +18,7 @@ import { BffCompaniesRepository } from './features/companies/data-access/bff-com
 import { RESTAURANTS_REPOSITORY } from './features/restaurants/application/restaurants.repository';
 import { LocalRestaurantsRepository } from './features/restaurants/data-access/local-restaurants.repository';
 import { BffRestaurantsRepository } from './features/restaurants/data-access/bff-restaurants.repository';
+import { BackendRestaurantsRepository } from './features/restaurants/data-access/backend-restaurants.repository';
 import { MONITORING_REPOSITORY } from './features/monitoring/application/monitoring.repository';
 import { LocalMonitoringRepository } from './features/monitoring/data-access/local-monitoring.repository';
 import { BffMonitoringRepository } from './features/monitoring/data-access/bff-monitoring.repository';
@@ -43,7 +44,7 @@ export const appConfig: ApplicationConfig = {
     },
     {
       provide: RESTAURANTS_REPOSITORY,
-      deps: [APP_RUNTIME_CONFIG, LocalRestaurantsRepository, BffRestaurantsRepository],
+      deps: [APP_RUNTIME_CONFIG, LocalRestaurantsRepository, BffRestaurantsRepository, BackendRestaurantsRepository],
       useFactory: selectRepository,
     },
     {

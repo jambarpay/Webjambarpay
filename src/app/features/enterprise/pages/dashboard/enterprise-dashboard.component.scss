@@ -3,67 +3,197 @@
 :host {
   display: flex;
   flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  gap: 3.5rem;
+  flex: 0 0 auto;
+  min-height: 100%;
+  gap: 2rem;
 }
 
-.enterprise-kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 4rem;
-}
-
-.enterprise-kpi-card {
-  min-height: 7.35rem;
-  padding: 0.875rem 1.125rem 0.75rem 1.375rem;
-  border-radius: 0.5rem;
+.financial-overview {
+  padding: 1.25rem 1.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 0.75rem;
   background: #fff;
   box-shadow: var(--shadow-card);
 }
 
-.kpi-head {
+.financial-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+
+  h2 { margin: 0; color: var(--color-text-primary); font-size: 1.2rem; }
+  p { margin: 0.25rem 0 0; color: var(--color-grey-secondary); font-size: 0.78rem; }
+}
+
+.live-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #16834b;
+  font-size: 0.75rem;
+  font-weight: 700;
+
+  i { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: #25b66a; box-shadow: 0 0 0 4px rgba(37, 182, 106, 0.13); }
+}
+
+.financial-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.financial-card {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 1rem;
+  border-radius: 0.65rem;
+  background: #f8f8fa;
+
+  .financial-icon { display: grid; place-items: center; flex: 0 0 2.5rem; height: 2.5rem; border-radius: 0.6rem; background: #1a1a2e; color: #fff; }
+  .financial-label, small { display: block; color: var(--color-grey-secondary); font-size: 0.7rem; }
+  strong { display: block; margin: 0.2rem 0; color: var(--color-text-primary); font-size: 1rem; }
+}
+
+.dashboard-statistics {
+  display: grid;
+  gap: 1rem;
+}
+
+.stat-card {
+  padding: 1.35rem 1.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 0.75rem;
+  background: #fff;
+  box-shadow: var(--shadow-card);
+}
+
+.stat-heading {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
+  gap: 1rem;
+
+  h2 {
+    margin: 0;
+    color: var(--color-text-primary);
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 0.35rem 0 0;
+    color: var(--color-grey-secondary);
+    font-size: 0.75rem;
+  }
 }
 
-.kpi-icon {
-  display: grid;
-  place-items: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 0.3125rem;
-  background: var(--color-text-primary);
+.stat-rate {
+  text-align: right;
+
+  strong {
+    display: block;
+    color: #e65f3b;
+    font-size: 1.5rem;
+  }
+
+  span {
+    color: var(--color-grey-secondary);
+    font-size: 0.7rem;
+  }
 }
 
-.kpi-icon img {
-  width: 1.25rem;
-  height: 1.25rem;
-  filter: $filter-white;
+.large-consumption-track {
+  height: 0.7rem;
+  margin-top: 1.2rem;
+  overflow: hidden;
+  border-radius: 1rem;
+  background: #ececef;
+
+  span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #ef4f32, #f58b68);
+  }
 }
 
-.kpi-change {
-  color: var(--color-text-primary);
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.kpi-value {
-  display: block;
-  margin-top: 0.875rem;
-  color: #000;
-  font-size: 1.25rem;
-  font-weight: 800;
-  line-height: 1;
-}
-
-.kpi-label {
-  display: block;
-  margin-top: 0.4rem;
+.track-values,
+.chart-axis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.55rem;
   color: var(--color-grey-secondary);
+  font-size: 0.68rem;
+}
+
+.statistics-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(17rem, 1fr);
+  gap: 1rem;
+}
+
+.daily-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: clamp(0.2rem, 0.55vw, 0.55rem);
+  height: 9rem;
+  margin-top: 1rem;
+  padding-top: 0.5rem;
+}
+
+.daily-bar {
+  flex: 1;
+  min-width: 0.25rem;
+  border-radius: 0.25rem 0.25rem 0 0;
+  background: #ececef;
+
+  &.recent {
+    background: #f3b0a0;
+  }
+
+  &:nth-last-child(-n + 3) {
+    background: #ed6241;
+  }
+}
+
+.restaurant-ranking {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 1rem;
+}
+
+.restaurant-usage-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.35rem;
   font-size: 0.75rem;
-  font-weight: 500;
+
+  strong {
+    color: var(--color-text-primary);
+  }
+
+  span {
+    color: #e65f3b;
+    font-weight: 700;
+  }
+}
+
+.restaurant-usage-track {
+  height: 0.3rem;
+  overflow: hidden;
+  border-radius: 1rem;
+  background: #ececef;
+
+  span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: #ed6241;
+  }
 }
 
 .transactions-card {
@@ -132,13 +262,10 @@
     gap: 2rem;
   }
 
-  .enterprise-kpi-grid {
-    gap: 1.25rem;
-  }
 }
 
 @media (max-width: 1100px) {
-  .enterprise-kpi-grid {
+  .financial-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -148,10 +275,10 @@
     display: block;
   }
 
-  .enterprise-kpi-grid {
+  .financial-grid { grid-template-columns: 1fr; }
+
+  .statistics-row {
     grid-template-columns: 1fr;
-    gap: 0.875rem;
-    margin-bottom: 1rem;
   }
 
   .transactions-card {

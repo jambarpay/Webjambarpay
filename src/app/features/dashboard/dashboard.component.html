@@ -1,29 +1,57 @@
-<!-- KPI Cards -->
-<div class="kpi-grid">
-  @for (kpi of kpis; track kpi) {
-    <app-kpi-card
-      [label]="kpi.label"
-      [value]="kpi.value"
-      [change]="kpi.change"
-      [changeLabel]="kpi.changeLabel ?? ''"
-      [unit]="kpi.unit ?? ''"
-      [icon]="kpi.icon ?? 'pi pi-chart-line'"
-      [iconSrc]="kpi.iconSrc ?? ''">
-    </app-kpi-card>
-  }
-</div>
+<section class="global-overview" aria-labelledby="global-overview-title">
+  <div class="global-heading">
+    <div>
+      <h2 id="global-overview-title">Vue d’ensemble globale</h2>
+      <p>Entreprises et restaurants partenaires • {{ displayedPeriod }}</p>
+    </div>
+    <span class="live-indicator"><i></i> Temps réel</span>
+  </div>
 
-<!-- Chart + Top Restaurants -->
+  <div class="kpi-grid">
+    @for (kpi of kpis; track kpi) {
+      <app-kpi-card
+        [label]="kpi.label"
+        [value]="kpi.value"
+        [change]="kpi.change"
+        [changeLabel]="kpi.changeLabel ?? ''"
+        [unit]="kpi.unit ?? ''"
+        [icon]="kpi.icon ?? 'pi pi-chart-line'"
+        [iconSrc]="kpi.iconSrc ?? ''">
+      </app-kpi-card>
+    }
+  </div>
+</section>
+
+<section class="platform-activity panel" aria-labelledby="platform-activity-title">
+  <div class="activity-rate-heading">
+    <div>
+      <h2 id="platform-activity-title">Activité mensuelle de la plateforme</h2>
+      <p>Transactions réalisées sur l’objectif mensuel global</p>
+    </div>
+    <div class="activity-rate">
+      <strong>{{ monthlyActivityRate }}%</strong>
+      <span>de l’objectif</span>
+    </div>
+  </div>
+  <div class="activity-progress" role="progressbar" aria-label="Objectif mensuel des transactions" aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="monthlyActivityRate">
+    <span [style.width.%]="monthlyActivityRate"></span>
+  </div>
+  <div class="activity-progress-values">
+    <span>0 transaction</span>
+    <span>{{ monthlyTransactionTarget }} transactions</span>
+  </div>
+</section>
+
 <div class="dashboard-row">
   <div class="panel chart-panel">
-    <h3 class="panel-title">Transactions par jours</h3>
+    <h3 class="panel-title">Transactions globales par jour</h3>
     <div class="chart-container">
       <p-chart type="line" [data]="chartData" [options]="chartOptions" />
     </div>
   </div>
 
   <div class="panel top-restaurants-panel">
-    <h3 class="panel-title">Top Restaurants</h3>
+    <h3 class="panel-title">Top restaurants de la plateforme</h3>
     <ul class="restaurant-list">
       @for (r of topRestaurants; track r) {
         <li class="restaurant-item">

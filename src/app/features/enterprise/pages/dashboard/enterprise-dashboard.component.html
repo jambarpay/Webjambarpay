@@ -1,17 +1,93 @@
-<div class="enterprise-kpi-grid">
-  @for (kpi of kpis; track kpi) {
-    <article class="enterprise-kpi-card">
-      <div class="kpi-head">
-        <span class="kpi-icon">
-          <img [src]="kpi.iconSrc" [alt]="kpi.label" />
-        </span>
-        <span class="kpi-change">{{ kpi.changeLabel }}</span>
+<section class="financial-overview" aria-labelledby="financial-title">
+  <div class="financial-heading">
+    <div>
+      <h2 id="financial-title">Vue d’ensemble financière</h2>
+      <p>{{ companyName }} • {{ displayedPeriod | titlecase }}</p>
+    </div>
+    <span class="live-indicator"><i></i> Temps réel</span>
+  </div>
+  <div class="financial-grid">
+    @for (metric of financialKpis; track metric.label) {
+      <article class="financial-card" [class]="'financial-card ' + metric.tone">
+        <span class="financial-icon"><i [class]="metric.icon"></i></span>
+        <div>
+          <span class="financial-label">{{ metric.label }}</span>
+          <strong>{{ metric.value }}</strong>
+          <small>{{ metric.helper }}</small>
+        </div>
+      </article>
+    }
+  </div>
+</section>
+
+<section class="dashboard-statistics" aria-label="Statistiques mensuelles">
+  <article class="stat-card consumption-stat">
+    <div class="stat-heading">
+      <div>
+        <h2>Taux de consommation mensuelle</h2>
+        <p>Budget alloué vs dépenses réelles</p>
       </div>
-      <strong class="kpi-value">{{ kpi.value }}</strong>
-      <span class="kpi-label">{{ kpi.label }}</span>
+      <div class="stat-rate">
+        <strong>{{ consumptionRate }}%</strong>
+        <span>consommé</span>
+      </div>
+    </div>
+    <div class="large-consumption-track" role="progressbar" aria-label="Consommation mensuelle" aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="consumptionRate">
+      <span [style.width.%]="consumptionRate"></span>
+    </div>
+    <div class="track-values">
+      <span>0 FCFA</span>
+      <span>{{ financialKpis[0].value }}</span>
+    </div>
+  </article>
+
+  <div class="statistics-row">
+    <article class="stat-card daily-stat">
+      <div class="stat-heading">
+        <div>
+          <h2>Repas par jour — {{ displayedPeriod | titlecase }}</h2>
+          <p>Nombre de transactions quotidiennes</p>
+        </div>
+      </div>
+      <div class="daily-chart" aria-label="Histogramme des repas quotidiens">
+        @for (item of dailyMeals; track item.day) {
+          <span
+            class="daily-bar"
+            [class.recent]="item.day > 20"
+            [style.height.%]="dailyMealHeight(item.count)"
+            [attr.title]="item.day + ' : ' + item.count + ' repas'">
+          </span>
+        }
+      </div>
+      <div class="chart-axis">
+        <span>01 {{ displayedPeriod.split(' ')[0] }}</span>
+        <span>25 {{ displayedPeriod.split(' ')[0] }}</span>
+      </div>
     </article>
-  }
-</div>
+
+    <article class="stat-card restaurant-stat">
+      <div class="stat-heading">
+        <div>
+          <h2>Top restaurants</h2>
+          <p>Utilisés par vos salariés</p>
+        </div>
+      </div>
+      <div class="restaurant-ranking">
+        @for (restaurant of topRestaurants; track restaurant.name) {
+          <div class="restaurant-usage">
+            <div class="restaurant-usage-label">
+              <strong>{{ restaurant.name }}</strong>
+              <span>{{ restaurant.meals }} repas</span>
+            </div>
+            <div class="restaurant-usage-track">
+              <span [style.width.%]="restaurantUsageWidth(restaurant.meals)"></span>
+            </div>
+          </div>
+        }
+      </div>
+    </article>
+  </div>
+</section>
 
 <section class="transactions-card">
   <h2>Transaction recentes</h2>

@@ -105,6 +105,14 @@
             (click)="goToEmployeeHistory(row.name)">
             <i class="pi pi-history"></i>
           </button>
+          <button
+            type="button"
+            class="row-action"
+            [attr.aria-label]="'Télécharger le rapport mensuel de ' + row.name"
+            title="Rapport mensuel PDF"
+            (click)="exportMonthlyReport(row)">
+            <i class="pi pi-file-pdf"></i>
+          </button>
         </td>
       </tr>
     </ng-template>

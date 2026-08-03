@@ -86,6 +86,14 @@ export class EnterpriseEmployeesComponent {
     this.facade.exportEmployees();
   }
 
+  exportMonthlyReport(employee: Parameters<EnterpriseEmployeesFacade['exportMonthlyReport']>[0]): void {
+    try {
+      this.facade.exportMonthlyReport(employee);
+    } catch (error) {
+      this.facade.setErrorFeedback(error, 'Génération du rapport mensuel impossible.');
+    }
+  }
+
   onSearchChange(value: string): void {
     this.facade.setSearchTerm(value);
   }

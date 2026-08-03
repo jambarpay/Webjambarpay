@@ -39,6 +39,7 @@ export class DataTransferService {
       dateStyle: 'medium',
       timeStyle: 'short',
     }).format(new Date());
+    const logoUrl = new URL('assets/images/jambaar-pay-logo.png', document.baseURI).href;
 
     const headers = columns.map(column => `<th>${this.escapeHtml(column.header)}</th>`).join('');
     const body = rows.length
@@ -56,49 +57,186 @@ export class DataTransferService {
           <meta charset="utf-8">
           <title>${this.escapeHtml(title)}</title>
           <style>
+            @page {
+              size: A4 landscape;
+              margin: 14mm;
+            }
+            * {
+              box-sizing: border-box;
+            }
             body {
-              font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-              margin: 24px;
+              font-family: Inter, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+              margin: 0;
               color: #1a1a2e;
+              background: #fff;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            .document-header {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              padding: 18px 22px;
+              border-bottom: 4px solid #f4c542;
+              border-radius: 12px 12px 0 0;
+              background: #1a1a2e;
+              color: #fff;
+            }
+            .brand {
+              display: flex;
+              align-items: center;
+              gap: 16px;
+            }
+            .brand-logo {
+              width: 130px;
+              max-height: 48px;
+              object-fit: contain;
+              padding: 5px 9px;
+              border-radius: 7px;
+              background: #fff;
+            }
+            .brand-copy strong {
+              display: block;
+              font-size: 18px;
+              letter-spacing: 0.2px;
+            }
+            .brand-copy span {
+              display: block;
+              margin-top: 4px;
+              color: rgba(255, 255, 255, 0.68);
+              font-size: 11px;
+            }
+            .header-mark {
+              width: 44px;
+              height: 44px;
+              border: 2px solid rgba(244, 197, 66, 0.65);
+              border-radius: 50%;
+              color: #f4c542;
+              font-size: 20px;
+              font-weight: 800;
+              line-height: 40px;
+              text-align: center;
+            }
+            .document-content {
+              padding: 24px 4px 0;
+            }
+            .title-row {
+              display: flex;
+              align-items: flex-end;
+              justify-content: space-between;
+              gap: 24px;
+              margin-bottom: 20px;
             }
             h1 {
-              margin: 0 0 8px;
-              font-size: 24px;
+              margin: 0;
+              color: #1a1a2e;
+              font-size: 22px;
+              line-height: 1.25;
             }
-            p {
-              margin: 0 0 20px;
-              color: #666;
-              font-size: 13px;
+            .subtitle {
+              margin: 7px 0 0;
+              color: #737382;
+              font-size: 12px;
+            }
+            .count {
+              flex: 0 0 auto;
+              padding: 8px 12px;
+              border: 1px solid #f0d56e;
+              border-radius: 20px;
+              background: #fff9df;
+              color: #725b00;
+              font-size: 11px;
+              font-weight: 700;
             }
             table {
               width: 100%;
+              overflow: hidden;
               border-collapse: collapse;
+              border: 1px solid #e4e4e9;
+              border-radius: 9px;
             }
             th,
             td {
-              border: 1px solid #d9d9d9;
-              padding: 10px 12px;
+              padding: 11px 13px;
               text-align: left;
-              font-size: 13px;
+              font-size: 11px;
             }
             th {
-              background: #f5f5f5;
+              border-bottom: 2px solid #f4c542;
+              background: #1a1a2e;
+              color: #fff;
               font-weight: 700;
+              letter-spacing: 0.2px;
             }
-            tr:nth-child(even) td {
-              background: #fafafa;
+            td {
+              border-bottom: 1px solid #ececf0;
+              color: #363642;
+            }
+            tbody tr:nth-child(even) td {
+              background: #f8f8fa;
+            }
+            tbody tr:last-child td {
+              border-bottom: 0;
+            }
+            .document-footer {
+              display: flex;
+              justify-content: space-between;
+              gap: 16px;
+              margin-top: 20px;
+              padding-top: 12px;
+              border-top: 1px solid #e5e5e9;
+              color: #888894;
+              font-size: 9px;
+            }
+            .document-footer strong {
+              color: #1a1a2e;
+            }
+            @media print {
+              .document-header {
+                break-inside: avoid;
+              }
+              thead {
+                display: table-header-group;
+              }
+              tr {
+                break-inside: avoid;
+              }
             }
           </style>
         </head>
         <body>
-          <h1>${this.escapeHtml(title)}</h1>
-          <p>Export généré le ${this.escapeHtml(generatedAt)}</p>
-          <table>
-            <thead>
-              <tr>${headers}</tr>
-            </thead>
-            <tbody>${body}</tbody>
-          </table>
+          <header class="document-header">
+            <div class="brand">
+              <img class="brand-logo" src="${this.escapeHtml(logoUrl)}" alt="JambaarPay">
+              <div class="brand-copy">
+                <strong>JambaarPay</strong>
+                <span>La solution de paiement qui simplifie votre quotidien</span>
+              </div>
+            </div>
+            <div class="header-mark">JP</div>
+          </header>
+
+          <main class="document-content">
+            <div class="title-row">
+              <div>
+                <h1>${this.escapeHtml(title)}</h1>
+                <p class="subtitle">Document généré le ${this.escapeHtml(generatedAt)}</p>
+              </div>
+              <span class="count">${rows.length} ligne${rows.length > 1 ? 's' : ''}</span>
+            </div>
+
+            <table>
+              <thead>
+                <tr>${headers}</tr>
+              </thead>
+              <tbody>${body}</tbody>
+            </table>
+
+            <footer class="document-footer">
+              <span><strong>JambaarPay</strong> · Rapport confidentiel</span>
+              <span>Ce document a été généré automatiquement depuis votre espace sécurisé.</span>
+            </footer>
+          </main>
         </body>
       </html>
     `;

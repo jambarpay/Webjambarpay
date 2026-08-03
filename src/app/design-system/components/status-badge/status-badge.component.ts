@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
 
-type StatusType = 'Validé' | 'En cours' | 'En attente' | 'Échoué' | 'Actif' | 'Inactif';
+type StatusType = 'Validé' | 'En cours' | 'En attente' | 'Échoué' | 'Actif' | 'Inactif' | 'Suspendu';
 
 @Component({
     selector: 'app-status-badge',
@@ -21,6 +21,7 @@ export class StatusBadgeComponent {
       'Échoué':     'badge-failed',
       'Actif':      'badge-active',
       'Inactif':    'badge-inactive',
+      'Suspendu':   'badge-inactive',
     };
     return map[this.status()] ?? 'badge-inactive';
   });

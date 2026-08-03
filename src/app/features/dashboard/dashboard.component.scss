@@ -4,9 +4,101 @@
 :host {
   display: flex;
   flex-direction: column;
-  flex: 1;
-  min-height: 0;
+  flex: 0 0 auto;
+  min-height: 100%;
   gap: 1rem;
+}
+
+.global-overview {
+  padding: 1.25rem 1.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  border-radius: 0.6875rem;
+  background: #fff;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.18);
+}
+
+.global-heading,
+.activity-rate-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+
+  h2 {
+    margin: 0;
+    color: $text-primary;
+    font-size: 1.2rem;
+  }
+
+  p {
+    margin: 0.25rem 0 0;
+    color: #888;
+    font-size: 0.78rem;
+  }
+}
+
+.live-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #16834b;
+  font-size: 0.75rem;
+  font-weight: 700;
+
+  i {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: #25b66a;
+    box-shadow: 0 0 0 4px rgba(37, 182, 106, 0.13);
+  }
+}
+
+.platform-activity {
+  flex: 0 0 auto;
+  padding: 1.25rem 1.5rem;
+}
+
+.activity-rate-heading {
+  margin-bottom: 1.1rem;
+}
+
+.activity-rate {
+  text-align: right;
+
+  strong {
+    display: block;
+    color: #e65f3b;
+    font-size: 1.5rem;
+  }
+
+  span {
+    color: #888;
+    font-size: 0.7rem;
+  }
+}
+
+.activity-progress {
+  height: 0.7rem;
+  overflow: hidden;
+  border-radius: 1rem;
+  background: #ececef;
+
+  span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #ef4f32, #f58b68);
+  }
+}
+
+.activity-progress-values {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.55rem;
+  color: #888;
+  font-size: 0.68rem;
 }
 
 // ── KPI Grid ──────────────────────────────────────────────────────────────────
@@ -20,7 +112,7 @@
 // ── Middle row: Chart + Top Restaurants ───────────────────────────────────────
 // flex: 1 — takes its share of remaining space (shorter than activity)
 .dashboard-row {
-  flex: 0 0 18rem;
+  flex: 0 0 20rem;
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -214,8 +306,8 @@
 // ── Activity Panel ────────────────────────────────────────────────────────────
 // flex: 0.8 — takes less space, more compact
 .activity-panel {
-  flex: 1;
-  min-height: 0;
+  flex: 0 0 auto;
+  min-height: 20rem;
   overflow: hidden;
   display: flex;
   flex-direction: column;

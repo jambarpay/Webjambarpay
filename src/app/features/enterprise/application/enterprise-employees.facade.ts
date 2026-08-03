@@ -2,6 +2,7 @@ import { Injectable, computed, signal, inject } from '@angular/core';
 import { DataTransferService, ExportColumn, ImportedRecord } from '../../../core/services/data-transfer.service';
 import { DatasetStorageService } from '../../../core/services/dataset-storage.service';
 import { sliceCurrentPage } from '../../../core/utils/pagination';
+import { EMPLOYEE_NAMES, createEnterpriseDemoTransactions } from '../domain/enterprise-demo-data';
 
 export interface EmployeeRow {
   id: string;
@@ -77,14 +78,23 @@ export class EnterpriseEmployeesFacade {
   constructor() {
     const defaults = Array.from({ length: 144 }, (_, index) => ({
       id: `employee-${index + 1}`,
-      name: `#${38932987 + index}`,
+      name: index < EMPLOYEE_NAMES.length
+        ? EMPLOYEE_NAMES[index]
+        : `Salarié ${index + 1}`,
       email: `salarie${index + 1}@gmail.com`,
       phone: `77${String(7000000 + index).slice(-7)}`,
       balance: '2 000 Fcfa',
       status: 'Validé' as const,
     }));
 
-    this.allEmployees.set(this.datasetStorage.readArray(EMPLOYEES_STORAGE_KEY, defaults));
+    const storedEmployees = this.datasetStorage.readArray(EMPLOYEES_STORAGE_KEY, defaults);
+    const migratedEmployees = storedEmployees.map((employee, index) => ({
+      ...employee,
+      name: /^#\d+$/.test(employee.name)
+        ? (EMPLOYEE_NAMES[index] ?? `Salarié ${index + 1}`)
+        : employee.name,
+    }));
+    this.persistEmployees(migratedEmployees);
   }
 
   setSearchTerm(value: string): void {
@@ -163,6 +173,26 @@ export class EnterpriseEmployeesFacade {
   exportEmployees(): void {
     this.dataTransfer.exportCsv('salaries-entreprise-jambaarpay', this.filteredEmployees(), this.exportColumns);
     this.setFeedback('success', 'Export Excel prepare pour la liste des salaries.');
+  }
+
+  exportMonthlyReport(employee: EmployeeRow, referenceDate = new Date()): void {
+    const month = `${referenceDate.getFullYear()}-${String(referenceDate.getMonth() + 1).padStart(2, '0')}`;
+    const transactions = createEnterpriseDemoTransactions(referenceDate)
+      .filter(transaction => transaction.employee === employee.name && transaction.date.startsWith(month));
+    const columns: ExportColumn<(typeof transactions)[number]>[] = [
+      { header: 'Date', value: transaction => transaction.date },
+      { header: 'Restaurant', value: transaction => transaction.restaurant },
+      { header: 'Montant', value: transaction => `${this.formatBalance(transaction.amount)}` },
+      { header: 'Statut', value: transaction => transaction.status },
+    ];
+    const period = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(referenceDate);
+
+    this.dataTransfer.exportPdf(
+      `Rapport mensuel — ${employee.name} — ${period}`,
+      transactions,
+      columns,
+    );
+    this.setFeedback('success', `Rapport mensuel de ${employee.name} préparé.`);
   }
 
   setErrorFeedback(error: unknown, fallbackMessage: string): void {
