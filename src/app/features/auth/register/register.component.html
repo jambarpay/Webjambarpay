@@ -34,6 +34,13 @@
         </div>
       }
 
+      @if (errorMessage()) {
+        <div class="success-alert" role="alert">
+          <i class="pi pi-exclamation-triangle"></i>
+          <span>{{ errorMessage() }}</span>
+        </div>
+      }
+
       @if (step() === 1) {
         <form class="register-form" (ngSubmit)="nextStep()" novalidate>
           <div class="field">

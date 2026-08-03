@@ -14,7 +14,7 @@ describe('BackendRestaurantsRepository', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: BACKEND_API_URL, useValue: 'http://localhost:8080/api/v1/' },
+        { provide: BACKEND_API_URL, useValue: 'http://localhost:8888/api/v1/' },
       ],
     });
 
@@ -29,7 +29,7 @@ describe('BackendRestaurantsRepository', () => {
 
     repository.list().subscribe(restaurants => result = restaurants);
 
-    const request = httpTesting.expectOne('http://localhost:8080/api/v1/restaurants');
+    const request = httpTesting.expectOne('http://localhost:8888/api/v1/restaurants');
     expect(request.request.method).toBe('GET');
     request.flush([{
       id: 'restaurant-1',
@@ -79,13 +79,12 @@ describe('BackendRestaurantsRepository', () => {
 
     repository.upsert(restaurant).subscribe();
 
-    const ownerRequest = httpTesting.expectOne('http://localhost:8080/api/v1/users/restaurant');
+    const ownerRequest = httpTesting.expectOne('http://localhost:8888/api/v1/users/restaurant');
     expect(ownerRequest.request.method).toBe('POST');
     expect(ownerRequest.request.body).toEqual({
       phoneNumber: '779876543',
       firstName: 'Moussa',
       lastName: 'Ndiaye',
-      role: 'RESTAURANT',
     });
     ownerRequest.flush({
       success: true,
@@ -99,7 +98,7 @@ describe('BackendRestaurantsRepository', () => {
       timestamp: '2026-08-02T17:30:00Z',
     });
 
-    const request = httpTesting.expectOne('http://localhost:8080/api/v1/restaurants');
+    const request = httpTesting.expectOne('http://localhost:8888/api/v1/restaurants');
     expect(request.request.method).toBe('POST');
     expect(request.request.body).toEqual({
       name: 'Le Djolof',
@@ -150,7 +149,7 @@ describe('BackendRestaurantsRepository', () => {
 
     repository.upsert(restaurant).subscribe();
 
-    const request = httpTesting.expectOne('http://localhost:8080/api/v1/restaurants');
+    const request = httpTesting.expectOne('http://localhost:8888/api/v1/restaurants');
     expect(request.request.body.ownerUserId).toBe('existing-user');
     expect(request.request.body.ownerFirstName).toBe('');
     expect(request.request.body.ownerLastName).toBe('');

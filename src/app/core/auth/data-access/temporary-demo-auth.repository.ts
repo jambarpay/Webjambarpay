@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { Observable, of, tap } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { StorageService } from '../../services/storage.service';
 import { AuthRepository } from '../application/auth.repository';
 import { TEMPORARY_DEMO_ACCOUNTS } from '../demo/demo-accounts';
@@ -33,14 +33,7 @@ export class TemporaryDemoAuthRepository implements AuthRepository {
   }
 
   logout(): Observable<void> {
-    if (this.storage.get(DEMO_SESSION_KEY)) {
-      this.storage.remove(DEMO_SESSION_KEY);
-      return of(undefined);
-    }
-
-    return this.backend.logout().pipe(
-      tap(() => this.storage.remove(DEMO_SESSION_KEY)),
-    );
+    this.storage.remove(DEMO_SESSION_KEY);
+    return of(undefined);
   }
 }
-

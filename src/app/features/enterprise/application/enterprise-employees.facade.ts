@@ -35,24 +35,6 @@ interface BackendWalletDto {
   active: boolean;
 }
 
-interface BackendTransactionDto {
-  payerUserId: string;
-  restaurantId: string;
-  amount: number;
-  currency: string;
-  status: string;
-  createdAt: string;
-}
-
-interface BackendTransactionPage {
-  data: BackendTransactionDto[];
-}
-
-interface BulkTopUpResponse {
-  walletCount: number;
-  totalAmount: number;
-}
-
 export type EmployeeStatusFilter = 'Tous' | EmployeeRow['status'];
 export type EmployeeFeedbackState = { type: 'success' | 'error'; message: string } | null;
 
@@ -139,20 +121,9 @@ export class EnterpriseEmployeesFacade {
     if (!employeeIds.length) throw new Error('Sélectionnez au moins un salarié.');
     if (!Number.isFinite(amount) || amount <= 0) throw new Error('Le montant doit être supérieur à zéro.');
 
-    const selectedIds = new Set(employeeIds);
-    const selected = this.allEmployees().filter(employee => selectedIds.has(employee.id));
-    const walletIds = selected.map(employee => employee.walletId).filter((id): id is string => !!id);
-    if (walletIds.length !== selected.length) throw new Error('Un ou plusieurs salariés ne possèdent pas de portefeuille actif.');
-
-    const response = await firstValueFrom(this.api.post<BulkTopUpResponse, {
-      walletIds: string[];
-      amount: number;
-      currency: string;
-    }>('payments/wallets/bulk-top-up', { walletIds, amount, currency: 'XOF' }, {
-      headers: { 'Idempotency-Key': createIdempotencyKey() },
-    }));
-    this.loadEmployees();
-    return { employeeCount: response.walletCount, totalAmount: response.totalAmount };
+    throw new Error(
+      'Le wallet-service ne fournit pas encore de recharge groupée. Aucun portefeuille n’a été modifié.',
+    );
   }
 
   exportEmployees(): void {
@@ -161,26 +132,11 @@ export class EnterpriseEmployeesFacade {
   }
 
   async exportMonthlyReport(employee: EmployeeRow, referenceDate = new Date()): Promise<void> {
-    const from = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), 1).toISOString();
-    const to = new Date(referenceDate.getFullYear(), referenceDate.getMonth() + 1, 1).toISOString();
-    const response = await firstValueFrom(this.api.get<BackendTransactionPage>('payments/transactions', {
-      params: { page: 0, pageSize: 100, payerUserIds: employee.id, from, to },
-    }));
-    const rows = response.data.map(transaction => ({
-      date: transaction.createdAt,
-      restaurant: transaction.restaurantId,
-      amount: `${new Intl.NumberFormat('fr-FR').format(transaction.amount)} ${transaction.currency}`,
-      status: transaction.status,
-    }));
-    const columns: ExportColumn<(typeof rows)[number]>[] = [
-      { header: 'Date', value: transaction => transaction.date },
-      { header: 'Restaurant', value: transaction => transaction.restaurant },
-      { header: 'Montant', value: transaction => transaction.amount },
-      { header: 'Statut', value: transaction => transaction.status },
-    ];
-    const period = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(referenceDate);
-    this.dataTransfer.exportPdf(`Rapport mensuel — ${employee.name} — ${period}`, rows, columns);
-    this.setFeedback('success', `Rapport mensuel de ${employee.name} préparé.`);
+    void employee;
+    void referenceDate;
+    throw new Error(
+      'Le payment-service ne fournit pas encore de route de liste des transactions pour générer ce rapport.',
+    );
   }
 
   setErrorFeedback(error: unknown, fallbackMessage: string): void {
@@ -210,7 +166,7 @@ export class EnterpriseEmployeesFacade {
   }
 
   private loadEmployeeWallet(user: BackendUserDto) {
-    return this.api.get<BackendWalletDto>(`payments/wallets/owners/${encodeURIComponent(user.id)}`).pipe(
+    return this.api.get<BackendWalletDto>(`wallets/owners/${encodeURIComponent(user.id)}`).pipe(
       map(wallet => this.toEmployee(user, wallet)),
       catchError(() => of(this.toEmployee(user, null))),
     );
@@ -255,10 +211,4 @@ interface RegistrationRequest {
 
 function isRegistrationRequest(value: RegistrationRequest | null): value is RegistrationRequest {
   return value !== null;
-}
-
-function createIdempotencyKey(): string {
-  return typeof crypto !== 'undefined' && 'randomUUID' in crypto
-    ? crypto.randomUUID()
-    : `web-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }

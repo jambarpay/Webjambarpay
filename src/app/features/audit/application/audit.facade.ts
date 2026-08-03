@@ -5,7 +5,13 @@ import { sliceCurrentPage } from '../../../core/utils/pagination';
 import { AuditLog } from '../domain/audit-log.model';
 import { AUDIT_REPOSITORY, AuditRepository } from './audit.repository';
 
-export type AuditActionFilter = 'Tous' | 'Création entreprise' | 'Création restaurant' | 'Modification' | 'Suppression';
+export type AuditActionFilter = 'Tous'
+  | 'Demande de paiement'
+  | 'QR validé'
+  | 'Transaction enregistrée'
+  | 'Paiement validé'
+  | 'Paiement échoué'
+  | 'Paiement compensé';
 
 @Injectable()
 export class AuditFacade {
@@ -26,7 +32,15 @@ export class AuditFacade {
   readonly loading = signal(true);
   readonly feedback = signal<{ type: 'success' | 'error'; message: string } | null>(null);
   readonly pageSizeOptions = [6, 12, 18];
-  readonly filterOptions: AuditActionFilter[] = ['Tous', 'Création entreprise', 'Création restaurant', 'Modification', 'Suppression'];
+  readonly filterOptions: AuditActionFilter[] = [
+    'Tous',
+    'Demande de paiement',
+    'QR validé',
+    'Transaction enregistrée',
+    'Paiement validé',
+    'Paiement échoué',
+    'Paiement compensé',
+  ];
 
   readonly filtered = computed(() => {
     const query = this.searchTerm().trim().toLowerCase();

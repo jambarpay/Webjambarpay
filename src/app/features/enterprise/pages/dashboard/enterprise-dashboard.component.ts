@@ -1,7 +1,6 @@
 import { TitleCasePipe } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject } from '@angular/core';
 import { TableModule } from 'primeng/table';
-import { forkJoin } from 'rxjs';
 import { AuthFacade } from '../../../../core/auth/application/auth.facade';
 import { BackendApiClient } from '../../../../core/http/backend-api.client';
 import { ApiEnvelope } from '../../../../core/http/models/api-response';
@@ -60,13 +59,18 @@ export class EnterpriseDashboardComponent {
   financialKpis: FinancialKpi[] = this.createKpis(0, 0, 0, 0);
 
   constructor() {
-    forkJoin({
-      users: this.api.get<ApiEnvelope<BackendUser[]>>('users/role/EMPLOYE'),
-      transactions: this.api.get<{ data: BackendTransaction[] }>('payments/transactions', {
-        params: { page: 0, pageSize: 100 },
-      }),
-    }).subscribe({
-      next: ({ users, transactions }) => this.applyBackendData(users.data, transactions.data),
+    this.api.get<ApiEnvelope<BackendUser[]>>('users/role/EMPLOYE').subscribe({
+      next: users => {
+        this.applyBackendData(users.data, []);
+        const activeEmployees = users.data.filter(user => user.status === 'ACTIVE').length;
+        this.financialKpis = [
+          { label: 'Solde chargé ce mois', value: 'Indisponible', helper: 'Route de liste absente du payment-service', icon: 'pi pi-money-bill', tone: 'charged' },
+          { label: 'Montant consommé', value: 'Indisponible', helper: 'Route de liste absente du payment-service', icon: 'pi pi-shopping-cart', tone: 'consumed' },
+          { label: 'Solde restant', value: 'Indisponible', helper: 'Route de liste absente du payment-service', icon: 'pi pi-credit-card', tone: 'balance' },
+          { label: 'Salariés actifs', value: `${activeEmployees}/${users.data.length}`, helper: 'Donnée du user-service', icon: 'pi pi-users', tone: 'rate' },
+        ];
+        this.changeDetector.markForCheck();
+      },
       error: () => this.changeDetector.markForCheck(),
     });
   }

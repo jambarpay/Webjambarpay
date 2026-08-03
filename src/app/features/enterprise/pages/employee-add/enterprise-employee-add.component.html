@@ -11,22 +11,6 @@
         }
       </label>
 
-      <label class="field" for="employee-position">
-        <span>Poste <strong>*</strong></span>
-        <input id="employee-position" type="text" name="position" [(ngModel)]="form.position" [class.input-invalid]="submitted() && !!positionError" placeholder="Ex : Comptable" />
-        @if (submitted() && !!positionError) {
-          <small class="field-error">{{ positionError }}</small>
-        }
-      </label>
-
-      <label class="field" for="employee-email">
-        <span>Adresse e-mail<strong>*</strong></span>
-        <input id="employee-email" type="email" name="email" [(ngModel)]="form.email" [class.input-invalid]="submitted() && !!emailError" placeholder="Ex : awa.diop@entreprise.sn" />
-        @if (submitted() && !!emailError) {
-          <small class="field-error">{{ emailError }}</small>
-        }
-      </label>
-
       <label class="field" for="employee-phone">
         <span>Numero de t&eacute;l&eacute;phone<strong>*</strong></span>
         <input id="employee-phone" type="tel" name="phone" [(ngModel)]="form.phone" [class.input-invalid]="submitted() && !!phoneError" placeholder="Ex : 77 123 45 67" />
@@ -35,26 +19,10 @@
         }
       </label>
 
-      <label class="field" for="employee-address">
-        <span>Adresse</span>
-        <input id="employee-address" type="text" name="address" [(ngModel)]="form.address" [class.input-invalid]="submitted() && !!addressError" placeholder="Ex : Liberte 6, Dakar" />
-        @if (submitted() && !!addressError) {
-          <small class="field-error">{{ addressError }}</small>
-        }
-      </label>
-
-      <label class="field" for="employee-initial-amount">
-        <span>montant initiale</span>
-        <input id="employee-initial-amount" type="text" name="initialAmount" [(ngModel)]="form.initialAmount" [class.input-invalid]="submitted() && !!initialAmountError" placeholder="Ex : 25000" />
-        @if (submitted() && !!initialAmountError) {
-          <small class="field-error">{{ initialAmountError }}</small>
-        }
-      </label>
     </div>
 
     <p class="helper-text">
-      Un email avec les identifiants de connexion sera automatiquement envoy&eacute; au salari&eacute; apr&egrave;s
-      l'enregistrement.
+      Le user-service enregistre le nom et le num&eacute;ro puis envoie un code OTP par WhatsApp au salari&eacute;.
     </p>
 
     @if (errorMessage()) {

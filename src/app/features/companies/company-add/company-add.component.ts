@@ -59,10 +59,12 @@ export class CompanyAddComponent {
     try {
       await firstValueFrom(this.companiesRepository.upsert(this.buildCompany()));
       await this.router.navigate(['/companies']);
-    } catch {
+    } catch (error) {
       this.feedback.set({
         type: 'error',
-        message: 'L’entreprise n’a pas pu être enregistrée. Veuillez réessayer.',
+        message: error instanceof Error
+          ? error.message
+          : 'L’entreprise n’a pas pu être enregistrée.',
       });
     } finally {
       this.submitting.set(false);

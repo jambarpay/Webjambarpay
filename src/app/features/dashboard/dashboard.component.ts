@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { ChartData, ChartOptions } from 'chart.js';
 import { ChartModule } from 'primeng/chart';
 import { TableModule } from 'primeng/table';
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
 import { KpiCardComponent } from '../../design-system/components/kpi-card/kpi-card.component';
 import { FcfaCurrencyPipe } from '../../shared/pipes/fcfa-currency.pipe';
 import { COMPANIES_REPOSITORY, CompaniesRepository } from '../companies/application/companies.repository';
@@ -45,9 +45,9 @@ export class DashboardComponent {
 
   constructor() {
     forkJoin({
-      companies: this.companiesRepository.list(),
-      restaurants: this.restaurantsRepository.list(),
-      transactions: this.monitoringRepository.list(),
+      companies: this.companiesRepository.list().pipe(catchError(() => of([]))),
+      restaurants: this.restaurantsRepository.list().pipe(catchError(() => of([]))),
+      transactions: this.monitoringRepository.list().pipe(catchError(() => of([]))),
     }).subscribe({
       next: data => {
         const validTransactions = data.transactions.filter(transaction => transaction.status === 'Validé');

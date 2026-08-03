@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component, signal, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { InputTextModule } from 'primeng/inputtext';
 import {
   hasMinLength,
@@ -38,13 +38,12 @@ interface RegisterForm {
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class RegisterComponent {
-  private router = inject(Router);
-
   step = signal<1 | 2>(1);
   showPassword = signal(false);
   showConfirmPassword = signal(false);
   submitted = signal(false);
   successMessage = signal('');
+  errorMessage = signal('');
 
   form: RegisterForm = {
     companyName: '',
@@ -82,6 +81,7 @@ export class RegisterComponent {
   nextStep(): void {
     this.submitted.set(true);
     this.successMessage.set('');
+    this.errorMessage.set('');
 
     if (!this.isFirstStepValid()) {
       return;
@@ -94,6 +94,7 @@ export class RegisterComponent {
   previousStep(): void {
     this.submitted.set(false);
     this.successMessage.set('');
+    this.errorMessage.set('');
     this.step.set(1);
   }
 
@@ -115,8 +116,9 @@ export class RegisterComponent {
       return;
     }
 
-    this.successMessage.set('Entreprise inscrite avec succès. Vous pouvez maintenant vous connecter.');
-    setTimeout(() => this.router.navigate(['/login']), 700);
+    this.errorMessage.set(
+      'Le backend ne fournit pas encore de contrat d’inscription d’entreprise. Aucune donnée n’a été enregistrée.',
+    );
   }
 
   showRequiredError(value: string | number | null | undefined): boolean {

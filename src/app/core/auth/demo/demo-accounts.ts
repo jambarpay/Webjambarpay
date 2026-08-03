@@ -10,12 +10,12 @@ export interface DemoAccount {
 export const TEMPORARY_DEMO_ACCOUNTS: readonly DemoAccount[] = [
   {
     label: 'Admin',
-    email: 'admin@jambaarpay.com',
-    password: 'Admin@1234',
+    email: 'adminjambar@jambaarpay.com',
+    password: 'JambarPay2@26',
     profile: {
       id: 'demo-admin',
       name: 'Administrateur JambaarPay',
-      email: 'admin@jambaarpay.com',
+      email: 'adminjambar@jambaarpay.com',
       role: USER_ROLES.admin,
     },
   },
@@ -42,4 +42,3 @@ export const TEMPORARY_DEMO_ACCOUNTS: readonly DemoAccount[] = [
     },
   },
 ];
-

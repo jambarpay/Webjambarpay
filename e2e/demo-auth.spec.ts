@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 const demoAccounts = [
-  { label: 'Admin', email: 'admin@jambaarpay.com', route: '/dashboard' },
+  { label: 'Admin', email: 'adminjambar@jambaarpay.com', route: '/dashboard' },
   { label: 'Entreprise', email: 'entreprise@jambaarpay.com', route: '/enterprise-dashboard' },
   { label: 'Restaurant', email: 'restaurant@jambaarpay.com', route: '/restaurant-dashboard' },
 ] as const;
@@ -16,4 +16,3 @@ for (const account of demoAccounts) {
     await expect(page).toHaveURL(new RegExp(`${account.route}$`));
   });
 }
-

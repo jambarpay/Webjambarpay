@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { firstValueFrom, of } from 'rxjs';
+import { firstValueFrom, throwError } from 'rxjs';
 import { TEMPORARY_DEMO_ACCOUNTS } from '../demo/demo-accounts';
 import { BackendAuthRepository } from './backend-auth.repository';
 import { TemporaryDemoAuthRepository } from './temporary-demo-auth.repository';
@@ -36,15 +36,14 @@ describe('TemporaryDemoAuthRepository', () => {
     });
   }
 
-  it('delegates non-demo credentials to the backend', async () => {
+  it('reports that backend login is unavailable for non-demo credentials', async () => {
     const credentials = { email: 'real@example.com', password: 'Password@1234' };
-    const backendSession = { profile: TEMPORARY_DEMO_ACCOUNTS[0].profile };
-    backend.login.and.returnValue(of(backendSession));
+    backend.login.and.returnValue(throwError(() => new Error('connexion indisponible')));
 
-    const session = await firstValueFrom(repository.login(credentials));
+    await expectAsync(firstValueFrom(repository.login(credentials)))
+      .toBeRejectedWithError('connexion indisponible');
 
     expect(backend.login).toHaveBeenCalledOnceWith(credentials);
-    expect(session).toEqual(backendSession);
   });
 
   it('closes a demo session without calling the backend', async () => {
@@ -56,4 +55,3 @@ describe('TemporaryDemoAuthRepository', () => {
     expect(backend.logout).not.toHaveBeenCalled();
   });
 });
-
