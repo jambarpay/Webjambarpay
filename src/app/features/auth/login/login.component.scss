@@ -89,7 +89,7 @@ $border: #c9c9c9;
 }
 
 .login-header {
-  margin-bottom: 3.625rem;
+  margin-bottom: 1.5rem;
   text-align: center;
 }
 
@@ -117,12 +117,61 @@ $border: #c9c9c9;
   display: flex;
   gap: 0.625rem;
   align-items: center;
-  margin: -2.25rem 0 1.5rem;
+  margin: 0 0 1.25rem;
   padding: 0.8125rem 0.9375rem;
   border-radius: 0.5rem;
   background: #fee2e2;
   color: $red-danger;
   font-size: 0.875rem;
+}
+
+.demo-access {
+  margin-bottom: 1.25rem;
+  padding: 0.75rem;
+  border: 0.0625rem solid rgba($orange, .3);
+  border-radius: 0.75rem;
+  background: rgba($orange, .06);
+}
+
+.demo-access > div:first-child {
+  display: grid;
+  gap: 0.125rem;
+  margin-bottom: 0.625rem;
+}
+
+.demo-access strong {
+  color: $text;
+  font-size: 0.8125rem;
+}
+
+.demo-access span {
+  color: $muted;
+  font-size: 0.75rem;
+}
+
+.demo-account-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.demo-account-list button {
+  min-height: 2.25rem;
+  padding: 0.375rem 0.5rem;
+  border: 0.0625rem solid rgba($orange, .45);
+  border-radius: 0.5rem;
+  background: var(--color-white-card);
+  color: $text;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.demo-account-list button:hover,
+.demo-account-list button:focus-visible {
+  border-color: $orange;
+  color: $orange;
 }
 
 .login-form,

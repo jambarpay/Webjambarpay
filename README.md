@@ -14,7 +14,17 @@ Le frontend fonctionne exclusivement en mode backend strict :
 <meta name="jambaar-backend-api-url" content="/api/v1">
 ```
 
-Il n’existe aucun repli vers des données locales. Une route backend absente produit une erreur explicite. Les appels passent par le client HTTP commun, avec cookies, délai maximal, corrélation et erreurs structurées.
+Il n’existe aucun repli vers des données métier locales. Une route backend absente produit une erreur explicite. Les appels passent par le client HTTP commun, avec cookies, délai maximal, corrélation et erreurs structurées.
+
+### Accès de démonstration temporaires
+
+En attendant l’endpoint de connexion backend, trois sessions UI temporaires permettent de parcourir les espaces :
+
+- `admin@jambaarpay.com` / `Admin@1234` ;
+- `entreprise@jambaarpay.com` / `Entreprise@1234` ;
+- `restaurant@jambaarpay.com` / `Restaurant@1234`.
+
+Ces comptes ne créent aucun jeton et n’accordent aucun droit dans les microservices. Les opérations métier restent soumises à l’authentification et aux autorisations du backend. Supprimer `TemporaryDemoAuthRepository` dès que l’authentification par cookie `HttpOnly` est disponible.
 
 Contrats backend encore requis pour rendre tous les écrans opérationnels :
 

@@ -27,6 +27,7 @@ interface PricingPlan {
   readonly name: string;
   readonly audience: string;
   readonly description: string;
+  readonly monthlyPrice: string;
   readonly features: readonly string[];
   readonly featured?: boolean;
 }
@@ -84,12 +85,14 @@ export class LandingComponent implements AfterViewInit {
       name: 'Essentiel',
       audience: 'Petites équipes',
       description: 'Pour démarrer simplement la gestion des repas de vos salariés.',
+      monthlyPrice: '75 000',
       features: ['Gestion des salariés', 'Chargement des soldes', 'Historique des transactions'],
     },
     {
       name: 'Entreprise',
       audience: 'Équipes en croissance',
       description: 'Pour piloter les paiements et les données de plusieurs équipes.',
+      monthlyPrice: '150 000',
       features: ['Toutes les fonctions Essentiel', 'Exports CSV et PDF', 'Suivi et reporting avancés'],
       featured: true,
     },
@@ -97,6 +100,7 @@ export class LandingComponent implements AfterViewInit {
       name: 'Sur mesure',
       audience: 'Grandes organisations',
       description: 'Un accompagnement adapté à vos volumes et à votre organisation.',
+      monthlyPrice: '250 000',
       features: ['Configuration personnalisée', 'Accompagnement au déploiement', 'Support dédié'],
     },
   ];

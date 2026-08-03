@@ -184,8 +184,8 @@
             <h3>{{ plan.name }}</h3>
             <p class="plan-description">{{ plan.description }}</p>
             <div class="plan-price">
-              <strong>Sur devis</strong>
-              <span>selon vos besoins</span>
+              <strong>{{ plan.monthlyPrice }}</strong>
+              <span>FCFA / mois + 1 % sur le volume</span>
             </div>
             <ul>
               @for (feature of plan.features; track feature) {
@@ -198,7 +198,7 @@
           </article>
         }
       </div>
-      <p class="pricing-note">Aucun montant n’est prélevé depuis cette page. Notre équipe confirme l’offre adaptée après étude de vos besoins.</p>
+      <p class="pricing-note">Aucun montant n’est prélevé depuis cette page. Notre équipe confirme avec vous l’offre choisie avant toute souscription.</p>
     </section>
 
     <section class="numbers section-container">

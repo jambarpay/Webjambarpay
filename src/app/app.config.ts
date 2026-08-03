@@ -9,6 +9,7 @@ import { errorInterceptor } from './core/http/interceptors/error.interceptor';
 import { correlationInterceptor } from './core/http/interceptors/correlation.interceptor';
 import { AUTH_REPOSITORY } from './core/auth/application/auth.repository';
 import { BackendAuthRepository } from './core/auth/data-access/backend-auth.repository';
+import { TemporaryDemoAuthRepository } from './core/auth/data-access/temporary-demo-auth.repository';
 import { COMPANIES_REPOSITORY } from './features/companies/application/companies.repository';
 import { BackendCompaniesRepository } from './features/companies/data-access/backend-companies.repository';
 import { RESTAURANTS_REPOSITORY } from './features/restaurants/application/restaurants.repository';
@@ -23,7 +24,8 @@ import { BackendPlatformSettingsRepository } from './features/settings/data-acce
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
-    { provide: AUTH_REPOSITORY, useExisting: BackendAuthRepository },
+    BackendAuthRepository,
+    { provide: AUTH_REPOSITORY, useExisting: TemporaryDemoAuthRepository },
     { provide: COMPANIES_REPOSITORY, useExisting: BackendCompaniesRepository },
     { provide: RESTAURANTS_REPOSITORY, useExisting: BackendRestaurantsRepository },
     { provide: MONITORING_REPOSITORY, useExisting: BackendMonitoringRepository },

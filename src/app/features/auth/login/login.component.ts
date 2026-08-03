@@ -5,6 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import { InputTextModule } from 'primeng/inputtext';
 import { firstValueFrom } from 'rxjs';
 import { AuthFacade } from '../../../core/auth/application/auth.facade';
+import { DemoAccount, TEMPORARY_DEMO_ACCOUNTS } from '../../../core/auth/demo/demo-accounts';
 import { LoginForm } from '../../../core/auth/domain/auth.models';
 import { isValidEmail } from '../../../core/utils/form-validation';
 
@@ -29,6 +30,7 @@ export class LoginComponent {
   submitted = signal(false);
 
   readonly passwordMinLength = 8;
+  readonly demoAccounts = TEMPORARY_DEMO_ACCOUNTS;
 
   get emailError(): string {
     const email = this.form.email.trim();
@@ -60,6 +62,12 @@ export class LoginComponent {
 
   togglePassword(): void {
     this.showPassword.update(v => !v);
+  }
+
+  useDemoAccount(account: DemoAccount): void {
+    this.form = { email: account.email, password: account.password };
+    this.error.set('');
+    this.submitted.set(false);
   }
 
   async onSubmit(): Promise<void> {
