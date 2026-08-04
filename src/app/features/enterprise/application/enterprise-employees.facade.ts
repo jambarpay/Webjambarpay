@@ -5,6 +5,7 @@ import { BackendApiClient } from '../../../core/http/backend-api.client';
 import { ApiEnvelope } from '../../../core/http/models/api-response';
 import { DataTransferService, ExportColumn, ImportedRecord } from '../../../core/services/data-transfer.service';
 import { sliceCurrentPage } from '../../../core/utils/pagination';
+import { MONITORING_REPOSITORY, MonitoringRepository } from '../../monitoring/application/monitoring.repository';
 
 export interface EmployeeRow {
   id: string;
@@ -56,6 +57,7 @@ const STATUS_OPTIONS: EmployeeStatusFilter[] = ['Tous', 'Validé', 'Inactif'];
 export class EnterpriseEmployeesFacade {
   private readonly api = inject(BackendApiClient);
   private readonly auth = inject(AuthFacade);
+  private readonly monitoringRepository = inject<MonitoringRepository>(MONITORING_REPOSITORY);
   private readonly dataTransfer = inject(DataTransferService);
   private readonly allEmployees = signal<EmployeeRow[]>([]);
   private readonly exportColumns: ExportColumn<EmployeeRow>[] = [
@@ -165,10 +167,28 @@ export class EnterpriseEmployeesFacade {
   }
 
   async exportMonthlyReport(employee: EmployeeRow, referenceDate = new Date()): Promise<void> {
-    void employee;
-    void referenceDate;
-    throw new Error(
-      'Le payment-service ne fournit pas encore de route de liste des transactions pour générer ce rapport.',
+    const month = `${referenceDate.getFullYear()}-${String(referenceDate.getMonth() + 1).padStart(2, '0')}`;
+    const transactions = await firstValueFrom(this.monitoringRepository.list());
+    const employeeTransactions = transactions
+      .filter(transaction => transaction.employee === employee.id && transaction.date.startsWith(month))
+      .map(transaction => ({
+        employee: transaction.employee,
+        restaurant: transaction.restaurant,
+        amount: transaction.amount,
+        date: transaction.date,
+        status: transaction.status,
+      }));
+
+    this.dataTransfer.exportCsv(
+      `rapport-${employee.name.replace(/\s+/g, '-').toLowerCase()}-${month}`,
+      employeeTransactions,
+      [
+        { header: 'Salarie', value: transaction => transaction.employee },
+        { header: 'Restaurant', value: transaction => transaction.restaurant },
+        { header: 'Montant', value: transaction => transaction.amount },
+        { header: 'Date', value: transaction => transaction.date },
+        { header: 'Statut', value: transaction => transaction.status },
+      ],
     );
   }
 
