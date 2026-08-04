@@ -1,5 +1,6 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { catchError, firstValueFrom, forkJoin, map, of } from 'rxjs';
+import { AuthFacade } from '../../../core/auth/application/auth.facade';
 import { BackendApiClient } from '../../../core/http/backend-api.client';
 import { ApiEnvelope } from '../../../core/http/models/api-response';
 import { DataTransferService, ExportColumn, ImportedRecord } from '../../../core/services/data-transfer.service';
@@ -35,6 +36,15 @@ interface BackendWalletDto {
   active: boolean;
 }
 
+interface BackendBulkTransferResponse {
+  sourceWalletId: string;
+  destinationWalletIds: string[];
+  destinationCount: number;
+  amountPerWallet: number;
+  totalAmount: number;
+  currency: string;
+}
+
 export type EmployeeStatusFilter = 'Tous' | EmployeeRow['status'];
 export type EmployeeFeedbackState = { type: 'success' | 'error'; message: string } | null;
 
@@ -45,6 +55,7 @@ const STATUS_OPTIONS: EmployeeStatusFilter[] = ['Tous', 'Validé', 'Inactif'];
 @Injectable()
 export class EnterpriseEmployeesFacade {
   private readonly api = inject(BackendApiClient);
+  private readonly auth = inject(AuthFacade);
   private readonly dataTransfer = inject(DataTransferService);
   private readonly allEmployees = signal<EmployeeRow[]>([]);
   private readonly exportColumns: ExportColumn<EmployeeRow>[] = [
@@ -121,9 +132,31 @@ export class EnterpriseEmployeesFacade {
     if (!employeeIds.length) throw new Error('Sélectionnez au moins un salarié.');
     if (!Number.isFinite(amount) || amount <= 0) throw new Error('Le montant doit être supérieur à zéro.');
 
-    throw new Error(
-      'Le wallet-service ne fournit pas encore de recharge groupée. Aucun portefeuille n’a été modifié.',
-    );
+    const sourceOwnerId = this.auth.getProfile()?.id;
+    if (!sourceOwnerId) {
+      throw new Error('La session entreprise est requise pour charger les comptes salariés.');
+    }
+
+    const response = await firstValueFrom(this.api.post<BackendBulkTransferResponse, {
+      sourceOwnerId: string;
+      sourceWalletType: 'COMPANY';
+      destinationOwnerIds: string[];
+      destinationWalletType: 'EMPLOYEE';
+      amount: number;
+      currency: 'XOF';
+    }>('wallets/bulk-transfers', {
+      sourceOwnerId,
+      sourceWalletType: 'COMPANY',
+      destinationOwnerIds: employeeIds,
+      destinationWalletType: 'EMPLOYEE',
+      amount,
+      currency: 'XOF',
+    }));
+
+    return {
+      employeeCount: response.destinationCount,
+      totalAmount: response.totalAmount,
+    };
   }
 
   exportEmployees(): void {

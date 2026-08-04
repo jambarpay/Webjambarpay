@@ -1,9 +1,11 @@
 import { TitleCasePipe } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject } from '@angular/core';
+import { forkJoin } from 'rxjs';
 import { TableModule } from 'primeng/table';
 import { AuthFacade } from '../../../../core/auth/application/auth.facade';
 import { BackendApiClient } from '../../../../core/http/backend-api.client';
 import { ApiEnvelope } from '../../../../core/http/models/api-response';
+import { MONITORING_REPOSITORY, MonitoringRepository } from '../../../monitoring/application/monitoring.repository';
 
 interface FinancialKpi {
   label: string;
@@ -43,6 +45,7 @@ interface BackendTransaction {
 export class EnterpriseDashboardComponent {
   private readonly api = inject(BackendApiClient);
   private readonly auth = inject(AuthFacade);
+  private readonly monitoringRepository = inject<MonitoringRepository>(MONITORING_REPOSITORY);
   private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly referenceDate = new Date();
 
@@ -59,16 +62,21 @@ export class EnterpriseDashboardComponent {
   financialKpis: FinancialKpi[] = this.createKpis(0, 0, 0, 0);
 
   constructor() {
-    this.api.get<ApiEnvelope<BackendUser[]>>('users/role/EMPLOYE').subscribe({
-      next: users => {
-        this.applyBackendData(users.data, []);
-        const activeEmployees = users.data.filter(user => user.status === 'ACTIVE').length;
-        this.financialKpis = [
-          { label: 'Solde chargé ce mois', value: 'Indisponible', helper: 'Route de liste absente du payment-service', icon: 'pi pi-money-bill', tone: 'charged' },
-          { label: 'Montant consommé', value: 'Indisponible', helper: 'Route de liste absente du payment-service', icon: 'pi pi-shopping-cart', tone: 'consumed' },
-          { label: 'Solde restant', value: 'Indisponible', helper: 'Route de liste absente du payment-service', icon: 'pi pi-credit-card', tone: 'balance' },
-          { label: 'Salariés actifs', value: `${activeEmployees}/${users.data.length}`, helper: 'Donnée du user-service', icon: 'pi pi-users', tone: 'rate' },
-        ];
+    forkJoin({
+      users: this.api.get<ApiEnvelope<BackendUser[]>>('users/role/EMPLOYE'),
+      transactions: this.monitoringRepository.list(),
+    }).subscribe({
+      next: ({ users, transactions }) => {
+        this.applyBackendData(users.data, transactions.map(transaction => ({
+          payerUserId: transaction.employee,
+          restaurantId: transaction.restaurant,
+          amount: Number(transaction.amount),
+          currency: 'FCFA',
+          status: transaction.status === 'Validé'
+            ? 'SUCCESS'
+            : transaction.status === 'Échoué' ? 'FAILED' : 'PENDING',
+          createdAt: transaction.date,
+        })));
         this.changeDetector.markForCheck();
       },
       error: () => this.changeDetector.markForCheck(),

@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, signal, inject } from '@a
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { TableModule } from 'primeng/table';
+import { MONITORING_REPOSITORY, MonitoringRepository } from '../../../monitoring/application/monitoring.repository';
 import { EmptyStateComponent } from '../../../../design-system/components/empty-state/empty-state.component';
 import { PaginationComponent } from '../../../../design-system/components/pagination/pagination.component';
 import { DataTransferService, ExportColumn } from '../../../../core/services/data-transfer.service';
@@ -29,10 +30,24 @@ type PeriodMode = 'week' | 'month';
 export class EnterpriseHistoryComponent {
   private readonly dataTransfer = inject(DataTransferService);
   private readonly route = inject(ActivatedRoute);
+  private readonly monitoringRepository = inject<MonitoringRepository>(MONITORING_REPOSITORY);
 
   private readonly referenceDate = new Date();
   readonly transactions = signal<HistoryTransaction[]>([]);
-  readonly backendNotice = 'Le payment-service ne fournit pas encore de route pour lister les transactions.';
+
+  constructor() {
+    this.monitoringRepository.list().subscribe({
+      next: transactions => this.transactions.set(transactions.map(transaction => ({
+        employee: transaction.employee,
+        employeeEmail: '—',
+        restaurant: transaction.restaurant,
+        amount: transaction.amount,
+        date: transaction.date,
+        status: transaction.status,
+      }))),
+      error: () => this.transactions.set([]),
+    });
+  }
 
   readonly employeeOptions = computed(() => Array.from(
     new Map(this.transactions().map(transaction => [
