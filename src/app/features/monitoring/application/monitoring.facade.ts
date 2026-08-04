@@ -52,6 +52,15 @@ export class MonitoringFacade {
 
   readonly totalPages = computed(() => Math.max(1, Math.ceil(this.filtered().length / this.pageSize())));
   readonly transactions = computed(() => sliceCurrentPage(this.filtered(), this.currentPage(), this.pageSize()));
+  readonly summary = computed(() => {
+    const transactions = this.allTransactions();
+    return {
+      total: transactions.length,
+      validated: transactions.filter(transaction => transaction.status === 'Validé').length,
+      pending: transactions.filter(transaction => transaction.status === 'En attente').length,
+      failed: transactions.filter(transaction => transaction.status === 'Échoué').length,
+    };
+  });
 
   constructor() {
     this.repository.list().pipe(
