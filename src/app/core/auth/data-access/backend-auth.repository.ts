@@ -15,7 +15,7 @@ interface BackendAuthEnvelope {
 interface BackendAuthentication {
   accessToken: string;
   tokenType: string;
-  expiresAt: string;
+  expiresAt: number;
   profile: {
     id: string;
     name: string;
@@ -74,7 +74,8 @@ export class BackendAuthRepository implements AuthRepository {
       throw new Error('Le contrat de connexion du backend est invalide.');
     }
 
-    this.tokenStore.setAccessToken(authentication.accessToken, authentication.expiresAt);
+    const expiresAt = this.toIsoExpiration(authentication.expiresAt);
+    this.tokenStore.setAccessToken(authentication.accessToken, expiresAt);
     return {
       profile: {
         id: backendProfile.id,
@@ -87,5 +88,13 @@ export class BackendAuthRepository implements AuthRepository {
 
   private isUnauthorized(error: unknown): boolean {
     return (error instanceof ApiHttpError || error instanceof HttpErrorResponse) && error.status === 401;
+  }
+
+  private toIsoExpiration(expiresAtEpochSeconds: number): string {
+    if (!Number.isFinite(expiresAtEpochSeconds) || expiresAtEpochSeconds <= 0) {
+      throw new Error('La date d’expiration du jeton est invalide.');
+    }
+
+    return new Date(expiresAtEpochSeconds * 1_000).toISOString();
   }
 }

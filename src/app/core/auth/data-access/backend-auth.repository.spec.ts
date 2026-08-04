@@ -48,7 +48,7 @@ describe('BackendAuthRepository', () => {
       data: {
         accessToken: 'jwt-token',
         tokenType: 'Bearer',
-        expiresAt: new Date(Date.now() + 60_000).toISOString(),
+        expiresAt: (Date.now() + 60_000) / 1_000,
         profile: {
           id: 'user-id',
           name: 'Admin JambaarPay',
