@@ -7,9 +7,9 @@ import { JAMBAAR_PRESET } from './design-system/theme/jambaar.preset';
 import { routes } from './app.routes';
 import { errorInterceptor } from './core/http/interceptors/error.interceptor';
 import { correlationInterceptor } from './core/http/interceptors/correlation.interceptor';
+import { authTokenInterceptor } from './core/http/interceptors/auth-token.interceptor';
 import { AUTH_REPOSITORY } from './core/auth/application/auth.repository';
 import { BackendAuthRepository } from './core/auth/data-access/backend-auth.repository';
-import { TemporaryDemoAuthRepository } from './core/auth/data-access/temporary-demo-auth.repository';
 import { COMPANIES_REPOSITORY } from './features/companies/application/companies.repository';
 import { BackendCompaniesRepository } from './features/companies/data-access/backend-companies.repository';
 import { RESTAURANTS_REPOSITORY } from './features/restaurants/application/restaurants.repository';
@@ -25,13 +25,13 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
     BackendAuthRepository,
-    { provide: AUTH_REPOSITORY, useExisting: TemporaryDemoAuthRepository },
+    { provide: AUTH_REPOSITORY, useExisting: BackendAuthRepository },
     { provide: COMPANIES_REPOSITORY, useExisting: BackendCompaniesRepository },
     { provide: RESTAURANTS_REPOSITORY, useExisting: BackendRestaurantsRepository },
     { provide: MONITORING_REPOSITORY, useExisting: BackendMonitoringRepository },
     { provide: AUDIT_REPOSITORY, useExisting: BackendAuditRepository },
     { provide: PLATFORM_SETTINGS_REPOSITORY, useExisting: BackendPlatformSettingsRepository },
-    provideHttpClient(withInterceptors([correlationInterceptor, errorInterceptor])),
+    provideHttpClient(withInterceptors([correlationInterceptor, authTokenInterceptor, errorInterceptor])),
     provideAnimationsAsync(),
     providePrimeNG({
       ripple: true,

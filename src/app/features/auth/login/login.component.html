@@ -23,23 +23,6 @@
         </div>
       }
 
-      <section class="demo-access" aria-labelledby="demo-access-title">
-        <div>
-          <strong id="demo-access-title">Accès temporaires</strong>
-          <span>Sélectionnez un espace de démonstration</span>
-        </div>
-        <div class="demo-account-list">
-          @for (account of demoAccounts; track account.email) {
-            <button
-              type="button"
-              (click)="useDemoAccount(account)"
-              [attr.aria-label]="'Utiliser le compte ' + account.label + ' (' + account.email + ')'">
-              {{ account.label }}
-            </button>
-          }
-        </div>
-      </section>
-
       <form (ngSubmit)="onSubmit()" #f="ngForm" class="login-form">
         <div class="field">
           <label for="email">Adresse email</label>

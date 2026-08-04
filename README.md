@@ -14,17 +14,11 @@ Le frontend fonctionne exclusivement en mode backend strict :
 <meta name="jambaar-backend-api-url" content="/api/v1">
 ```
 
-Il n’existe aucun repli vers des données métier locales. Une route backend absente produit une erreur explicite. Les appels passent par le client HTTP commun, avec cookies, délai maximal, corrélation et erreurs structurées.
+Il n’existe aucun repli vers des données métier locales. Une route backend absente produit une erreur explicite. Les appels passent par le client HTTP commun, avec JWT Bearer, délai maximal, corrélation et erreurs structurées.
 
-### Accès de démonstration temporaires
+### Authentification backend
 
-En attendant l’endpoint de connexion backend, trois sessions UI temporaires permettent de parcourir les espaces :
-
-- `adminjambar@jambaarpay.com` / `JambarPay2@26` ;
-- `entreprise@jambaarpay.com` / `Entreprise@1234` ;
-- `restaurant@jambaarpay.com` / `Restaurant@1234`.
-
-Ces comptes ne créent aucun jeton et n’accordent aucun droit dans les microservices. Les opérations métier restent soumises à l’authentification et aux autorisations du backend. Supprimer `TemporaryDemoAuthRepository` dès que l’authentification par cookie `HttpOnly` est disponible.
+Le portail utilise `POST /api/v1/auth/login` et `POST /api/v1/auth/logout` via l’API Gateway. Le JWT est conservé dans `sessionStorage` pour la durée de l’onglet et ajouté uniquement aux requêtes destinées à `/api/v1`. Les rôles `ADMIN`, `ENTREPRISE` et `RESTAURANT` sont convertis vers les rôles d’interface correspondants.
 
 ## Fonctionnalités frontend encore absentes du backend
 
@@ -32,16 +26,15 @@ Cette section recense uniquement les fonctionnalités déjà représentées dans
 
 ### Authentification et sessions
 
-Le frontend attend une authentification par email et mot de passe avec des rôles `ADMIN`, `ENTREPRISE` et `RESTAURANT`. Les contrats suivants restent à fournir :
+Le login et le logout par JWT sont maintenant disponibles. Les contrats suivants restent à fournir pour une session de production complète :
 
-- `POST /api/v1/auth/login` avec création d’une session sécurisée ;
-- `POST /api/v1/auth/logout` ;
+- `POST /api/v1/auth/refresh` avec rotation du refresh token ;
 - `GET /api/v1/auth/session` ou `GET /api/v1/auth/me` ;
 - cookie de session `HttpOnly`, `Secure` et `SameSite` ;
 - récupération et modification du mot de passe ;
 - autorisation des routes côté backend selon le rôle connecté.
 
-Le `user-service` actuel propose l’inscription par téléphone et OTP, mais pas encore le parcours email/mot de passe affiché par le portail web.
+Le `user-service` conserve également son parcours d’inscription par téléphone et OTP.
 
 ### Inscription et gestion des entreprises
 

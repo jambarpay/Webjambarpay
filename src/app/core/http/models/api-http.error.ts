@@ -24,7 +24,7 @@ export function mapApiHttpError(response: HttpErrorResponse): ApiHttpError {
   return new ApiHttpError(
     payload.message ?? defaultMessage(response.status),
     response.status,
-    payload.code ?? `HTTP_${response.status || 'NETWORK'}`,
+    payload.code ?? payload.errorCode ?? `HTTP_${response.status || 'NETWORK'}`,
     correlationId,
     payload.validationErrors ?? {},
     response,

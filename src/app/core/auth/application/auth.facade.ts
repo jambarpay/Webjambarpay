@@ -2,6 +2,7 @@ import { computed, Injectable, signal, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { map, Observable } from 'rxjs';
 import { StorageService } from '../../services/storage.service';
+import { AuthTokenStore } from '../data-access/auth-token.store';
 import { AdminProfile, AuthState, isUserRole, LoginForm, UserRole, USER_ROLES } from '../domain/auth.models';
 import { AUTH_REPOSITORY, AuthRepository } from './auth.repository';
 
@@ -10,6 +11,7 @@ const USER_KEY  = 'jp_user';
 export class AuthFacade {
   private readonly repository = inject<AuthRepository>(AUTH_REPOSITORY);
   private readonly storage = inject(StorageService);
+  private readonly tokenStore = inject(AuthTokenStore);
   private readonly router = inject(Router);
 
   private readonly state = signal<AuthState>({
@@ -82,7 +84,7 @@ export class AuthFacade {
   private restoreSession(): void {
     const profile = this.readStoredProfile();
 
-    if (!profile) {
+    if (!profile || !this.tokenStore.getAccessToken()) {
       this.clearSession();
       return;
     }
@@ -101,6 +103,7 @@ export class AuthFacade {
 
   private clearSession(): void {
     this.storage.remove(USER_KEY);
+    this.tokenStore.clear();
     this.state.set({
       userId: null,
       role: null,

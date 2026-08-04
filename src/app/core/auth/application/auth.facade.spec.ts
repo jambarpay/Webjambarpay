@@ -55,7 +55,7 @@ describe('AuthFacade', () => {
 
     const authenticated = await firstValueFrom(service.login({
       email: 'adminjambar@jambaarpay.com',
-      password: 'JambarPay2@26',
+      password: 'TestPassword@123',
     }));
 
     expect(authenticated).toBeTrue();
