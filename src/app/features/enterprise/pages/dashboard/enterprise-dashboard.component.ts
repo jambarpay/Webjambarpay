@@ -62,8 +62,13 @@ export class EnterpriseDashboardComponent {
   financialKpis: FinancialKpi[] = this.createKpis(0, 0, 0, 0);
 
   constructor() {
+    const companyId = this.auth.getProfile()?.id;
+    if (!companyId) {
+      this.changeDetector.markForCheck();
+      return;
+    }
     forkJoin({
-      users: this.api.get<ApiEnvelope<BackendUser[]>>('users/role/EMPLOYE'),
+      users: this.api.get<ApiEnvelope<BackendUser[]>>(`users/company/${encodeURIComponent(companyId)}/employees`),
       transactions: this.monitoringRepository.list(),
     }).subscribe({
       next: ({ users, transactions }) => {

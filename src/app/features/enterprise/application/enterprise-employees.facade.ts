@@ -202,7 +202,12 @@ export class EnterpriseEmployeesFacade {
 
   private loadEmployees(): void {
     this.loading.set(true);
-    this.api.get<ApiEnvelope<BackendUserDto[]>>('users/role/EMPLOYE').pipe(
+    const companyId = this.auth.getProfile()?.id;
+    if (!companyId) {
+      this.handleLoadError(new Error('La session entreprise est requise pour charger les salariés.'));
+      return;
+    }
+    this.api.get<ApiEnvelope<BackendUserDto[]>>(`users/company/${encodeURIComponent(companyId)}/employees`).pipe(
       map(response => response.data),
       map(users => users.map(user => this.loadEmployeeWallet(user))),
       map(requests => requests.length ? forkJoin(requests) : of([])),
