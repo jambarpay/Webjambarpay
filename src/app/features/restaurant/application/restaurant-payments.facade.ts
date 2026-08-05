@@ -22,7 +22,9 @@ export interface RestaurantPaymentRecord {
 }
 
 export interface CreateRestaurantPaymentInput {
-  customerPhone: string;
+  payerUserId: string;
+  qrContent: string;
+  pin: string;
   table: string;
   amountLabel: string;
   company?: string;
@@ -50,10 +52,21 @@ export class RestaurantPaymentsFacade {
   }
 
   async createPayment(input: CreateRestaurantPaymentInput): Promise<RestaurantPaymentRecord> {
-    void input;
-    throw new Error(
-      'Le payment-service exige un QR salarié signé. Le paiement manuel par téléphone est désactivé côté navigateur.',
-    );
+    const response = await new Promise<{ id: string; qrReference: string; amount: number; status: string }>((resolve, reject) => {
+      this.api.post<{ id: string; qrReference: string; amount: number; status: string }, unknown>('payments/qr', {
+        payerUserId: input.payerUserId,
+        qrContent: input.qrContent,
+        amount: Number(input.amountLabel.replace(/[^\d]/g, '')),
+        currency: 'XOF',
+        pin: input.pin,
+      }).subscribe({ next: resolve, error: reject });
+    });
+    return {
+      id: response.id, reference: response.qrReference, customerPhone: '', company: '', table: input.table,
+      amount: response.amount, amountLabel: `${response.amount} FCFA`, date: new Date().toISOString(),
+      status: response.status === 'COMPLETED' ? 'Validé' : 'En attente', channel: 'QR fixe telephone',
+      idempotencyKey: '', correlationId: '', qrPhoneNumber: this.qrPhoneNumber(), fingerprint: '',
+    };
   }
 
   private loadRestaurantContext(): void {

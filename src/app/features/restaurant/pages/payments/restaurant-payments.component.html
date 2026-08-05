@@ -8,6 +8,18 @@
         </div>
 
         <div class="payment-grid">
+          <label class="field field-full" for="payment-payer-id">
+            <span>Identifiant du salarié</span>
+            <input id="payment-payer-id" [(ngModel)]="payerUserId" type="text" placeholder="UUID du salarié" />
+          </label>
+          <label class="field field-full" for="payment-qr">
+            <span>QR salarié sécurisé</span>
+            <input id="payment-qr" [(ngModel)]="qrContent" type="text" placeholder="Contenu scanné du QR salarié" />
+          </label>
+          <label class="field" for="payment-pin">
+            <span>PIN salarié</span>
+            <input id="payment-pin" [(ngModel)]="pin" type="password" inputmode="numeric" maxlength="4" placeholder="••••" />
+          </label>
           <label class="field" for="payment-phone">
             <span>Téléphone du mobile</span>
             <input id="payment-phone" [(ngModel)]="customerPhone" type="text" placeholder="Ex : 77 123 45 67" />

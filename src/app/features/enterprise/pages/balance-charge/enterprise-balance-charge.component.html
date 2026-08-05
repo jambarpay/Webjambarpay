@@ -89,7 +89,7 @@
       <div class="step-content review-step">
         <div class="review-icon"><i class="pi pi-wallet"></i></div>
         <h3>Vérifiez l’opération</h3>
-        <p class="step-description">Le crédit sera appliqué immédiatement après confirmation.</p>
+        <p class="step-description">Vous serez redirigé vers KkiaPay. Les comptes seront crédités après vérification du paiement.</p>
         <dl class="summary">
           <div><dt>Nombre de comptes</dt><dd>{{ selectedEmployees.length }}</dd></div>
           <div><dt>Montant par compte</dt><dd>{{ formatAmount(amountValue) }}</dd></div>
@@ -114,7 +114,7 @@
           <button type="button" class="btn btn-primary" (click)="continueToReview()">Voir le récapitulatif</button>
         } @else {
           <button type="button" class="btn btn-primary" (click)="confirmCharge()">
-            <i class="pi pi-check"></i> Confirmer le chargement
+            <i class="pi pi-credit-card"></i> Payer avec KkiaPay
           </button>
         }
       }

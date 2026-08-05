@@ -19,6 +19,9 @@ export class RestaurantPaymentsComponent {
 
   amount = '';
   customerPhone = '';
+  payerUserId = '';
+  qrContent = '';
+  pin = '';
   tableNumber = '';
   feedback = signal<{ type: 'success' | 'error'; message: string } | null>(null);
   submitting = signal(false);
@@ -30,6 +33,9 @@ export class RestaurantPaymentsComponent {
 
   get isFormValid(): boolean {
     return !this.phoneError
+      && !!this.payerUserId.trim()
+      && !!this.qrContent.trim()
+      && /^\d{4}$/.test(this.pin)
       && this.tableNumber.trim().length >= 2
       && this.normalizedAmount > 0;
   }
@@ -69,7 +75,9 @@ export class RestaurantPaymentsComponent {
 
     try {
       const payment = await this.restaurantPayments.createPayment({
-        customerPhone: this.customerPhone,
+        payerUserId: this.payerUserId,
+        qrContent: this.qrContent,
+        pin: this.pin,
         table: this.tableNumber,
         amountLabel: this.amount,
       });
@@ -80,6 +88,9 @@ export class RestaurantPaymentsComponent {
       });
 
       this.customerPhone = '';
+      this.payerUserId = '';
+      this.qrContent = '';
+      this.pin = '';
       this.tableNumber = '';
       this.amount = '';
     } catch (error) {
