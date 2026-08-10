@@ -29,8 +29,20 @@ export class TopbarComponent {
     return this.profile?.role === USER_ROLES.restaurant;
   }
 
+  get isSeller(): boolean {
+    return this.profile?.role === USER_ROLES.seller;
+  }
+
   get showSettingsLink(): boolean {
-    return !this.isEnterprise && !this.isRestaurant;
+    return !this.isEnterprise && !this.isRestaurant && !this.isSeller;
+  }
+
+  get showSearchBox(): boolean {
+    return !this.isSeller;
+  }
+
+  get showAvatarBlock(): boolean {
+    return !this.isSeller;
   }
 
   logout(): void {

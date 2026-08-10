@@ -24,6 +24,14 @@ export class BackendApiClient {
       .pipe(timeout(this.requestTimeout));
   }
 
+  getBlob(path: string, options: BackendRequestOptions = {}): Observable<Blob> {
+    return this.http.get(this.buildUrl(path), {
+      ...options,
+      responseType: 'blob',
+      withCredentials: true,
+    }).pipe(timeout(this.requestTimeout));
+  }
+
   post<TResponse, TBody = unknown>(path: string, body: TBody, options: BackendRequestOptions = {}): Observable<TResponse> {
     return this.http.post<TResponse>(this.buildUrl(path), body, { ...options, withCredentials: true })
       .pipe(timeout(this.requestTimeout));

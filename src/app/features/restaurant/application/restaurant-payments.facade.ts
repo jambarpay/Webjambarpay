@@ -1,4 +1,5 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import { AuthFacade } from '../../../core/auth/application/auth.facade';
 import { BackendApiClient } from '../../../core/http/backend-api.client';
 
@@ -21,19 +22,23 @@ export interface RestaurantPaymentRecord {
   fingerprint: string;
 }
 
-export interface CreateRestaurantPaymentInput {
-  payerUserId: string;
-  qrContent: string;
-  pin: string;
-  table: string;
-  amountLabel: string;
-  company?: string;
-  channel?: RestaurantPaymentRecord['channel'];
-}
-
 interface BackendRestaurantDto {
   id: string;
+  name: string;
   phoneNumber: string;
+  country: string;
+  city: string;
+  district: string;
+  street: string;
+  status: 'PENDING' | 'ACTIVE' | 'SUSPENDED';
+}
+
+interface PointOfSaleDto {
+  id: string;
+}
+
+interface MerchantQrDto {
+  qrReference: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -41,6 +46,7 @@ export class RestaurantPaymentsFacade {
   private readonly api = inject(BackendApiClient);
   private readonly auth = inject(AuthFacade);
   private readonly paymentsState = signal<RestaurantPaymentRecord[]>([]);
+  private qrImageObjectUrl?: string;
 
   readonly payments = computed(() => this.paymentsState());
   readonly qrPhoneNumber = signal('Indisponible');
@@ -51,27 +57,11 @@ export class RestaurantPaymentsFacade {
     this.loadRestaurantContext();
   }
 
-  async createPayment(input: CreateRestaurantPaymentInput): Promise<RestaurantPaymentRecord> {
-    const response = await new Promise<{ id: string; qrReference: string; amount: number; status: string }>((resolve, reject) => {
-      this.api.post<{ id: string; qrReference: string; amount: number; status: string }, unknown>('payments/qr', {
-        payerUserId: input.payerUserId,
-        qrContent: input.qrContent,
-        amount: Number(input.amountLabel.replace(/[^\d]/g, '')),
-        currency: 'XOF',
-        pin: input.pin,
-      }).subscribe({ next: resolve, error: reject });
-    });
-    return {
-      id: response.id, reference: response.qrReference, customerPhone: '', company: '', table: input.table,
-      amount: response.amount, amountLabel: `${response.amount} FCFA`, date: new Date().toISOString(),
-      status: response.status === 'COMPLETED' ? 'Validé' : 'En attente', channel: 'QR fixe telephone',
-      idempotencyKey: '', correlationId: '', qrPhoneNumber: this.qrPhoneNumber(), fingerprint: '',
-    };
-  }
-
   private loadRestaurantContext(): void {
-    const ownerId = this.auth.getProfile()?.id;
+    const profile = this.auth.getProfile();
+    const ownerId = profile?.restaurantId?.trim() || profile?.id;
     if (!ownerId) {
+      this.clearQrImage();
       this.qrCodeStatus.set('error');
       return;
     }
@@ -81,17 +71,83 @@ export class RestaurantPaymentsFacade {
         const restaurant = restaurants[0];
         if (!restaurant) {
           this.paymentsState.set([]);
+          this.clearQrImage();
           this.qrCodeStatus.set('error');
           return;
         }
         this.qrPhoneNumber.set(restaurant.phoneNumber);
-        this.qrCodeStatus.set('error');
         this.paymentsState.set([]);
+        this.generateRestaurantQr(restaurant);
       },
       error: () => {
         this.paymentsState.set([]);
+        this.clearQrImage();
         this.qrCodeStatus.set('error');
       },
     });
+  }
+
+  private async generateRestaurantQr(restaurant: BackendRestaurantDto): Promise<void> {
+    if (restaurant.status === 'SUSPENDED') {
+      this.clearQrImage();
+      this.qrCodeStatus.set('error');
+      return;
+    }
+
+    const pointOfSaleKey = `jp_restaurant_pos_${restaurant.id}`;
+    try {
+      // Restaurant activation is a back-office compliance decision, not an owner action.
+      if (restaurant.status !== 'ACTIVE') {
+        this.clearQrImage();
+        this.qrCodeStatus.set('error');
+        return;
+      }
+
+      let pointOfSaleId = localStorage.getItem(pointOfSaleKey);
+      if (!pointOfSaleId) {
+        const pointOfSale = await firstValueFrom(this.api.post<PointOfSaleDto, unknown>(
+          `restaurants/${encodeURIComponent(restaurant.id)}/points-of-sale`,
+          {
+            name: 'Point de vente principal',
+            country: restaurant.country || 'Sénégal',
+            city: restaurant.city,
+            district: restaurant.district,
+            street: restaurant.street,
+          },
+        ));
+        pointOfSaleId = pointOfSale.id;
+        localStorage.setItem(pointOfSaleKey, pointOfSaleId);
+      }
+
+      await firstValueFrom(this.api.patch(
+        `restaurants/points-of-sale/${encodeURIComponent(pointOfSaleId)}/activate`, {},
+      ));
+      const qr = await firstValueFrom(this.api.post<MerchantQrDto, unknown>(
+        `restaurants/${encodeURIComponent(restaurant.id)}/points-of-sale/${encodeURIComponent(pointOfSaleId)}/qr`,
+        {},
+      ));
+      const image = await firstValueFrom(this.api.getBlob(
+        `qrs/${encodeURIComponent(qr.qrReference)}/image`,
+      ));
+      this.replaceQrImage(image);
+      this.qrCodeStatus.set('ready');
+    } catch {
+      this.clearQrImage();
+      this.qrCodeStatus.set('error');
+    }
+  }
+
+  private replaceQrImage(image: Blob): void {
+    this.clearQrImage();
+    this.qrImageObjectUrl = URL.createObjectURL(image);
+    this.qrCodeUrl.set(this.qrImageObjectUrl);
+  }
+
+  private clearQrImage(): void {
+    if (this.qrImageObjectUrl) {
+      URL.revokeObjectURL(this.qrImageObjectUrl);
+      this.qrImageObjectUrl = undefined;
+    }
+    this.qrCodeUrl.set('');
   }
 }

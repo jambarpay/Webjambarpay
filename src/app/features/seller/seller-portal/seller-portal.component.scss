@@ -1,0 +1,177 @@
+:host {
+  display: block;
+  min-height: 100%;
+}
+
+.seller-page {
+  min-height: 100%;
+  display: grid;
+  place-items: center;
+}
+
+.seller-card {
+  width: min(100%, 70rem);
+  display: grid;
+  gap: 1.1rem;
+  padding: 1.25rem;
+  border-radius: 1.2rem;
+  background: var(--color-white-card);
+  border: 1px solid rgba(25, 24, 49, 0.08);
+  box-shadow: 0 18px 36px rgba(24, 23, 47, 0.1);
+}
+
+.seller-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.eyebrow {
+  display: inline-flex;
+  margin-bottom: 0.35rem;
+  color: #2f66f5;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.seller-head h2 {
+  margin: 0;
+  color: #191831;
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.seller-head p {
+  margin: 0.35rem 0 0;
+  color: #6e6b7d;
+}
+
+.scan-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.9rem 1.2rem;
+  background: linear-gradient(135deg, #1f8ef1, #2f66f5);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 14px 24px rgba(47, 102, 245, 0.25);
+}
+
+.seller-grid {
+  display: grid;
+  grid-template-columns: minmax(16rem, 0.95fr) minmax(18rem, 1.05fr);
+  gap: 1rem;
+}
+
+.qr-panel,
+.scanner-panel {
+  border-radius: 1rem;
+  border: 1px solid rgba(25, 24, 49, 0.08);
+  background: linear-gradient(180deg, #ffffff, #f8f9ff);
+}
+
+.qr-panel {
+  padding: 1rem;
+  display: grid;
+  gap: 0.8rem;
+  align-content: start;
+}
+
+.qr-frame {
+  display: grid;
+  place-items: center;
+  min-height: 18rem;
+}
+
+.qr-code {
+  width: 100%;
+  max-width: 18rem;
+  height: auto;
+}
+
+.qr-meta {
+  display: grid;
+  gap: 0.2rem;
+  color: #605d71;
+}
+
+.qr-meta strong {
+  color: #191831;
+  font-size: 1rem;
+}
+
+.scanner-panel {
+  padding: 1rem;
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+  border-style: dashed;
+  min-height: 100%;
+}
+
+.scanner-panel.is-open {
+  background: linear-gradient(180deg, #f2f7ff, #ffffff);
+  border-color: rgba(47, 102, 245, 0.35);
+}
+
+.scanner-copy h3 {
+  margin: 0;
+  color: #191831;
+  font-size: 1.05rem;
+}
+
+.scanner-copy p {
+  margin: 0.4rem 0 0;
+  color: #6e6b7d;
+}
+
+.scanner-placeholder {
+  min-height: 16rem;
+  border-radius: 1rem;
+  display: grid;
+  place-items: center;
+  gap: 0.6rem;
+  color: #2f66f5;
+  background:
+    radial-gradient(circle at center, rgba(47, 102, 245, 0.08), transparent 62%),
+    #ffffff;
+  border: 1px solid rgba(47, 102, 245, 0.15);
+  font-weight: 700;
+}
+
+.scanner-placeholder i {
+  font-size: 2rem;
+}
+
+@media (max-width: 900px) {
+  .seller-head,
+  .seller-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .seller-head {
+    display: grid;
+  }
+
+  .scan-btn {
+    justify-self: start;
+  }
+}
+
+@media (max-width: 640px) {
+  .seller-card {
+    padding: 1rem;
+    border-radius: 1rem;
+  }
+
+  .qr-frame,
+  .scanner-placeholder {
+    min-height: 14rem;
+  }
+}

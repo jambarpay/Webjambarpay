@@ -77,11 +77,29 @@ describe('BackendAuthRepository', () => {
     expect(tokenStore.getAccessToken()).toBeNull();
   });
 
+  it('authenticates an employee with phone number and PIN', async () => {
+    const login = firstValueFrom(repository.employeeLogin({ phoneNumber: '+221 77 123 45 67', pin: '1234' }));
+
+    const request = http.expectOne('/api/v1/auth/employee/login');
+    expect(request.request.body).toEqual({ phoneNumber: '771234567', pin: '1234' });
+    request.flush({
+      success: true,
+      data: {
+        accessToken: 'employee-jwt-token', tokenType: 'Bearer', expiresAt: (Date.now() + 60_000) / 1_000,
+        profile: { id: 'employee-id', name: 'Employé Test', email: 'employee@test.local', role: 'EMPLOYE' },
+      },
+    });
+
+    expect((await login)?.profile.role).toBe(USER_ROLES.employee);
+  });
+
   it('calls logout and clears the access token', async () => {
     tokenStore.setAccessToken('jwt-token', new Date(Date.now() + 60_000).toISOString());
     const logout = firstValueFrom(repository.logout());
 
-    http.expectOne('/api/v1/auth/logout').flush({ success: true, data: null });
+    const request = http.expectOne('/api/v1/auth/logout');
+    expect(request.request.headers.get('Authorization')).toBe('Bearer jwt-token');
+    request.flush({ success: true, data: null });
     await logout;
 
     expect(tokenStore.getAccessToken()).toBeNull();

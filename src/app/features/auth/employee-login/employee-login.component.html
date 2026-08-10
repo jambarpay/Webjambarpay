@@ -1,0 +1,15 @@
+<div class="login-card">
+  <aside class="login-left" aria-hidden="true"><img class="login-visual" src="assets/images/login-bg.jpg" alt="" /></aside>
+  <main class="login-right">
+    <a class="back-link" routerLink="/login">← <span>Connexion par email</span></a>
+    <div class="login-form-card">
+      <div class="login-header"><h1>ESPACE SALARIÉ</h1><p>Connectez-vous avec votre téléphone et votre PIN.</p></div>
+      @if (error()) { <div class="error-alert"><span>{{ error() }}</span></div> }
+      <form (ngSubmit)="submit()" class="login-form">
+        <div class="field"><label for="phone">Téléphone</label><div class="input-wrapper"><span class="input-icon">+221</span><input id="phone" name="phone" [(ngModel)]="phoneNumber" inputmode="numeric" autocomplete="tel" placeholder="77 123 45 67" /></div></div>
+        <div class="field"><label for="pin">PIN à 4 chiffres</label><div class="input-wrapper"><input id="pin" name="pin" [(ngModel)]="pin" type="password" inputmode="numeric" maxlength="4" autocomplete="current-password" placeholder="••••" /></div></div>
+        <button type="submit" class="btn-submit" [disabled]="loading()">{{ loading() ? 'Connexion…' : 'Se connecter' }}</button>
+      </form>
+    </div>
+  </main>
+</div>

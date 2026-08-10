@@ -5,7 +5,7 @@ import { StorageService } from '../../services/storage.service';
 import { AuthRepository } from './auth.repository';
 import { AuthFacade } from './auth.facade';
 import { AUTH_REPOSITORY } from './auth.repository';
-import { LoginCredentials, USER_ROLES } from '../domain/auth.models';
+import { EmployeeLoginCredentials, LoginCredentials, USER_ROLES } from '../domain/auth.models';
 
 class FakeAuthRepository implements AuthRepository {
   login(credentials: LoginCredentials) {
@@ -15,6 +15,17 @@ class FakeAuthRepository implements AuthRepository {
         name: 'Admin Test',
         email: credentials.email,
         role: USER_ROLES.admin,
+      },
+    });
+  }
+
+  employeeLogin(credentials: EmployeeLoginCredentials) {
+    return of({
+      profile: {
+        id: 'employee-test',
+        name: 'Employé Test',
+        email: `${credentials.phoneNumber}@employee.local`,
+        role: USER_ROLES.employee,
       },
     });
   }

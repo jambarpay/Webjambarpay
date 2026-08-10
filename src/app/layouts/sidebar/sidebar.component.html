@@ -5,30 +5,32 @@
   </div>
 
   <!-- Navigation -->
-  <nav class="sidebar-nav" aria-label="Navigation principale">
-    @for (item of navItems; track item) {
-      @if (!item.disabled && item.route) {
-        <a
-          [routerLink]="item.route"
-          routerLinkActive="active"
-          class="nav-item"
-          [attr.aria-label]="item.label">
-          <img [src]="item.iconSrc" [alt]="item.label" class="nav-icon" />
-          <span>{{ item.label }}</span>
-        </a>
+  @if (navItems.length) {
+    <nav class="sidebar-nav" aria-label="Navigation principale">
+      @for (item of navItems; track item) {
+        @if (!item.disabled && item.route) {
+          <a
+            [routerLink]="item.route"
+            routerLinkActive="active"
+            class="nav-item"
+            [attr.aria-label]="item.label">
+            <img [src]="item.iconSrc" [alt]="item.label" class="nav-icon" />
+            <span>{{ item.label }}</span>
+          </a>
+        }
+        @if (item.disabled || !item.route) {
+          <button
+            type="button"
+            class="nav-item nav-item-disabled"
+            [attr.aria-label]="item.label"
+            aria-disabled="true">
+            <img [src]="item.iconSrc" [alt]="item.label" class="nav-icon" />
+            <span>{{ item.label }}</span>
+          </button>
+        }
       }
-      @if (item.disabled || !item.route) {
-        <button
-          type="button"
-          class="nav-item nav-item-disabled"
-          [attr.aria-label]="item.label"
-          aria-disabled="true">
-          <img [src]="item.iconSrc" [alt]="item.label" class="nav-icon" />
-          <span>{{ item.label }}</span>
-        </button>
-      }
-    }
-  </nav>
+    </nav>
+  }
 
   <!-- Logout -->
   <div class="sidebar-footer">

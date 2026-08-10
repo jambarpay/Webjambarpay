@@ -5,6 +5,9 @@ import { ADMIN_ROUTES } from './features/admin/admin.routes';
 import { AUTH_ROUTES } from './features/auth/auth.routes';
 import { ENTERPRISE_ROUTES } from './features/enterprise/enterprise.routes';
 import { RESTAURANT_ROUTES } from './features/restaurant/restaurant.routes';
+import { SELLER_ROUTES } from './features/seller/seller.routes';
+import { USER_ROLES } from './core/auth/domain/auth.models';
+import { protectedPage } from './core/routing/protected-page';
 
 const landingComponent = () =>
   import('./features/landing/landing.component').then(module => module.LandingComponent);
@@ -66,6 +69,13 @@ export const routes: Routes = [
       ...ADMIN_ROUTES,
       ...ENTERPRISE_ROUTES,
       ...RESTAURANT_ROUTES,
+      ...SELLER_ROUTES,
+      protectedPage({
+        path: 'account-access',
+        title: 'Mon accès',
+        data: { subtitle: 'Votre espace est en cours de préparation' },
+        loadComponent: () => import('./features/auth/account-access/account-access.component').then(module => module.AccountAccessComponent),
+      }, [USER_ROLES.client, USER_ROLES.seller, USER_ROLES.employee]),
     ],
   },
   { path: '**', redirectTo: '' },

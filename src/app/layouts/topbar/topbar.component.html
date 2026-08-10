@@ -6,10 +6,12 @@
     }
   </div>
 
-  <div class="search-box">
-    <img src="assets/icons/icon-search.svg" alt="" class="search-icon" aria-hidden="true" />
-    <input type="text" placeholder="Recherchez ..." aria-label="Rechercher dans l'application" />
-  </div>
+  @if (showSearchBox) {
+    <div class="search-box">
+      <img src="assets/icons/icon-search.svg" alt="" class="search-icon" aria-hidden="true" />
+      <input type="text" placeholder="Recherchez ..." aria-label="Rechercher dans l'application" />
+    </div>
+  }
 
   <div class="topbar-right">
     @if (showSettingsLink) {
@@ -49,16 +51,18 @@
       <img src="assets/icons/icon-logout.svg" alt="" class="logout-icon" aria-hidden="true" />
     </button>
 
-    <div class="avatar-block">
-      <div class="user-info">
-        <span class="user-name">{{ profile?.name ?? 'Admin' }}</span>
-        <span class="user-role">{{ profile?.role }}</span>
+    @if (showAvatarBlock) {
+      <div class="avatar-block">
+        <div class="user-info">
+          <span class="user-name">{{ profile?.name ?? 'Admin' }}</span>
+          <span class="user-role">{{ profile?.role }}</span>
+        </div>
+        <img
+          src="assets/images/avatar-admin.png"
+          [alt]="profile?.name ?? 'Admin'"
+          class="avatar-photo"
+          />
       </div>
-      <img
-        src="assets/images/avatar-admin.png"
-        [alt]="profile?.name ?? 'Admin'"
-        class="avatar-photo"
-        />
-    </div>
+    }
   </div>
 </header>

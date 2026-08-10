@@ -4,7 +4,7 @@ import { catchError, finalize, map, Observable, of, throwError } from 'rxjs';
 import { BackendApiClient } from '../../http/backend-api.client';
 import { ApiHttpError } from '../../http/models/api-http.error';
 import { AuthRepository } from '../application/auth.repository';
-import { AuthSession, LoginCredentials, UserRole, USER_ROLES } from '../domain/auth.models';
+import { AuthSession, EmployeeLoginCredentials, LoginCredentials, UserRole, USER_ROLES } from '../domain/auth.models';
 import { AuthTokenStore } from './auth-token.store';
 
 interface BackendAuthEnvelope {
@@ -21,6 +21,7 @@ interface BackendAuthentication {
     name: string;
     email: string;
     role: string;
+    restaurantId?: string;
   };
 }
 
@@ -28,6 +29,9 @@ const BACKEND_ROLE_MAP: Readonly<Record<string, UserRole>> = {
   ADMIN: USER_ROLES.admin,
   ENTREPRISE: USER_ROLES.enterprise,
   RESTAURANT: USER_ROLES.restaurant,
+  CLIENT: USER_ROLES.client,
+  VENDEUR: USER_ROLES.seller,
+  EMPLOYE: USER_ROLES.employee,
 };
 
 @Injectable({ providedIn: 'root' })
@@ -47,13 +51,27 @@ export class BackendAuthRepository implements AuthRepository {
     );
   }
 
+  employeeLogin(credentials: EmployeeLoginCredentials): Observable<AuthSession | null> {
+    this.tokenStore.clear();
+    return this.api.post<BackendAuthEnvelope, EmployeeLoginCredentials>('auth/employee/login', {
+      phoneNumber: credentials.phoneNumber.replace(/\D/g, '').replace(/^221/, ''),
+      pin: credentials.pin,
+    }).pipe(
+      map(response => this.toSession(response)),
+      catchError(error => this.isUnauthorized(error) ? of(null) : throwError(() => error)),
+    );
+  }
+
   logout(): Observable<void> {
-    if (!this.tokenStore.getAccessToken()) {
+    const accessToken = this.tokenStore.getAccessToken();
+    if (!accessToken) {
       this.tokenStore.clear();
       return of(undefined);
     }
 
-    return this.api.post<unknown, Record<string, never>>('auth/logout', {}).pipe(
+    return this.api.post<unknown, Record<string, never>>('auth/logout', {}, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }).pipe(
       map(() => undefined),
       finalize(() => this.tokenStore.clear()),
     );
@@ -82,6 +100,7 @@ export class BackendAuthRepository implements AuthRepository {
         name: backendProfile.name,
         email: backendProfile.email,
         role,
+        restaurantId: backendProfile.restaurantId,
       },
     };
   }

@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { map, Observable } from 'rxjs';
 import { StorageService } from '../../services/storage.service';
 import { AuthTokenStore } from '../data-access/auth-token.store';
-import { AdminProfile, AuthState, isUserRole, LoginForm, UserRole, USER_ROLES } from '../domain/auth.models';
+import { AdminProfile, AuthState, EmployeeLoginCredentials, isUserRole, LoginForm, UserRole, USER_ROLES } from '../domain/auth.models';
 import { AUTH_REPOSITORY, AuthRepository } from './auth.repository';
 
 const USER_KEY  = 'jp_user';
@@ -40,6 +40,17 @@ export class AuthFacade {
     );
   }
 
+  employeeLogin(credentials: EmployeeLoginCredentials): Observable<boolean> {
+    return this.repository.employeeLogin(credentials).pipe(
+      map(session => {
+        if (!session) return false;
+        this.storage.set(USER_KEY, JSON.stringify(session.profile));
+        this.setAuthenticatedState(session.profile);
+        return true;
+      }),
+    );
+  }
+
   getLandingRoute(): string {
     if (this.getRole() === USER_ROLES.enterprise) {
       return '/enterprise-dashboard';
@@ -47,6 +58,14 @@ export class AuthFacade {
 
     if (this.getRole() === USER_ROLES.restaurant) {
       return '/restaurant-dashboard';
+    }
+
+    if (this.getRole() === USER_ROLES.seller) {
+      return '/seller-portal';
+    }
+
+    if (this.getRole() === USER_ROLES.client || this.getRole() === USER_ROLES.employee) {
+      return '/account-access';
     }
 
     return '/dashboard';

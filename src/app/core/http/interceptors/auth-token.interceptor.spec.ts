@@ -47,4 +47,11 @@ describe('authTokenInterceptor', () => {
     expect(http.expectOne('/api/v1/auth/login').request.headers.has('Authorization'))
       .toBeFalse();
   });
+
+  it('attaches the bearer token to logout', () => {
+    httpClient.post('/api/v1/auth/logout', {}).subscribe();
+
+    expect(http.expectOne('/api/v1/auth/logout').request.headers.get('Authorization'))
+      .toBe('Bearer jwt-token');
+  });
 });

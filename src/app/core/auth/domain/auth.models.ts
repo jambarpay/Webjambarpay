@@ -2,6 +2,9 @@ export const USER_ROLES = {
   admin: 'Admin Principal',
   enterprise: 'Entreprise',
   restaurant: 'Restaurant',
+  client: 'Client',
+  seller: 'Vendeur',
+  employee: 'Employé',
 } as const;
 
 export type UserRole = (typeof USER_ROLES)[keyof typeof USER_ROLES];
@@ -18,6 +21,11 @@ export interface LoginForm {
 
 export type LoginCredentials = Pick<LoginForm, 'email' | 'password'>;
 
+export interface EmployeeLoginCredentials {
+  phoneNumber: string;
+  pin: string;
+}
+
 export interface AuthSession {
   profile: AdminProfile;
 }
@@ -28,6 +36,7 @@ export interface AdminProfile {
   email: string;
   role: UserRole;
   avatarUrl?: string;
+  restaurantId?: string;
 }
 
 export interface AuthState {

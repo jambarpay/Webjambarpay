@@ -24,6 +24,12 @@ export const RESTAURANT_ROUTES: Routes = [
     loadComponent: () => import('./pages/history/restaurant-history.component').then(module => module.RestaurantHistoryComponent),
   }, RESTAURANT_ROLES),
   protectedPage({
+    path: 'restaurant-sellers',
+    title: 'Gestion des vendeurs',
+    data: { subtitle: 'Créez les comptes des vendeurs autorisés à encaisser' },
+    loadComponent: () => import('./pages/sellers/restaurant-sellers.component').then(module => module.RestaurantSellersComponent),
+  }, RESTAURANT_ROLES),
+  protectedPage({
     path: 'restaurant-settings',
     title: 'Paramètres',
     data: { subtitle: 'Configurez votre espace restaurant' },

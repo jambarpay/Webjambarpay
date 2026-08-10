@@ -1,0 +1,53 @@
+<section class="seller-page">
+  <article class="seller-card">
+    <div class="seller-head">
+      <div>
+        <span class="eyebrow">Espace vendeur</span>
+        <h2>QR du restaurant</h2>
+        <p>Présentez ce QR au besoin. L’action principale côté vendeur reste le scan.</p>
+      </div>
+
+      <button type="button" class="scan-btn" (click)="openScanner()">
+        <i class="pi pi-camera" aria-hidden="true"></i>
+        <span>Scanner</span>
+      </button>
+    </div>
+
+    @if (feedback()) {
+      <app-feedback-message [state]="feedback()" />
+    }
+
+    <div class="seller-grid">
+      <aside class="qr-panel" aria-label="Code QR du restaurant">
+        <div class="qr-frame">
+          @if (qrCodeStatus() === 'ready') {
+            <img
+              [src]="qrCodeUrl()"
+              class="qr-code"
+              [alt]="'QR code du restaurant pour le numéro ' + qrPhoneNumber()" />
+          } @else if (qrCodeStatus() === 'error') {
+            <app-empty-state message="QR code indisponible." icon="pi pi-exclamation-triangle" />
+          } @else {
+            <app-loading-state message="Génération du QR code…" />
+          }
+        </div>
+        <div class="qr-meta">
+          <strong>{{ qrPhoneNumber() }}</strong>
+          <span>Restaurant lié à ce compte</span>
+        </div>
+      </aside>
+
+      <section class="scanner-panel" [class.is-open]="scannerOpen()">
+        <div class="scanner-copy">
+          <h3>Scanner</h3>
+          <p>Ce bouton ouvre l’espace de scan. On peut y brancher la caméra ou un lecteur QR ensuite.</p>
+        </div>
+
+        <div class="scanner-placeholder">
+          <i class="pi pi-qrcode" aria-hidden="true"></i>
+          <span>Zone de scan prête</span>
+        </div>
+      </section>
+    </div>
+  </article>
+</section>

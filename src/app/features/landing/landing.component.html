@@ -192,12 +192,13 @@
                 <li><span>✓</span>{{ feature }}</li>
               }
             </ul>
-            <a class="plan-button" routerLink="/register">
-              Demander une offre <span aria-hidden="true">↗</span>
-            </a>
+            <button type="button" class="plan-button" (click)="startPlanRegistration(plan)">
+              S'inscrire <span aria-hidden="true">↗</span>
+            </button>
           </article>
         }
       </div>
+      @if (paymentMessage()) { <p class="pricing-note">{{ paymentMessage() }}</p> }
       <p class="pricing-note">Aucun montant n’est prélevé depuis cette page. Notre équipe confirme avec vous l’offre choisie avant toute souscription.</p>
     </section>
 
