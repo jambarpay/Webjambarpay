@@ -1,10 +1,9 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
-
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { BackendApiClient } from '../../../core/http/backend-api.client';
+import { ApiHttpError } from '../../../core/http/models/api-http.error';
 import { InputTextModule } from 'primeng/inputtext';
 import {
   hasMinLength,
@@ -130,6 +129,12 @@ export class RegisterComponent {
         email: this.form.email.trim(),
         password: this.form.password,
         role,
+        organizationName: this.form.companyName.trim(),
+        sector: this.form.sector.trim() || undefined,
+        employeeCount: this.form.employeeCount ? Number(this.form.employeeCount) : undefined,
+        registrationNumber: this.form.ninea.trim() || undefined,
+        location: this.form.location,
+        city: this.form.city,
       }));
 
       if (this.accountType() === 'restaurant') {
@@ -154,9 +159,8 @@ export class RegisterComponent {
   }
 
   private getRegistrationErrorMessage(error: unknown): string {
-    if (error instanceof HttpErrorResponse) {
-      const message = error.error?.message;
-      if (typeof message === 'string' && message.trim()) return message;
+    if (error instanceof ApiHttpError) {
+      if (error.message.trim()) return error.message;
       return `L’inscription a échoué (erreur ${error.status}).`;
     }
     return error instanceof Error ? error.message : 'Impossible d’inscrire le compte pour le moment.';

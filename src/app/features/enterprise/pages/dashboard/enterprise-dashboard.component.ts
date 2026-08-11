@@ -1,7 +1,8 @@
 import { TitleCasePipe } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject } from '@angular/core';
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
 import { TableModule } from 'primeng/table';
+import { KpiCardComponent } from '../../../../design-system/components/kpi-card/kpi-card.component';
 import { AuthFacade } from '../../../../core/auth/application/auth.facade';
 import { BackendApiClient } from '../../../../core/http/backend-api.client';
 import { ApiEnvelope } from '../../../../core/http/models/api-response';
@@ -34,10 +35,11 @@ interface BackendTransaction {
   status: string;
   createdAt: string;
 }
+interface BackendWallet { balance: number }
 
 @Component({
   selector: 'app-enterprise-dashboard',
-  imports: [TableModule, TitleCasePipe],
+  imports: [TableModule, TitleCasePipe, KpiCardComponent],
   templateUrl: './enterprise-dashboard.component.html',
   styleUrls: ['./enterprise-dashboard.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -70,8 +72,11 @@ export class EnterpriseDashboardComponent {
     forkJoin({
       users: this.api.get<ApiEnvelope<BackendUser[]>>(`users/company/${encodeURIComponent(companyId)}/employees`),
       transactions: this.monitoringRepository.list(),
+      wallet: this.api.get<BackendWallet>(`wallets/owners/${encodeURIComponent(companyId)}/types/COMPANY`).pipe(
+        catchError(() => of(null)),
+      ),
     }).subscribe({
-      next: ({ users, transactions }) => {
+      next: ({ users, transactions, wallet }) => {
         this.applyBackendData(users.data, transactions.map(transaction => ({
           payerUserId: transaction.employee,
           restaurantId: transaction.restaurant,
@@ -81,7 +86,7 @@ export class EnterpriseDashboardComponent {
             ? 'SUCCESS'
             : transaction.status === 'Échoué' ? 'FAILED' : 'PENDING',
           createdAt: transaction.date,
-        })));
+        })), wallet?.balance ?? 0);
         this.changeDetector.markForCheck();
       },
       error: () => this.changeDetector.markForCheck(),
@@ -96,7 +101,7 @@ export class EnterpriseDashboardComponent {
     return Math.round((meals / this.maxRestaurantMeals) * 100);
   }
 
-  private applyBackendData(users: BackendUser[], allTransactions: BackendTransaction[]): void {
+  private applyBackendData(users: BackendUser[], allTransactions: BackendTransaction[], charged: number): void {
     const month = `${this.referenceDate.getFullYear()}-${String(this.referenceDate.getMonth() + 1).padStart(2, '0')}`;
     const transactions = allTransactions.filter(transaction => transaction.createdAt.startsWith(month));
     const consumed = transactions.reduce((total, transaction) => total + transaction.amount, 0);
@@ -113,7 +118,7 @@ export class EnterpriseDashboardComponent {
     this.maxDailyMeals = Math.max(1, ...this.dailyMeals.map(item => item.count));
     this.topRestaurants = this.groupByRestaurant(transactions).slice(0, 4);
     this.maxRestaurantMeals = Math.max(1, ...this.topRestaurants.map(item => item.meals));
-    this.financialKpis = this.createKpis(0, consumed, activeEmployees, users.length);
+    this.financialKpis = this.createKpis(charged, consumed, activeEmployees, users.length);
     this.changeDetector.markForCheck();
   }
 

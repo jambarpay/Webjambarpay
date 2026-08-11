@@ -224,6 +224,9 @@ export class EnterpriseEmployeesFacade {
   }
 
   private loadEmployeeWallet(user: BackendUserDto) {
+    if (user.status !== 'ACTIVE') {
+      return of(this.toEmployee(user, null));
+    }
     return this.api.get<BackendWalletDto>(`wallets/owners/${encodeURIComponent(user.id)}`).pipe(
       map(wallet => this.toEmployee(user, wallet)),
       catchError(() => of(this.toEmployee(user, null))),

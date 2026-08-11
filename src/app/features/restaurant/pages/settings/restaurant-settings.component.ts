@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { AuthFacade } from '../../../../core/auth/application/auth.facade';
 import { BackendApiClient } from '../../../../core/http/backend-api.client';
+import { isStrongPassword } from '../../../../core/utils/form-validation';
 
 interface BackendRestaurant {
   id: string;
@@ -75,8 +76,27 @@ export class RestaurantSettingsComponent {
     }
   }
 
-  updatePassword(): void {
-    this.feedback.set('Le user-service ne fournit pas encore de route de modification du mot de passe.');
+  async updatePassword(): Promise<void> {
+    if (!this.currentPassword || !this.newPassword || this.newPassword !== this.confirmPassword) {
+      this.feedback.set('Les trois champs du mot de passe sont requis et doivent correspondre.');
+      return;
+    }
+    if (this.newPassword.length < 8 || !isStrongPassword(this.newPassword)) {
+      this.feedback.set('Le nouveau mot de passe doit contenir au moins 8 caracteres, une majuscule, une minuscule et un chiffre.');
+      return;
+    }
+    try {
+      await firstValueFrom(this.api.post('auth/change-password', {
+        currentPassword: this.currentPassword,
+        newPassword: this.newPassword,
+      }));
+      this.currentPassword = '';
+      this.newPassword = '';
+      this.confirmPassword = '';
+      this.feedback.set('Mot de passe mis à jour.');
+    } catch (error) {
+      this.feedback.set(error instanceof Error ? error.message : 'Modification du mot de passe impossible.');
+    }
   }
 
   private populate(restaurant: BackendRestaurant | null): void {

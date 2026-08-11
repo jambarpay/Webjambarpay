@@ -41,6 +41,21 @@ interface MerchantQrDto {
   qrReference: string;
 }
 
+interface BackendPaymentDto {
+  id: string;
+  payerUserId: string;
+  restaurantId: string;
+  amount: number;
+  currency: string;
+  method: string;
+  status: string;
+  createdAt: string;
+}
+
+interface BackendPaymentPage {
+  content: BackendPaymentDto[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class RestaurantPaymentsFacade {
   private readonly api = inject(BackendApiClient);
@@ -76,7 +91,7 @@ export class RestaurantPaymentsFacade {
           return;
         }
         this.qrPhoneNumber.set(restaurant.phoneNumber);
-        this.paymentsState.set([]);
+        this.loadPayments(restaurant.id);
         this.generateRestaurantQr(restaurant);
       },
       error: () => {
@@ -85,6 +100,39 @@ export class RestaurantPaymentsFacade {
         this.qrCodeStatus.set('error');
       },
     });
+  }
+
+  private loadPayments(restaurantId: string): void {
+    this.api.get<BackendPaymentPage>('payments/transactions', {
+      params: { page: 0, size: 100, restaurantId },
+    }).subscribe({
+      next: page => this.paymentsState.set(page.content.map(payment => this.toPaymentRecord(payment))),
+      error: () => this.paymentsState.set([]),
+    });
+  }
+
+  private toPaymentRecord(payment: BackendPaymentDto): RestaurantPaymentRecord {
+    const status: RestaurantPaymentStatus = payment.status === 'SUCCESS' || payment.status === 'COMPLETED'
+      ? 'Validé'
+      : payment.status === 'FAILED' || payment.status === 'REJECTED' ? 'Échoué' : 'En attente';
+    const amount = Number(payment.amount);
+    const amountLabel = `${new Intl.NumberFormat('fr-FR').format(amount)} ${payment.currency || 'XOF'}`;
+    return {
+      id: payment.id,
+      reference: payment.id,
+      customerPhone: payment.payerUserId,
+      company: '—',
+      table: '—',
+      amount,
+      amountLabel,
+      date: payment.createdAt,
+      status,
+      channel: payment.method?.toUpperCase().includes('QR') ? 'QR fixe telephone' : 'Paiement manuel',
+      idempotencyKey: payment.id,
+      correlationId: payment.id,
+      qrPhoneNumber: this.qrPhoneNumber(),
+      fingerprint: payment.id,
+    };
   }
 
   private async generateRestaurantQr(restaurant: BackendRestaurantDto): Promise<void> {

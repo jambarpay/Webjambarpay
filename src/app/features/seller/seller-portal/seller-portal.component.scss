@@ -149,6 +149,44 @@
   font-size: 2rem;
 }
 
+.scanner-live {
+  display: grid;
+  gap: .75rem;
+}
+
+.scanner-live video {
+  width: 100%;
+  min-height: 16rem;
+  border-radius: 1rem;
+  object-fit: cover;
+  background: #111;
+}
+
+.stop-scan-btn {
+  justify-self: start;
+  border: 1px solid rgba(47, 102, 245, .3);
+  border-radius: .6rem;
+  padding: .65rem .9rem;
+  background: #fff;
+  color: #2f66f5;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.scanner-result {
+  display: grid;
+  gap: .5rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  background: #fff;
+  border: 1px solid rgba(47, 102, 245, .2);
+}
+
+.scanner-result code {
+  overflow-wrap: anywhere;
+  color: #191831;
+}
+
 @media (max-width: 900px) {
   .seller-head,
   .seller-grid {

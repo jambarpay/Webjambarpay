@@ -16,8 +16,8 @@
       </div>
 
       <div class="account-type-selector" role="radiogroup" aria-label="Type de compte">
-        <label [class.selected]="accountType() === 'enterprise'"><input type="radio" name="accountType" [checked]="accountType() === 'enterprise'" (change)="accountType.set('enterprise')" /><span><strong>Entreprise</strong><small>Gérer les allocations des salariés</small></span></label>
-        <label [class.selected]="accountType() === 'restaurant'"><input type="radio" name="accountType" [checked]="accountType() === 'restaurant'" (change)="accountType.set('restaurant')" /><span><strong>Restaurant</strong><small>Accepter les paiements repas</small></span></label>
+        <label for="account-type-enterprise" [class.selected]="accountType() === 'enterprise'"><input id="account-type-enterprise" type="radio" name="accountType" [checked]="accountType() === 'enterprise'" (change)="accountType.set('enterprise')" /><span><strong>Entreprise</strong><small>Gérer les allocations des salariés</small></span></label>
+        <label for="account-type-restaurant" [class.selected]="accountType() === 'restaurant'"><input id="account-type-restaurant" type="radio" name="accountType" [checked]="accountType() === 'restaurant'" (change)="accountType.set('restaurant')" /><span><strong>Restaurant</strong><small>Accepter les paiements repas</small></span></label>
       </div>
 
       <div class="stepper" aria-label="Progression de l'inscription">

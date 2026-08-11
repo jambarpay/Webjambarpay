@@ -40,13 +40,25 @@
       <section class="scanner-panel" [class.is-open]="scannerOpen()">
         <div class="scanner-copy">
           <h3>Scanner</h3>
-          <p>Ce bouton ouvre l’espace de scan. On peut y brancher la caméra ou un lecteur QR ensuite.</p>
+          <p>Autorisez la caméra puis cadrez le QR du paiement.</p>
         </div>
 
-        <div class="scanner-placeholder">
-          <i class="pi pi-qrcode" aria-hidden="true"></i>
-          <span>Zone de scan prête</span>
-        </div>
+        @if (scannerOpen()) {
+          <div class="scanner-live">
+            <video #scannerVideo autoplay muted playsinline aria-label="Caméra de scan QR"></video>
+            <button type="button" class="stop-scan-btn" (click)="stopScanner()">Arrêter le scan</button>
+          </div>
+        } @else if (scanResult()) {
+          <div class="scanner-result" role="status">
+            <strong>QR lu</strong>
+            <code>{{ scanResult() }}</code>
+          </div>
+        } @else {
+          <div class="scanner-placeholder">
+            <i class="pi pi-qrcode" aria-hidden="true"></i>
+            <span>Appuyez sur Scanner pour ouvrir la caméra</span>
+          </div>
+        }
       </section>
     </div>
   </article>

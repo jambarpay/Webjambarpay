@@ -8,14 +8,12 @@
   </div>
   <div class="financial-grid">
     @for (metric of financialKpis; track metric.label) {
-      <article class="financial-card" [class]="'financial-card ' + metric.tone">
-        <span class="financial-icon"><i [class]="metric.icon"></i></span>
-        <div>
-          <span class="financial-label">{{ metric.label }}</span>
-          <strong>{{ metric.value }}</strong>
-          <small>{{ metric.helper }}</small>
-        </div>
-      </article>
+      <app-kpi-card
+        [label]="metric.label"
+        [value]="metric.value"
+        [icon]="metric.icon"
+        [helper]="metric.helper">
+      </app-kpi-card>
     }
   </div>
 </section>
