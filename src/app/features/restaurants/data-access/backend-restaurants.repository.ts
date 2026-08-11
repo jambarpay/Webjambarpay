@@ -36,7 +36,6 @@ interface CreateRestaurantOwnerDto {
   phoneNumber: string;
   firstName: string;
   lastName: string;
-  role: 'RESTAURANT';
 }
 
 interface CreateRestaurantOwnerResponse {
@@ -186,7 +185,6 @@ export class BackendRestaurantsRepository implements RestaurantsRepository {
       phoneNumber: normalizePhone(restaurant.ownerPhoneNumber),
       firstName: restaurant.ownerFirstName.trim(),
       lastName: restaurant.ownerLastName.trim(),
-      role: 'RESTAURANT',
     };
 
     return this.api.post<CreateRestaurantOwnerResponse, CreateRestaurantOwnerDto>(

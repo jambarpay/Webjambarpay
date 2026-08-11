@@ -6,15 +6,15 @@
   flex-direction: column;
   flex: 0 0 auto;
   min-height: 100%;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 .global-overview {
-  padding: 1.25rem 1.5rem;
-  border: 1px solid rgba(0, 0, 0, 0.14);
-  border-radius: 0.6875rem;
+  padding: 1.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
   background: var(--color-white-card);
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--shadow-card);
 }
 
 .global-heading,
@@ -27,14 +27,15 @@
 
   h2 {
     margin: 0;
-    color: $text-primary;
-    font-size: 1.2rem;
+    color: var(--color-text-primary);
+    font-size: 1.15rem;
+    letter-spacing: -0.02em;
   }
 
   p {
     margin: 0.25rem 0 0;
     color: var(--color-text-tertiary);
-    font-size: 0.78rem;
+    font-size: 0.8rem;
   }
 }
 
@@ -42,7 +43,11 @@
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  color: #16834b;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid #ccefe0;
+  border-radius: var(--radius-pill);
+  background: var(--color-success-surface);
+  color: var(--color-green-valid);
   font-size: 0.75rem;
   font-weight: 700;
 
@@ -57,7 +62,7 @@
 
 .platform-activity {
   flex: 0 0 auto;
-  padding: 1.25rem 1.5rem;
+  padding: 1.5rem;
 }
 
 .activity-rate-heading {
@@ -69,8 +74,8 @@
 
   strong {
     display: block;
-    color: #e65f3b;
-    font-size: 1.5rem;
+    color: var(--color-orange-accent);
+    font-size: 1.7rem;
   }
 
   span {
@@ -80,16 +85,16 @@
 }
 
 .activity-progress {
-  height: 0.7rem;
+  height: 0.75rem;
   overflow: hidden;
   border-radius: 1rem;
-  background: #ececef;
+  background: var(--color-surface-subtle);
 
   span {
     display: block;
     height: 100%;
     border-radius: inherit;
-    background: linear-gradient(90deg, #ef4f32, #f58b68);
+    background: linear-gradient(90deg, var(--color-orange-accent), #ffb08f);
   }
 }
 
@@ -106,7 +111,7 @@
   flex-shrink: 0;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 // ── Middle row: Chart + Top Restaurants ───────────────────────────────────────
@@ -116,30 +121,30 @@
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 0.5rem;
+  gap: 1rem;
 }
 
 // ── Shared Panel ──────────────────────────────────────────────────────────────
 .panel {
   background: var(--color-white-card);
-  border: 1px solid rgba(0, 0, 0, 0.14);
-  border-radius: 0.6875rem;
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.24);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
   overflow: hidden;
 }
 
 .panel-title {
   margin: 0;
-  color: #000;
-  font-size: 0.6875rem;
+  color: var(--color-text-primary);
+  font-size: 0.9rem;
   font-weight: 700;
-  letter-spacing: 0;
+  letter-spacing: -0.01em;
 }
 
 // ── Chart Panel ───────────────────────────────────────────────────────────────
 .chart-panel {
   height: 100%;
-  padding: 0.75rem 1.25rem 1rem 2rem;
+  padding: 1.25rem 1.25rem 1rem 1.5rem;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -166,7 +171,7 @@
 // ── Top Restaurants Panel ─────────────────────────────────────────────────────
 .top-restaurants-panel {
   height: 100%;
-  padding: 0.75rem 1rem 0.875rem 1rem;
+  padding: 1.25rem 1.25rem 0.875rem;
   display: flex;
   flex-direction: column;
   min-height: 0;

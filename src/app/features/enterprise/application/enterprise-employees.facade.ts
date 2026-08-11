@@ -1,9 +1,11 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { catchError, firstValueFrom, forkJoin, map, of } from 'rxjs';
+import { AuthFacade } from '../../../core/auth/application/auth.facade';
 import { BackendApiClient } from '../../../core/http/backend-api.client';
 import { ApiEnvelope } from '../../../core/http/models/api-response';
 import { DataTransferService, ExportColumn, ImportedRecord } from '../../../core/services/data-transfer.service';
 import { sliceCurrentPage } from '../../../core/utils/pagination';
+import { MONITORING_REPOSITORY, MonitoringRepository } from '../../monitoring/application/monitoring.repository';
 
 export interface EmployeeRow {
   id: string;
@@ -35,22 +37,13 @@ interface BackendWalletDto {
   active: boolean;
 }
 
-interface BackendTransactionDto {
-  payerUserId: string;
-  restaurantId: string;
-  amount: number;
-  currency: string;
-  status: string;
-  createdAt: string;
-}
-
-interface BackendTransactionPage {
-  data: BackendTransactionDto[];
-}
-
-interface BulkTopUpResponse {
-  walletCount: number;
+interface BackendBulkTransferResponse {
+  sourceWalletId: string;
+  destinationWalletIds: string[];
+  destinationCount: number;
+  amountPerWallet: number;
   totalAmount: number;
+  currency: string;
 }
 
 export type EmployeeStatusFilter = 'Tous' | EmployeeRow['status'];
@@ -63,6 +56,8 @@ const STATUS_OPTIONS: EmployeeStatusFilter[] = ['Tous', 'Validé', 'Inactif'];
 @Injectable()
 export class EnterpriseEmployeesFacade {
   private readonly api = inject(BackendApiClient);
+  private readonly auth = inject(AuthFacade);
+  private readonly monitoringRepository = inject<MonitoringRepository>(MONITORING_REPOSITORY);
   private readonly dataTransfer = inject(DataTransferService);
   private readonly allEmployees = signal<EmployeeRow[]>([]);
   private readonly exportColumns: ExportColumn<EmployeeRow>[] = [
@@ -139,20 +134,31 @@ export class EnterpriseEmployeesFacade {
     if (!employeeIds.length) throw new Error('Sélectionnez au moins un salarié.');
     if (!Number.isFinite(amount) || amount <= 0) throw new Error('Le montant doit être supérieur à zéro.');
 
-    const selectedIds = new Set(employeeIds);
-    const selected = this.allEmployees().filter(employee => selectedIds.has(employee.id));
-    const walletIds = selected.map(employee => employee.walletId).filter((id): id is string => !!id);
-    if (walletIds.length !== selected.length) throw new Error('Un ou plusieurs salariés ne possèdent pas de portefeuille actif.');
+    const sourceOwnerId = this.auth.getProfile()?.id;
+    if (!sourceOwnerId) {
+      throw new Error('La session entreprise est requise pour charger les comptes salariés.');
+    }
 
-    const response = await firstValueFrom(this.api.post<BulkTopUpResponse, {
-      walletIds: string[];
+    const response = await firstValueFrom(this.api.post<BackendBulkTransferResponse, {
+      sourceOwnerId: string;
+      sourceWalletType: 'COMPANY';
+      destinationOwnerIds: string[];
+      destinationWalletType: 'EMPLOYEE';
       amount: number;
-      currency: string;
-    }>('payments/wallets/bulk-top-up', { walletIds, amount, currency: 'XOF' }, {
-      headers: { 'Idempotency-Key': createIdempotencyKey() },
+      currency: 'XOF';
+    }>('wallets/bulk-transfers', {
+      sourceOwnerId,
+      sourceWalletType: 'COMPANY',
+      destinationOwnerIds: employeeIds,
+      destinationWalletType: 'EMPLOYEE',
+      amount,
+      currency: 'XOF',
     }));
-    this.loadEmployees();
-    return { employeeCount: response.walletCount, totalAmount: response.totalAmount };
+
+    return {
+      employeeCount: response.destinationCount,
+      totalAmount: response.totalAmount,
+    };
   }
 
   exportEmployees(): void {
@@ -161,26 +167,29 @@ export class EnterpriseEmployeesFacade {
   }
 
   async exportMonthlyReport(employee: EmployeeRow, referenceDate = new Date()): Promise<void> {
-    const from = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), 1).toISOString();
-    const to = new Date(referenceDate.getFullYear(), referenceDate.getMonth() + 1, 1).toISOString();
-    const response = await firstValueFrom(this.api.get<BackendTransactionPage>('payments/transactions', {
-      params: { page: 0, pageSize: 100, payerUserIds: employee.id, from, to },
-    }));
-    const rows = response.data.map(transaction => ({
-      date: transaction.createdAt,
-      restaurant: transaction.restaurantId,
-      amount: `${new Intl.NumberFormat('fr-FR').format(transaction.amount)} ${transaction.currency}`,
-      status: transaction.status,
-    }));
-    const columns: ExportColumn<(typeof rows)[number]>[] = [
-      { header: 'Date', value: transaction => transaction.date },
-      { header: 'Restaurant', value: transaction => transaction.restaurant },
-      { header: 'Montant', value: transaction => transaction.amount },
-      { header: 'Statut', value: transaction => transaction.status },
-    ];
-    const period = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(referenceDate);
-    this.dataTransfer.exportPdf(`Rapport mensuel — ${employee.name} — ${period}`, rows, columns);
-    this.setFeedback('success', `Rapport mensuel de ${employee.name} préparé.`);
+    const month = `${referenceDate.getFullYear()}-${String(referenceDate.getMonth() + 1).padStart(2, '0')}`;
+    const transactions = await firstValueFrom(this.monitoringRepository.list());
+    const employeeTransactions = transactions
+      .filter(transaction => transaction.employee === employee.id && transaction.date.startsWith(month))
+      .map(transaction => ({
+        employee: transaction.employee,
+        restaurant: transaction.restaurant,
+        amount: transaction.amount,
+        date: transaction.date,
+        status: transaction.status,
+      }));
+
+    this.dataTransfer.exportCsv(
+      `rapport-${employee.name.replace(/\s+/g, '-').toLowerCase()}-${month}`,
+      employeeTransactions,
+      [
+        { header: 'Salarie', value: transaction => transaction.employee },
+        { header: 'Restaurant', value: transaction => transaction.restaurant },
+        { header: 'Montant', value: transaction => transaction.amount },
+        { header: 'Date', value: transaction => transaction.date },
+        { header: 'Statut', value: transaction => transaction.status },
+      ],
+    );
   }
 
   setErrorFeedback(error: unknown, fallbackMessage: string): void {
@@ -193,7 +202,12 @@ export class EnterpriseEmployeesFacade {
 
   private loadEmployees(): void {
     this.loading.set(true);
-    this.api.get<ApiEnvelope<BackendUserDto[]>>('users/role/EMPLOYE').pipe(
+    const companyId = this.auth.getProfile()?.id;
+    if (!companyId) {
+      this.handleLoadError(new Error('La session entreprise est requise pour charger les salariés.'));
+      return;
+    }
+    this.api.get<ApiEnvelope<BackendUserDto[]>>(`users/company/${encodeURIComponent(companyId)}/employees`).pipe(
       map(response => response.data),
       map(users => users.map(user => this.loadEmployeeWallet(user))),
       map(requests => requests.length ? forkJoin(requests) : of([])),
@@ -210,7 +224,10 @@ export class EnterpriseEmployeesFacade {
   }
 
   private loadEmployeeWallet(user: BackendUserDto) {
-    return this.api.get<BackendWalletDto>(`payments/wallets/owners/${encodeURIComponent(user.id)}`).pipe(
+    if (user.status !== 'ACTIVE') {
+      return of(this.toEmployee(user, null));
+    }
+    return this.api.get<BackendWalletDto>(`wallets/owners/${encodeURIComponent(user.id)}`).pipe(
       map(wallet => this.toEmployee(user, wallet)),
       catchError(() => of(this.toEmployee(user, null))),
     );
@@ -255,10 +272,4 @@ interface RegistrationRequest {
 
 function isRegistrationRequest(value: RegistrationRequest | null): value is RegistrationRequest {
   return value !== null;
-}
-
-function createIdempotencyKey(): string {
-  return typeof crypto !== 'undefined' && 'randomUUID' in crypto
-    ? crypto.randomUUID()
-    : `web-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }

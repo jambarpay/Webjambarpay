@@ -2,7 +2,8 @@ import { computed, Injectable, signal, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { map, Observable } from 'rxjs';
 import { StorageService } from '../../services/storage.service';
-import { AdminProfile, AuthState, isUserRole, LoginForm, UserRole, USER_ROLES } from '../domain/auth.models';
+import { AuthTokenStore } from '../data-access/auth-token.store';
+import { AdminProfile, AuthState, EmployeeLoginCredentials, isUserRole, LoginForm, UserRole, USER_ROLES } from '../domain/auth.models';
 import { AUTH_REPOSITORY, AuthRepository } from './auth.repository';
 
 const USER_KEY  = 'jp_user';
@@ -10,6 +11,7 @@ const USER_KEY  = 'jp_user';
 export class AuthFacade {
   private readonly repository = inject<AuthRepository>(AUTH_REPOSITORY);
   private readonly storage = inject(StorageService);
+  private readonly tokenStore = inject(AuthTokenStore);
   private readonly router = inject(Router);
 
   private readonly state = signal<AuthState>({
@@ -38,6 +40,17 @@ export class AuthFacade {
     );
   }
 
+  employeeLogin(credentials: EmployeeLoginCredentials): Observable<boolean> {
+    return this.repository.employeeLogin(credentials).pipe(
+      map(session => {
+        if (!session) return false;
+        this.storage.set(USER_KEY, JSON.stringify(session.profile));
+        this.setAuthenticatedState(session.profile);
+        return true;
+      }),
+    );
+  }
+
   getLandingRoute(): string {
     if (this.getRole() === USER_ROLES.enterprise) {
       return '/enterprise-dashboard';
@@ -45,6 +58,14 @@ export class AuthFacade {
 
     if (this.getRole() === USER_ROLES.restaurant) {
       return '/restaurant-dashboard';
+    }
+
+    if (this.getRole() === USER_ROLES.seller) {
+      return '/seller-portal';
+    }
+
+    if (this.getRole() === USER_ROLES.client || this.getRole() === USER_ROLES.employee) {
+      return '/account-access';
     }
 
     return '/dashboard';
@@ -82,7 +103,7 @@ export class AuthFacade {
   private restoreSession(): void {
     const profile = this.readStoredProfile();
 
-    if (!profile) {
+    if (!profile || !this.tokenStore.getAccessToken()) {
       this.clearSession();
       return;
     }
@@ -101,6 +122,7 @@ export class AuthFacade {
 
   private clearSession(): void {
     this.storage.remove(USER_KEY);
+    this.tokenStore.clear();
     this.state.set({
       userId: null,
       role: null,

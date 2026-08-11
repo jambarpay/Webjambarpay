@@ -1,49 +1,119 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { map, Observable } from 'rxjs';
+import { catchError, finalize, map, Observable, of, throwError } from 'rxjs';
 import { BackendApiClient } from '../../http/backend-api.client';
-import { ApiEnvelope } from '../../http/models/api-response';
+import { ApiHttpError } from '../../http/models/api-http.error';
 import { AuthRepository } from '../application/auth.repository';
-import { AdminProfile, AuthSession, LoginCredentials, USER_ROLES, UserRole } from '../domain/auth.models';
+import { AuthSession, EmployeeLoginCredentials, LoginCredentials, UserRole, USER_ROLES } from '../domain/auth.models';
+import { AuthTokenStore } from './auth-token.store';
 
-interface BackendAuthSessionDto {
-  user: {
+interface BackendAuthEnvelope {
+  success: boolean;
+  data: BackendAuthentication;
+}
+
+interface BackendAuthentication {
+  accessToken: string;
+  tokenType: string;
+  expiresAt: number;
+  profile: {
     id: string;
-    firstName?: string;
-    lastName?: string;
-    name?: string;
+    name: string;
     email: string;
-    role: 'ADMIN' | 'ENTREPRISE' | 'RESTAURANT';
-    avatarUrl?: string;
+    role: string;
+    restaurantId?: string;
   };
 }
+
+const BACKEND_ROLE_MAP: Readonly<Record<string, UserRole>> = {
+  ADMIN: USER_ROLES.admin,
+  ENTREPRISE: USER_ROLES.enterprise,
+  RESTAURANT: USER_ROLES.restaurant,
+  CLIENT: USER_ROLES.client,
+  VENDEUR: USER_ROLES.seller,
+  EMPLOYE: USER_ROLES.employee,
+};
 
 @Injectable({ providedIn: 'root' })
 export class BackendAuthRepository implements AuthRepository {
   private readonly api = inject(BackendApiClient);
+  private readonly tokenStore = inject(AuthTokenStore);
 
-  login(credentials: LoginCredentials): Observable<AuthSession> {
-    return this.api.post<ApiEnvelope<BackendAuthSessionDto>, LoginCredentials>('auth/login', credentials).pipe(
-      map(response => ({ profile: this.toProfile(response.data) })),
+  login(credentials: LoginCredentials): Observable<AuthSession | null> {
+    this.tokenStore.clear();
+
+    return this.api.post<BackendAuthEnvelope, LoginCredentials>('auth/login', {
+      email: credentials.email.trim().toLowerCase(),
+      password: credentials.password,
+    }).pipe(
+      map(response => this.toSession(response)),
+      catchError(error => this.isUnauthorized(error) ? of(null) : throwError(() => error)),
+    );
+  }
+
+  employeeLogin(credentials: EmployeeLoginCredentials): Observable<AuthSession | null> {
+    this.tokenStore.clear();
+    return this.api.post<BackendAuthEnvelope, EmployeeLoginCredentials>('auth/employee/login', {
+      phoneNumber: credentials.phoneNumber.replace(/\D/g, '').replace(/^221/, ''),
+      pin: credentials.pin,
+    }).pipe(
+      map(response => this.toSession(response)),
+      catchError(error => this.isUnauthorized(error) ? of(null) : throwError(() => error)),
     );
   }
 
   logout(): Observable<void> {
-    return this.api.post<ApiEnvelope<null>, Record<string, never>>('auth/logout', {}).pipe(map(() => undefined));
+    const accessToken = this.tokenStore.getAccessToken();
+    if (!accessToken) {
+      this.tokenStore.clear();
+      return of(undefined);
+    }
+
+    return this.api.post<unknown, Record<string, never>>('auth/logout', {}, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }).pipe(
+      map(() => undefined),
+      finalize(() => this.tokenStore.clear()),
+    );
   }
 
-  private toProfile(dto: BackendAuthSessionDto): AdminProfile {
+  private toSession(response: BackendAuthEnvelope): AuthSession {
+    const authentication = response?.data;
+    const backendProfile = authentication?.profile;
+    const role = backendProfile ? BACKEND_ROLE_MAP[backendProfile.role] : undefined;
+
+    if (!response?.success
+      || !authentication?.accessToken
+      || !authentication?.expiresAt
+      || !backendProfile?.id
+      || !backendProfile?.name
+      || !backendProfile?.email
+      || !role) {
+      throw new Error('Le contrat de connexion du backend est invalide.');
+    }
+
+    const expiresAt = this.toIsoExpiration(authentication.expiresAt);
+    this.tokenStore.setAccessToken(authentication.accessToken, expiresAt);
     return {
-      id: dto.user.id,
-      name: dto.user.name?.trim() || [dto.user.firstName, dto.user.lastName].filter(Boolean).join(' '),
-      email: dto.user.email,
-      role: this.toRole(dto.user.role),
-      avatarUrl: dto.user.avatarUrl,
+      profile: {
+        id: backendProfile.id,
+        name: backendProfile.name,
+        email: backendProfile.email,
+        role,
+        restaurantId: backendProfile.restaurantId,
+      },
     };
   }
 
-  private toRole(role: BackendAuthSessionDto['user']['role']): UserRole {
-    if (role === 'ADMIN') return USER_ROLES.admin;
-    if (role === 'ENTREPRISE') return USER_ROLES.enterprise;
-    return USER_ROLES.restaurant;
+  private isUnauthorized(error: unknown): boolean {
+    return (error instanceof ApiHttpError || error instanceof HttpErrorResponse) && error.status === 401;
+  }
+
+  private toIsoExpiration(expiresAtEpochSeconds: number): string {
+    if (!Number.isFinite(expiresAtEpochSeconds) || expiresAtEpochSeconds <= 0) {
+      throw new Error('La date d’expiration du jeton est invalide.');
+    }
+
+    return new Date(expiresAtEpochSeconds * 1_000).toISOString();
   }
 }

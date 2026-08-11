@@ -1,8 +1,11 @@
 {
   "/api/v1": {
-    "target": "http://localhost:8080",
+    "target": "http://localhost:8888",
     "secure": false,
     "changeOrigin": true,
+    "headers": {
+      "Origin": "http://localhost:5173"
+    },
     "cookieDomainRewrite": "localhost"
   }
 }

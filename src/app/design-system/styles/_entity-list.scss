@@ -17,10 +17,10 @@
   flex: 1;
   min-height: 0;
   overflow: hidden;
-  border: 1px solid #e0e0e0;
-  border-radius: 11px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
   background: var(--color-white-card);
-  box-shadow: 0 0 6px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--shadow-card);
 }
 
 // ── Toolbar ──────────────────────────────────────────────────────────────────
@@ -30,15 +30,16 @@
   justify-content: space-between;
   gap: 1rem;
   flex-shrink: 0;
-  min-height: 4.5rem;
-  padding: 0 1.25rem 0 1.5rem;
-  border-bottom: 1px solid #e0e0e0;
+  min-height: 5rem;
+  padding: 0 1.5rem;
+  border-bottom: 1px solid var(--color-border);
 
   h2 {
     margin: 0;
-    color: $text-primary;
-    font-size: 1.25rem;
+    color: var(--color-text-primary);
+    font-size: 1.05rem;
     font-weight: 700;
+    letter-spacing: -0.01em;
     white-space: nowrap;
   }
 }
@@ -57,10 +58,11 @@
   align-items: center;
   gap: 0.625rem;
   width: 16.25rem;
-  height: 2.625rem;
+  height: 2.75rem;
   padding: 0 0.875rem;
   border: 1px solid var(--color-border);
-  border-radius: 0.5rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-soft);
 
   i {
     color: #b5b5b5;
@@ -152,7 +154,7 @@
   height: 2.625rem;
   padding: 0 1.125rem;
   border: 1px solid var(--color-border);
-  border-radius: 0.5rem;
+  border-radius: var(--radius-pill);
   background: var(--color-white-card);
   color: #696969;
   font-family: var(--font-family-base);
@@ -161,7 +163,7 @@
   transition: border-color 0.2s;
 
   &:hover {
-    border-color: #bbb;
+    border-color: var(--color-orange-accent);
   }
 
   i {

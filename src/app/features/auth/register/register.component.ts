@@ -1,7 +1,9 @@
-import { ChangeDetectionStrategy, Component, signal, inject } from '@angular/core';
-
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
+import { BackendApiClient } from '../../../core/http/backend-api.client';
+import { ApiHttpError } from '../../../core/http/models/api-http.error';
 import { InputTextModule } from 'primeng/inputtext';
 import {
   hasMinLength,
@@ -38,13 +40,14 @@ interface RegisterForm {
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class RegisterComponent {
-  private router = inject(Router);
-
+  private readonly api = inject(BackendApiClient);
+  accountType = signal<'enterprise' | 'restaurant'>('enterprise');
   step = signal<1 | 2>(1);
   showPassword = signal(false);
   showConfirmPassword = signal(false);
   submitted = signal(false);
   successMessage = signal('');
+  errorMessage = signal('');
 
   form: RegisterForm = {
     companyName: '',
@@ -67,9 +70,7 @@ export class RegisterComponent {
       && !this.emailError
       && !this.phoneError
       && !this.hrManagerError
-      && !this.sectorError
-      && !this.employeeCountError
-      && !this.nineaError;
+      && (this.accountType() === 'restaurant' || (!this.sectorError && !this.employeeCountError && !this.nineaError));
   }
 
   private isSecondStepValid(): boolean {
@@ -82,6 +83,7 @@ export class RegisterComponent {
   nextStep(): void {
     this.submitted.set(true);
     this.successMessage.set('');
+    this.errorMessage.set('');
 
     if (!this.isFirstStepValid()) {
       return;
@@ -94,6 +96,7 @@ export class RegisterComponent {
   previousStep(): void {
     this.submitted.set(false);
     this.successMessage.set('');
+    this.errorMessage.set('');
     this.step.set(1);
   }
 
@@ -105,7 +108,7 @@ export class RegisterComponent {
     this.showConfirmPassword.update(value => !value);
   }
 
-  onSubmit(): void {
+  async onSubmit(): Promise<void> {
     this.submitted.set(true);
     this.successMessage.set('');
     this.form.location = this.form.location.trim();
@@ -115,8 +118,52 @@ export class RegisterComponent {
       return;
     }
 
-    this.successMessage.set('Entreprise inscrite avec succès. Vous pouvez maintenant vous connecter.');
-    setTimeout(() => this.router.navigate(['/login']), 700);
+    try {
+      const [firstName, ...lastName] = this.form.hrManager.trim().split(/\s+/);
+      const phoneNumber = this.form.phone.replace(/\D/g, '').replace(/^221/, '');
+      const role = this.accountType() === 'enterprise' ? 'ENTREPRISE' : 'RESTAURANT';
+      const registration = await firstValueFrom(this.api.post<{ data: { id: string } }, unknown>('auth/register/organization', {
+        phoneNumber,
+        firstName,
+        lastName: lastName.join(' ') || firstName,
+        email: this.form.email.trim(),
+        password: this.form.password,
+        role,
+        organizationName: this.form.companyName.trim(),
+        sector: this.form.sector.trim() || undefined,
+        employeeCount: this.form.employeeCount ? Number(this.form.employeeCount) : undefined,
+        registrationNumber: this.form.ninea.trim() || undefined,
+        location: this.form.location,
+        city: this.form.city,
+      }));
+
+      if (this.accountType() === 'restaurant') {
+        await firstValueFrom(this.api.post('restaurants', {
+          name: this.form.companyName,
+          registrationNumber: this.form.ninea || `PENDING-${phoneNumber}`,
+          ownerUserId: registration.data.id,
+          ownerFirstName: firstName,
+          ownerLastName: lastName.join(' ') || firstName,
+          ownerPhoneNumber: phoneNumber,
+          phoneNumber,
+          country: 'Sénégal', city: this.form.city, district: this.form.location, street: this.form.location,
+        }));
+      }
+
+      this.successMessage.set(this.accountType() === 'restaurant'
+        ? 'Restaurant inscrit avec succès. Vous pouvez maintenant vous connecter.'
+        : 'Entreprise inscrite avec succès. Vous pouvez maintenant vous connecter.');
+    } catch (error) {
+      this.errorMessage.set(this.getRegistrationErrorMessage(error));
+    }
+  }
+
+  private getRegistrationErrorMessage(error: unknown): string {
+    if (error instanceof ApiHttpError) {
+      if (error.message.trim()) return error.message;
+      return `L’inscription a échoué (erreur ${error.status}).`;
+    }
+    return error instanceof Error ? error.message : 'Impossible d’inscrire le compte pour le moment.';
   }
 
   showRequiredError(value: string | number | null | undefined): boolean {

@@ -1,32 +1,56 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { firstValueFrom } from 'rxjs';
 import { BACKEND_API_URL } from '../../../core/http/backend-api.config';
 import { BackendMonitoringRepository } from './backend-monitoring.repository';
 
 describe('BackendMonitoringRepository', () => {
-  it('maps payment statuses and XOF amounts', () => {
+  it('loads every backend transaction page and maps statuses', async () => {
     TestBed.configureTestingModule({
       providers: [provideHttpClient(), provideHttpClientTesting(), { provide: BACKEND_API_URL, useValue: '/api/v1' }],
     });
     const repository = TestBed.inject(BackendMonitoringRepository);
     const http = TestBed.inject(HttpTestingController);
 
-    repository.list().subscribe(transactions => {
-      expect(transactions[0].status).toBe('Validé');
-      expect(transactions[0].amount).toContain('XOF');
-      expect(transactions[1].status).toBe('Échoué');
+    const transactions = firstValueFrom(repository.list());
+    const firstPage = http.expectOne(request => request.url === '/api/v1/payments/transactions'
+      && request.params.get('page') === '0'
+      && request.params.get('size') === '100');
+    firstPage.flush({
+      content: [{
+        id: 'transaction-1',
+        payerUserId: 'payer-1',
+        restaurantId: 'restaurant-1',
+        amount: 2500,
+        currency: 'XOF',
+        status: 'SUCCESS',
+        createdAt: '2026-08-04T01:00:00Z',
+      }],
+      page: 0,
+      size: 100,
+      totalElements: 2,
+      totalPages: 2,
+    });
+    http.expectOne(request => request.params.get('page') === '1').flush({
+      content: [{
+        id: 'transaction-2',
+        payerUserId: 'payer-2',
+        restaurantId: 'restaurant-2',
+        amount: 1500,
+        currency: 'XOF',
+        status: 'FAILED',
+        createdAt: '2026-08-04T01:05:00Z',
+      }],
+      page: 1,
+      size: 100,
+      totalElements: 2,
+      totalPages: 2,
     });
 
-    const request = http.expectOne(req => req.url === '/api/v1/payments/transactions');
-    expect(request.request.params.get('pageSize')).toBe('100');
-    request.flush({
-      data: [
-        { id: '1', payerUserId: 'u1', restaurantId: 'r1', amount: 2000, currency: 'XOF', status: 'COMPLETED', createdAt: '2026-08-03T12:00:00Z' },
-        { id: '2', payerUserId: 'u2', restaurantId: 'r1', amount: 1500, currency: 'XOF', status: 'FAILED', createdAt: '2026-08-03T13:00:00Z' },
-      ],
-      meta: { page: 0, pageSize: 100, totalItems: 2, totalPages: 1 },
-    });
+    const result = await transactions;
+    expect(result.map(transaction => transaction.status)).toEqual(['Validé', 'Échoué']);
+    expect(result[0].company).toBe('—');
     http.verify();
   });
 

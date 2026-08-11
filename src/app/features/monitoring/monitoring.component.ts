@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, HostListener, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, ElementRef, HostListener, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
 import { MenuModule } from 'primeng/menu';
@@ -47,11 +47,15 @@ export class MonitoringComponent {
 
   readonly filterMenuOpen = signal(false);
   readonly exportMenuOpen = signal(false);
-  readonly kpis = [
-    { label: 'Validées', value: 4790, change: 95, iconSrc: 'assets/icons/icon-check-circle.svg' },
-    { label: 'En attente', value: '+20', change: 5, iconSrc: 'assets/icons/icon-pending.svg' },
-    { label: 'Transactions échouées', value: 0, changeLabel: '0 %', iconSrc: 'assets/icons/icon-failed.svg' },
-  ];
+  readonly kpis = computed(() => {
+    const summary = this.facade.summary();
+    const percentage = (value: number) => summary.total ? Math.round((value / summary.total) * 100) : 0;
+    return [
+      { label: 'Validées', value: summary.validated, change: percentage(summary.validated), iconSrc: 'assets/icons/icon-check-circle.svg' },
+      { label: 'En attente', value: summary.pending, change: percentage(summary.pending), iconSrc: 'assets/icons/icon-pending.svg' },
+      { label: 'Transactions échouées', value: summary.failed, change: percentage(summary.failed), iconSrc: 'assets/icons/icon-failed.svg' },
+    ];
+  });
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {

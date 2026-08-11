@@ -2,8 +2,8 @@ import { inject, Injectable } from '@angular/core';
 import { map, Observable, throwError } from 'rxjs';
 import { BackendApiClient } from '../../../core/http/backend-api.client';
 import { ApiEnvelope } from '../../../core/http/models/api-response';
-import { CompaniesRepository } from '../application/companies.repository';
-import { Company } from '../domain/company.model';
+import { CompaniesRepository, CompanyRegistration } from '../application/companies.repository';
+import type { Company } from '../domain/company.model';
 
 interface BackendCompanyUserDto {
   id: string;
@@ -40,6 +40,30 @@ export class BackendCompaniesRepository implements CompaniesRepository {
   upsert(company: Company): Observable<Company> {
     void company;
     return this.missingWriteContract();
+  }
+
+  register(input: CompanyRegistration): Observable<Company> {
+    const [firstName, ...lastNameParts] = input.managerName.trim().split(/\s+/);
+    const phone = input.phone.replace(/\D/g, '').replace(/^221/, '');
+    return this.api.post<ApiEnvelope<{ id: string }>, unknown>('auth/register/organization', {
+      phoneNumber: phone,
+      firstName,
+      lastName: lastNameParts.join(' ') || firstName,
+      email: input.email.trim(),
+      password: input.password,
+      role: 'ENTREPRISE',
+      organizationName: input.name.trim(),
+      sector: input.sector.trim(),
+      registrationNumber: input.ninea.trim() || undefined,
+      location: input.address.trim() || undefined,
+    }).pipe(map(response => ({
+      id: response.data.id,
+      name: input.name.trim(),
+      employeeCount: 0,
+      totalBalance: 0,
+      registrationDate: new Date().toISOString().slice(0, 10),
+      status: 'Actif' as const,
+    })));
   }
 
   private missingWriteContract<T>(): Observable<T> {

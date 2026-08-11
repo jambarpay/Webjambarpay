@@ -23,23 +23,6 @@
         </div>
       }
 
-      <section class="demo-access" aria-labelledby="demo-access-title">
-        <div>
-          <strong id="demo-access-title">Accès temporaires</strong>
-          <span>Sélectionnez un espace de démonstration</span>
-        </div>
-        <div class="demo-account-list">
-          @for (account of demoAccounts; track account.email) {
-            <button
-              type="button"
-              (click)="useDemoAccount(account)"
-              [attr.aria-label]="'Utiliser le compte ' + account.label + ' (' + account.email + ')'">
-              {{ account.label }}
-            </button>
-          }
-        </div>
-      </section>
-
       <form (ngSubmit)="onSubmit()" #f="ngForm" class="login-form">
         <div class="field">
           <label for="email">Adresse email</label>
@@ -53,7 +36,7 @@
               name="email"
               required
               autocomplete="email"
-              placeholder="Ex : admin@jambaarpay.com"
+              placeholder="Ex : adminjambar@jambaarpay.com"
               [class.input-invalid]="shouldShowEmailError()"
               [attr.aria-invalid]="shouldShowEmailError()"
               aria-describedby="email-error"
@@ -93,7 +76,7 @@
 
         <div class="form-options">
           <span></span>
-          <span class="forgot-link" aria-disabled="true" title="Fonction bientôt disponible">mot de passe oublié</span>
+          <a class="forgot-link" href="mailto:support@jambaarpay.com?subject=Réinitialisation%20du%20mot%20de%20passe">mot de passe oublié</a>
         </div>
 
         <button type="submit" class="btn-submit" [disabled]="loading()">

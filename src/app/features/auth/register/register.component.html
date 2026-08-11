@@ -12,7 +12,12 @@
             <span>Retour</span>
           </button>
         }
-        <h1 id="register-title">Inscrire votre entreprise</h1>
+        <h1 id="register-title">Inscrire votre {{ accountType() === 'restaurant' ? 'restaurant' : 'entreprise' }}</h1>
+      </div>
+
+      <div class="account-type-selector" role="radiogroup" aria-label="Type de compte">
+        <label for="account-type-enterprise" [class.selected]="accountType() === 'enterprise'"><input id="account-type-enterprise" type="radio" name="accountType" [checked]="accountType() === 'enterprise'" (change)="accountType.set('enterprise')" /><span><strong>Entreprise</strong><small>Gérer les allocations des salariés</small></span></label>
+        <label for="account-type-restaurant" [class.selected]="accountType() === 'restaurant'"><input id="account-type-restaurant" type="radio" name="accountType" [checked]="accountType() === 'restaurant'" (change)="accountType.set('restaurant')" /><span><strong>Restaurant</strong><small>Accepter les paiements repas</small></span></label>
       </div>
 
       <div class="stepper" aria-label="Progression de l'inscription">
@@ -34,10 +39,17 @@
         </div>
       }
 
+      @if (errorMessage()) {
+        <div class="success-alert" role="alert">
+          <i class="pi pi-exclamation-triangle"></i>
+          <span>{{ errorMessage() }}</span>
+        </div>
+      }
+
       @if (step() === 1) {
         <form class="register-form" (ngSubmit)="nextStep()" novalidate>
           <div class="field">
-            <label for="companyName">Nom de l'entreprise*</label>
+            <label for="companyName">Nom {{ accountType() === 'restaurant' ? 'du restaurant' : "de l'entreprise" }}*</label>
             <div class="input-wrapper">
               <i class="pi pi-building input-icon"></i>
               <input
@@ -46,7 +58,7 @@
                 name="companyName"
                 type="text"
                 [(ngModel)]="form.companyName"
-                placeholder="Ex : Jambaar Services"
+                [placeholder]="accountType() === 'restaurant' ? 'Ex : Le Teranga' : 'Ex : Jambaar Services'"
                 autocomplete="organization"
                 [class.input-invalid]="submitted() && !!companyNameError" />
             </div>
@@ -91,7 +103,7 @@
             }
           </div>
           <div class="field">
-            <label for="hrManager">Responsable RH *</label>
+            <label for="hrManager">{{ accountType() === 'restaurant' ? 'Propriétaire' : 'Responsable RH' }} *</label>
             <div class="input-wrapper">
               <input
                 pInputText
@@ -107,6 +119,7 @@
               <small class="field-error">{{ hrManagerError }}</small>
             }
           </div>
+          @if (accountType() === 'enterprise') {
           <div class="field-grid">
             <div class="field">
               <label for="sector">Secteur d'activité</label>
@@ -152,6 +165,7 @@
               <small class="field-error">{{ nineaError }}</small>
             }
           </div>
+          }
           <button type="submit" class="btn-submit">Continuer</button>
           <p class="auth-switch">
             J'ai déjà un compte ? <a routerLink="/login">Se connecter</a>

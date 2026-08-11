@@ -4,43 +4,15 @@
       <div class="payment-form-block">
         <div class="section-head">
           <h2>Nouveau paiement</h2>
-          <p>Enregistrez rapidement un paiement via le QR fixe lié au numéro téléphone du restaurant.</p>
-        </div>
-
-        <div class="payment-grid">
-          <label class="field" for="payment-phone">
-            <span>Téléphone du mobile</span>
-            <input id="payment-phone" [(ngModel)]="customerPhone" type="text" placeholder="Ex : 77 123 45 67" />
-          </label>
-
-          <label class="field" for="payment-table">
-            <span>Numero de table</span>
-            <input id="payment-table" [(ngModel)]="tableNumber" type="text" placeholder="Ex : Table 4" />
-          </label>
-
-          <label class="field field-full" for="payment-amount">
-            <span>Montant</span>
-            <input id="payment-amount" [(ngModel)]="amount" type="text" placeholder="Ex : 14 500 FCFA" />
-          </label>
-        </div>
-
-        <div class="quick-amounts">
-          <span>Montants rapides</span>
-          <div class="quick-amount-list">
-            @for (quickAmount of quickAmounts; track quickAmount) {
-              <button type="button" (click)="amount = quickAmount + ' FCFA'">
-                {{ quickAmount }} FCFA
-              </button>
-            }
-          </div>
+          <p>Présentez le QR fixe du restaurant. Le salarié scanne et confirme le paiement exclusivement dans son application mobile.</p>
         </div>
 
         <div class="payment-actions">
           <button type="button" class="secondary-btn secondary-btn-static" disabled>
             QR fixe · {{ qrPhoneNumber() }}
           </button>
-          <button type="button" class="primary-btn" [disabled]="submitting() || !isFormValid" (click)="submitPayment()">
-            {{ submitting() ? 'Validation...' : 'Valider le paiement' }}
+          <button type="button" class="primary-btn" (click)="showMobilePaymentInstructions()">
+            Afficher les instructions
           </button>
         </div>
 
@@ -63,7 +35,7 @@
         <div class="qr-meta">
           <strong>QR fixe téléphone</strong>
           <span>Numéro lié {{ qrPhoneNumber() }}</span>
-          <span>La déduplication et l'idempotence se font au moment de la demande de paiement</span>
+          <span>Le paiement est initié et confirmé depuis le mobile du salarié.</span>
         </div>
       </aside>
     </div>

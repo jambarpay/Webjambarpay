@@ -1,19 +1,19 @@
 import { expect, test } from '@playwright/test';
 
-const demoAccounts = [
-  { label: 'Admin', email: 'admin@jambaarpay.com', route: '/dashboard' },
-  { label: 'Entreprise', email: 'entreprise@jambaarpay.com', route: '/enterprise-dashboard' },
-  { label: 'Restaurant', email: 'restaurant@jambaarpay.com', route: '/restaurant-dashboard' },
-] as const;
+test('valide les champs obligatoires de connexion', async ({ page }) => {
+  await page.goto('/login');
+  await page.getByRole('button', { name: 'Se connecter' }).click();
 
-for (const account of demoAccounts) {
-  test(`ouvre l’espace ${account.label} avec le compte temporaire`, async ({ page }) => {
-    await page.goto('/login');
-    await page.getByRole('button', { name: new RegExp(`Utiliser le compte ${account.label}`) }).click();
+  await expect(page.getByText('Veuillez renseigner votre adresse email.')).toBeVisible();
+  await expect(page.getByText('Veuillez renseigner votre mot de passe.')).toBeVisible();
+});
 
-    await expect(page.locator('#email')).toHaveValue(account.email);
-    await page.getByRole('button', { name: 'Se connecter' }).click();
-    await expect(page).toHaveURL(new RegExp(`${account.route}$`));
-  });
-}
+test('redirige un visiteur non connecté vers la connexion', async ({ page }) => {
+  await page.goto('/dashboard');
+  await expect(page).toHaveURL(/\/login$/);
+});
 
+test('protège également les espaces métier par rôle', async ({ page }) => {
+  await page.goto('/enterprise-dashboard');
+  await expect(page).toHaveURL(/\/login$/);
+});

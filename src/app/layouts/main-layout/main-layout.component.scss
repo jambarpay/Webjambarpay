@@ -25,7 +25,7 @@
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
-  background: $bg-main;
+  background: var(--color-bg-main);
 }
 
 .main-content {
@@ -37,7 +37,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--color-white-card);
+  background: var(--color-bg-main);
 }
 
 // page-content is a flex column so that app-dashboard (router child) can fill it
@@ -47,8 +47,8 @@
   overflow: auto;
   display: flex;
   flex-direction: column;
-  padding: 1.125rem 3.1875rem 1rem 3.625rem;
-  background: var(--color-white-card);
+  padding: 1.5rem clamp(1rem, 3vw, 3.25rem) 2rem;
+  background: var(--color-bg-main);
   scrollbar-gutter: stable;
 }
 

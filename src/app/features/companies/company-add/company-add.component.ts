@@ -7,11 +7,11 @@ import { InputTextModule } from 'primeng/inputtext';
 import { firstValueFrom } from 'rxjs';
 import { FeedbackMessage, FeedbackMessageComponent } from '../../../design-system/components/feedback-message/feedback-message.component';
 import { COMPANIES_REPOSITORY, CompaniesRepository } from '../application/companies.repository';
-import { Company } from '../domain/company.model';
 import {
   hasMinLength,
   hasValue,
   isPositiveNumber,
+  isStrongPassword,
   isValidEmail,
   isValidNinea,
   isValidSenegalPhone,
@@ -41,6 +41,7 @@ export class CompanyAddComponent {
     ninea: '',
     initialBalance: '',
     address: '',
+    password: '',
   };
 
   onCancel(): void {
@@ -57,12 +58,14 @@ export class CompanyAddComponent {
 
     this.submitting.set(true);
     try {
-      await firstValueFrom(this.companiesRepository.upsert(this.buildCompany()));
+      await firstValueFrom(this.companiesRepository.register(this.form));
       await this.router.navigate(['/companies']);
-    } catch {
+    } catch (error) {
       this.feedback.set({
         type: 'error',
-        message: 'L’entreprise n’a pas pu être enregistrée. Veuillez réessayer.',
+        message: error instanceof Error
+          ? error.message
+          : 'L’entreprise n’a pas pu être enregistrée.',
       });
     } finally {
       this.submitting.set(false);
@@ -77,7 +80,8 @@ export class CompanyAddComponent {
       && !this.phoneError
       && !this.nineaError
       && !this.initialBalanceError
-      && !this.addressError;
+      && !this.addressError
+      && !this.passwordError;
   }
 
   get nameError(): string {
@@ -127,20 +131,12 @@ export class CompanyAddComponent {
     return '';
   }
 
-  private buildCompany(): Company {
-    return {
-      id: `company-${Date.now()}`,
-      name: this.form.name.trim(),
-      employeeCount: 0,
-      totalBalance: this.toNumber(this.form.initialBalance),
-      registrationDate: new Date().toISOString().slice(0, 10),
-      status: 'Actif',
-    };
+  get passwordError(): string {
+    if (!hasValue(this.form.password)) return 'Le mot de passe est requis.';
+    if (this.form.password.length < 8 || !isStrongPassword(this.form.password)) {
+      return 'Le mot de passe doit contenir au moins 8 caracteres, une majuscule, une minuscule et un chiffre.';
+    }
+    return '';
   }
 
-  private toNumber(value: string): number {
-    const normalized = value.replace(/[^\d.-]/g, '');
-    const parsed = Number(normalized);
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
 }

@@ -5,8 +5,8 @@ import { Router, RouterLink } from '@angular/router';
 import { InputTextModule } from 'primeng/inputtext';
 import { firstValueFrom } from 'rxjs';
 import { AuthFacade } from '../../../core/auth/application/auth.facade';
-import { DemoAccount, TEMPORARY_DEMO_ACCOUNTS } from '../../../core/auth/demo/demo-accounts';
 import { LoginForm } from '../../../core/auth/domain/auth.models';
+import { ApiHttpError } from '../../../core/http/models/api-http.error';
 import { isValidEmail } from '../../../core/utils/form-validation';
 
 @Component({
@@ -30,7 +30,6 @@ export class LoginComponent {
   submitted = signal(false);
 
   readonly passwordMinLength = 8;
-  readonly demoAccounts = TEMPORARY_DEMO_ACCOUNTS;
 
   get emailError(): string {
     const email = this.form.email.trim();
@@ -64,12 +63,6 @@ export class LoginComponent {
     this.showPassword.update(v => !v);
   }
 
-  useDemoAccount(account: DemoAccount): void {
-    this.form = { email: account.email, password: account.password };
-    this.error.set('');
-    this.submitted.set(false);
-  }
-
   async onSubmit(): Promise<void> {
     this.submitted.set(true);
     this.error.set('');
@@ -89,8 +82,10 @@ export class LoginComponent {
       }
 
       this.error.set('Email ou mot de passe incorrect.');
-    } catch {
-      this.error.set('Le service de connexion est temporairement indisponible.');
+    } catch (error) {
+      this.error.set(error instanceof ApiHttpError && error.status === 401
+        ? 'Email ou mot de passe incorrect.'
+        : 'Le service de connexion est temporairement indisponible.');
     } finally {
       this.loading.set(false);
     }

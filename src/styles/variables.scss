@@ -1,45 +1,41 @@
 // ─── Jambaar Pay — Design Tokens ────────────────────────────────────────────
 
-// Colors
 :root {
-  --color-sidebar-bg:       #1a1a2e;
-  --color-sidebar-active:   #e8722a;
-  --color-bg-main:          #f4f4f4;
-  --color-orange-accent:    #e8722a;
-  --color-orange-hover:     #c95b16;
-  --color-text-primary:     #1a1a2e;
-  --color-green-valid:      #00a344;
-  --color-grey-secondary:   #958e8e;
+  --color-sidebar-bg:       #111a2e;
+  --color-sidebar-active:   #ff8a5b;
+  --color-bg-main:          #f5f7fb;
+  --color-orange-accent:    #f4774f;
+  --color-orange-hover:     #dc5d38;
+  --color-text-primary:     #172033;
+  --color-green-valid:      #159968;
+  --color-grey-secondary:   #7b8799;
   --color-white-card:       #ffffff;
-  --color-red-danger:       #fa0505;
-  --color-orange-light:     #FFF3E8;
-  --color-sidebar-border:   rgba(255, 255, 255, 0.08);
-  --color-text-muted:       #444444;
-  --color-border:           #dedede;
-  --color-focus-ring:       rgba(232, 114, 42, 0.28);
-  --color-success-surface:  #f0fdf4;
-  --color-danger-surface:   #fef2f2;
-  --color-surface-subtle:   #f5f5f5;
-  --color-surface-soft:     #fafafa;
-  --color-text-secondary:   #777777;
-  --color-text-tertiary:    #888888;
-  --color-border-strong:    #c0c0c0;
+  --color-red-danger:       #dc4c4c;
+  --color-orange-light:     #fff1eb;
+  --color-sidebar-border:   rgba(255, 255, 255, 0.09);
+  --color-text-muted:       #526078;
+  --color-border:           #e3e8f0;
+  --color-focus-ring:       rgba(244, 119, 79, 0.25);
+  --color-success-surface:  #eaf8f1;
+  --color-danger-surface:   #fff0f0;
+  --color-surface-subtle:   #f1f4f8;
+  --color-surface-soft:     #f8fafc;
+  --color-text-secondary:   #64748b;
+  --color-text-tertiary:    #94a0b2;
+  --color-border-strong:    #c6cfdd;
 
-  // Layout - using relative units for responsiveness
-  --sidebar-width:          18vw;
-  --sidebar-width-min:      220px;
-  --topbar-height:          5.5rem;
+  --sidebar-width:          17rem;
+  --sidebar-width-min:      14rem;
+  --topbar-height:          5.75rem;
   --mobile-nav-height:      11vh;
 
-  // Typography
-  --font-family-base:       'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  --font-family-base:       Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-size-base:         14px;
   --font-size-sm:           12px;
   --font-size-lg:           16px;
   --font-size-xl:           18px;
   --font-size-2xl:          24px;
 
-  // Spacing
   --spacing-xs:   4px;
   --spacing-sm:   8px;
   --spacing-md:   16px;
@@ -48,25 +44,21 @@
   --spacing-2xl:  48px;
   --spacing-3xl:  64px;
 
-  // Radius
-  --radius-sm:    4px;
-  --radius-md:    6px;
-  --radius-lg:    9px;
-  --radius-xl:    16px;
+  --radius-sm:    8px;
+  --radius-md:    12px;
+  --radius-lg:    16px;
+  --radius-xl:    22px;
   --radius-pill:  999px;
 
-  // Shadows
-  --shadow-card:  0px 0px 5px 1px rgba(0, 0, 0, 0.25);
-  --shadow-panel: 0px 0px 4px 3px rgba(0, 0, 0, 0.25);
-  --shadow-overlay: 0 12px 28px rgba(24, 23, 47, 0.14);
+  --shadow-card:  0 8px 24px rgba(23, 32, 51, 0.06);
+  --shadow-panel: 0 12px 32px rgba(23, 32, 51, 0.08);
+  --shadow-overlay: 0 20px 48px rgba(23, 32, 51, 0.16);
 
-  // Motion and interaction
   --motion-fast: 120ms;
   --motion-normal: 200ms;
   --motion-slow: 320ms;
   --easing-standard: cubic-bezier(0.2, 0, 0, 1);
 
-  // Content and icons
   --content-max-width: 100rem;
   --icon-size-sm: 1rem;
   --icon-size-md: 1.5rem;
@@ -74,18 +66,18 @@
 }
 
 // SCSS variables (mirrors CSS custom props for use in SCSS expressions)
-$sidebar-bg:       #1a1a2e;
-$sidebar-active:   #e8722a;
-$bg-main:          #f4f4f4;
-$orange-accent:    #e8722a;
-$orange-hover:     #c95b16;
-$text-primary:     #1a1a2e;
-$green-valid:      #00a344;
-$grey-secondary:   #958e8e;
+$sidebar-bg:       #111a2e;
+$sidebar-active:   #ff8a5b;
+$bg-main:          #f5f7fb;
+$orange-accent:    #f4774f;
+$orange-hover:     #dc5d38;
+$text-primary:     #172033;
+$green-valid:      #159968;
+$grey-secondary:   #7b8799;
 $white-card:       #ffffff;
-$red-danger:       #fa0505;
-$sidebar-width:    18vw;
-$sidebar-width-min: 220px;
+$red-danger:       #dc4c4c;
+$sidebar-width:    17rem;
+$sidebar-width-min: 14rem;
 $topbar-height:    5.5rem;
 
 // Orange icon filter (for black SVG → #e8722a)

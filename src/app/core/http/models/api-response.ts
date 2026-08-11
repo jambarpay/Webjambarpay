@@ -13,6 +13,7 @@ export interface ApiMetadata {
 
 export interface ApiErrorPayload {
   code?: string;
+  errorCode?: string;
   message?: string;
   correlationId?: string;
   validationErrors?: Record<string, string[]>;

@@ -1,5 +1,5 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
-import { switchMap } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { AuthFacade } from '../../../core/auth/application/auth.facade';
 import { BackendApiClient } from '../../../core/http/backend-api.client';
 
@@ -22,30 +22,38 @@ export interface RestaurantPaymentRecord {
   fingerprint: string;
 }
 
-export interface CreateRestaurantPaymentInput {
-  customerPhone: string;
-  table: string;
-  amountLabel: string;
-  company?: string;
-  channel?: RestaurantPaymentRecord['channel'];
-}
-
 interface BackendRestaurantDto {
   id: string;
+  name: string;
   phoneNumber: string;
+  country: string;
+  city: string;
+  district: string;
+  street: string;
+  status: 'PENDING' | 'ACTIVE' | 'SUSPENDED';
 }
 
-interface BackendTransactionPage {
-  data: {
-    id: string;
-    payerUserId: string;
-    restaurantId: string;
-    qrReference: string;
-    amount: number;
-    currency: string;
-    status: string;
-    createdAt: string;
-  }[];
+interface PointOfSaleDto {
+  id: string;
+}
+
+interface MerchantQrDto {
+  qrReference: string;
+}
+
+interface BackendPaymentDto {
+  id: string;
+  payerUserId: string;
+  restaurantId: string;
+  amount: number;
+  currency: string;
+  method: string;
+  status: string;
+  createdAt: string;
+}
+
+interface BackendPaymentPage {
+  content: BackendPaymentDto[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -53,6 +61,7 @@ export class RestaurantPaymentsFacade {
   private readonly api = inject(BackendApiClient);
   private readonly auth = inject(AuthFacade);
   private readonly paymentsState = signal<RestaurantPaymentRecord[]>([]);
+  private qrImageObjectUrl?: string;
 
   readonly payments = computed(() => this.paymentsState());
   readonly qrPhoneNumber = signal('Indisponible');
@@ -63,61 +72,130 @@ export class RestaurantPaymentsFacade {
     this.loadRestaurantContext();
   }
 
-  async createPayment(input: CreateRestaurantPaymentInput): Promise<RestaurantPaymentRecord> {
-    void input;
-    throw new Error(
-      'Le payment-service exige un QR salarié signé. Le paiement manuel par téléphone est désactivé côté navigateur.',
-    );
-  }
-
   private loadRestaurantContext(): void {
-    const ownerId = this.auth.getProfile()?.id;
+    const profile = this.auth.getProfile();
+    const ownerId = profile?.restaurantId?.trim() || profile?.id;
     if (!ownerId) {
+      this.clearQrImage();
       this.qrCodeStatus.set('error');
       return;
     }
 
-    this.api.get<BackendRestaurantDto[]>(`restaurants/owner/${encodeURIComponent(ownerId)}`).pipe(
-      switchMap(restaurants => {
+    this.api.get<BackendRestaurantDto[]>(`restaurants/owner/${encodeURIComponent(ownerId)}`).subscribe({
+      next: restaurants => {
         const restaurant = restaurants[0];
-        if (!restaurant) throw new Error('Aucun restaurant associé à ce compte.');
+        if (!restaurant) {
+          this.paymentsState.set([]);
+          this.clearQrImage();
+          this.qrCodeStatus.set('error');
+          return;
+        }
         this.qrPhoneNumber.set(restaurant.phoneNumber);
-        this.qrCodeStatus.set('error');
-        return this.api.get<BackendTransactionPage>('payments/transactions', {
-          params: { page: 0, pageSize: 100, restaurantId: restaurant.id },
-        });
-      }),
-    ).subscribe({
-      next: response => this.paymentsState.set(response.data.map(transaction => this.toPayment(transaction))),
+        this.loadPayments(restaurant.id);
+        this.generateRestaurantQr(restaurant);
+      },
       error: () => {
         this.paymentsState.set([]);
+        this.clearQrImage();
         this.qrCodeStatus.set('error');
       },
     });
   }
 
-  private toPayment(transaction: BackendTransactionPage['data'][number]): RestaurantPaymentRecord {
+  private loadPayments(restaurantId: string): void {
+    this.api.get<BackendPaymentPage>('payments/transactions', {
+      params: { page: 0, size: 100, restaurantId },
+    }).subscribe({
+      next: page => this.paymentsState.set(page.content.map(payment => this.toPaymentRecord(payment))),
+      error: () => this.paymentsState.set([]),
+    });
+  }
+
+  private toPaymentRecord(payment: BackendPaymentDto): RestaurantPaymentRecord {
+    const status: RestaurantPaymentStatus = payment.status === 'SUCCESS' || payment.status === 'COMPLETED'
+      ? 'Validé'
+      : payment.status === 'FAILED' || payment.status === 'REJECTED' ? 'Échoué' : 'En attente';
+    const amount = Number(payment.amount);
+    const amountLabel = `${new Intl.NumberFormat('fr-FR').format(amount)} ${payment.currency || 'XOF'}`;
     return {
-      id: transaction.id,
-      reference: transaction.qrReference || transaction.id,
-      customerPhone: transaction.payerUserId,
+      id: payment.id,
+      reference: payment.id,
+      customerPhone: payment.payerUserId,
       company: '—',
       table: '—',
-      amount: transaction.amount,
-      amountLabel: `${new Intl.NumberFormat('fr-FR').format(transaction.amount)} ${transaction.currency}`,
-      date: transaction.createdAt,
-      status: toStatus(transaction.status),
-      channel: 'QR fixe telephone',
-      idempotencyKey: '',
-      correlationId: '',
+      amount,
+      amountLabel,
+      date: payment.createdAt,
+      status,
+      channel: payment.method?.toUpperCase().includes('QR') ? 'QR fixe telephone' : 'Paiement manuel',
+      idempotencyKey: payment.id,
+      correlationId: payment.id,
       qrPhoneNumber: this.qrPhoneNumber(),
-      fingerprint: transaction.id,
+      fingerprint: payment.id,
     };
   }
-}
 
-function toStatus(status: string): RestaurantPaymentStatus {
-  if (status === 'COMPLETED' || status === 'SUCCESS') return 'Validé';
-  if (status === 'FAILED' || status === 'REJECTED') return 'Échoué';
-  return 'En attente';
+  private async generateRestaurantQr(restaurant: BackendRestaurantDto): Promise<void> {
+    if (restaurant.status === 'SUSPENDED') {
+      this.clearQrImage();
+      this.qrCodeStatus.set('error');
+      return;
+    }
+
+    const pointOfSaleKey = `jp_restaurant_pos_${restaurant.id}`;
+    try {
+      // Restaurant activation is a back-office compliance decision, not an owner action.
+      if (restaurant.status !== 'ACTIVE') {
+        this.clearQrImage();
+        this.qrCodeStatus.set('error');
+        return;
+      }
+
+      let pointOfSaleId = localStorage.getItem(pointOfSaleKey);
+      if (!pointOfSaleId) {
+        const pointOfSale = await firstValueFrom(this.api.post<PointOfSaleDto, unknown>(
+          `restaurants/${encodeURIComponent(restaurant.id)}/points-of-sale`,
+          {
+            name: 'Point de vente principal',
+            country: restaurant.country || 'Sénégal',
+            city: restaurant.city,
+            district: restaurant.district,
+            street: restaurant.street,
+          },
+        ));
+        pointOfSaleId = pointOfSale.id;
+        localStorage.setItem(pointOfSaleKey, pointOfSaleId);
+      }
+
+      await firstValueFrom(this.api.patch(
+        `restaurants/points-of-sale/${encodeURIComponent(pointOfSaleId)}/activate`, {},
+      ));
+      const qr = await firstValueFrom(this.api.post<MerchantQrDto, unknown>(
+        `restaurants/${encodeURIComponent(restaurant.id)}/points-of-sale/${encodeURIComponent(pointOfSaleId)}/qr`,
+        {},
+      ));
+      const image = await firstValueFrom(this.api.getBlob(
+        `qrs/${encodeURIComponent(qr.qrReference)}/image`,
+      ));
+      this.replaceQrImage(image);
+      this.qrCodeStatus.set('ready');
+    } catch {
+      this.clearQrImage();
+      this.qrCodeStatus.set('error');
+    }
+  }
+
+  private replaceQrImage(image: Blob): void {
+    this.clearQrImage();
+    this.qrImageObjectUrl = URL.createObjectURL(image);
+    this.qrCodeUrl.set(this.qrImageObjectUrl);
+  }
+
+  private clearQrImage(): void {
+    if (this.qrImageObjectUrl) {
+      URL.revokeObjectURL(this.qrImageObjectUrl);
+      this.qrImageObjectUrl = undefined;
+    }
+    this.qrCodeUrl.set('');
+  }
 }

@@ -3,9 +3,9 @@ import { ChangeDetectionStrategy, Component, computed, signal, inject } from '@a
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { TableModule } from 'primeng/table';
+import { MONITORING_REPOSITORY, MonitoringRepository } from '../../../monitoring/application/monitoring.repository';
 import { EmptyStateComponent } from '../../../../design-system/components/empty-state/empty-state.component';
 import { PaginationComponent } from '../../../../design-system/components/pagination/pagination.component';
-import { BackendApiClient } from '../../../../core/http/backend-api.client';
 import { DataTransferService, ExportColumn } from '../../../../core/services/data-transfer.service';
 import { sliceCurrentPage } from '../../../../core/utils/pagination';
 
@@ -16,17 +16,6 @@ interface HistoryTransaction {
   amount: string;
   date: string;
   status: 'Validé' | 'En attente' | 'Échoué';
-}
-
-interface BackendTransactionPage {
-  data: {
-    payerUserId: string;
-    restaurantId: string;
-    amount: number;
-    currency: string;
-    status: string;
-    createdAt: string;
-  }[];
 }
 
 type PeriodMode = 'week' | 'month';
@@ -41,10 +30,24 @@ type PeriodMode = 'week' | 'month';
 export class EnterpriseHistoryComponent {
   private readonly dataTransfer = inject(DataTransferService);
   private readonly route = inject(ActivatedRoute);
-  private readonly api = inject(BackendApiClient);
+  private readonly monitoringRepository = inject<MonitoringRepository>(MONITORING_REPOSITORY);
 
   private readonly referenceDate = new Date();
   readonly transactions = signal<HistoryTransaction[]>([]);
+
+  constructor() {
+    this.monitoringRepository.list().subscribe({
+      next: transactions => this.transactions.set(transactions.map(transaction => ({
+        employee: transaction.employee,
+        employeeEmail: '—',
+        restaurant: transaction.restaurant,
+        amount: transaction.amount,
+        date: transaction.date,
+        status: transaction.status,
+      }))),
+      error: () => this.transactions.set([]),
+    });
+  }
 
   readonly employeeOptions = computed(() => Array.from(
     new Map(this.transactions().map(transaction => [
@@ -110,22 +113,6 @@ export class EnterpriseHistoryComponent {
   paginatedTransactions = computed(() => {
     return sliceCurrentPage(this.filteredTransactions(), this.currentPage(), this.pageSize());
   });
-
-  constructor() {
-    this.api.get<BackendTransactionPage>('payments/transactions', {
-      params: { page: 0, pageSize: 100 },
-    }).subscribe({
-      next: response => this.transactions.set(response.data.map(transaction => ({
-        employee: transaction.payerUserId,
-        employeeEmail: '—',
-        restaurant: transaction.restaurantId,
-        amount: `${new Intl.NumberFormat('fr-FR').format(transaction.amount)} ${transaction.currency}`,
-        date: transaction.createdAt,
-        status: this.toStatus(transaction.status),
-      }))),
-      error: () => this.transactions.set([]),
-    });
-  }
 
   setEmployeeSearch(value: string): void {
     this.employeeSearch.set(value);
@@ -200,12 +187,6 @@ export class EnterpriseHistoryComponent {
   private parseAmount(value: string): number {
     const amount = Number(value.replace(/[^\d,.-]/g, '').replace(',', '.'));
     return Number.isFinite(amount) ? amount : 0;
-  }
-
-  private toStatus(status: string): HistoryTransaction['status'] {
-    if (status === 'COMPLETED' || status === 'SUCCESS') return 'Validé';
-    if (status === 'FAILED' || status === 'REJECTED') return 'Échoué';
-    return 'En attente';
   }
 
   private parseLocalDate(value: string): Date {

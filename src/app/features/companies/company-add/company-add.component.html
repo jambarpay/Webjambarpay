@@ -38,6 +38,16 @@
       </div>
     </div>
 
+    <div class="form-row">
+      <div class="field">
+        <label class="field-label" for="company-password">Mot de passe initial<span class="required">*</span></label>
+        <input id="company-password" pInputText type="password" class="field-input" [(ngModel)]="form.password" name="password" required autocomplete="new-password" [class.field-input-invalid]="submitted() && !!passwordError" placeholder="Au moins 8 caracteres" />
+        @if (submitted() && !!passwordError) {
+          <small class="field-error">{{ passwordError }}</small>
+        }
+      </div>
+    </div>
+
     <!-- Row 2: Nom du responsable -->
     <div class="form-row">
       <div class="field">
@@ -149,8 +159,7 @@
 
     <!-- Info text + Actions -->
     <p class="info-text">
-      Un email de bienvenue avec les identifiants de connexion sera automatiquement envoyé au responsable de
-      l'entreprise après l'enregistrement.
+      Le compte entreprise sera créé dans le user-service. Le solde initial sera chargé séparément depuis l’espace entreprise.
     </p>
 
     <app-feedback-message [state]="feedback()" />

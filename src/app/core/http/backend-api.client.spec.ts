@@ -40,6 +40,15 @@ describe('BackendApiClient', () => {
     request.flush({ status: 'COMPLETED' });
   });
 
+  it('downloads protected binary resources through the gateway', () => {
+    client.getBlob('qrs/QR-REFERENCE/image').subscribe(image => expect(image).toBeInstanceOf(Blob));
+
+    const request = http.expectOne('/api/v1/qrs/QR-REFERENCE/image');
+    expect(request.request.responseType).toBe('blob');
+    expect(request.request.withCredentials).toBeTrue();
+    request.flush(new Blob(['qr'], { type: 'image/png' }));
+  });
+
   it('rejects absolute URLs that could bypass the gateway', () => {
     expect(() => client.get('https://third-party.example/data')).toThrowError(
       'BackendApiClient only accepts relative endpoint paths.',

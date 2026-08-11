@@ -13,6 +13,7 @@ export class KpiCardComponent {
   readonly value = input<number | string>(0);
   readonly change = input(0);
   readonly changeLabel = input('');
+  readonly helper = input('');
   readonly unit = input('');
   readonly icon = input('pi pi-chart-line');
   readonly iconSrc = input('');

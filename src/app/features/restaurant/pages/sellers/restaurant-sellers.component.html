@@ -1,0 +1,91 @@
+<section class="sellers-page">
+  <article class="seller-card">
+    <div class="section-head">
+      <h2>Créer un vendeur</h2>
+      <p>Chaque vendeur possède son propre compte afin de tracer les encaissements qu’il effectue.</p>
+    </div>
+
+    <form class="seller-form" (ngSubmit)="createSeller()" novalidate>
+      <label class="field" for="seller-first-name">
+        <span>Prénom</span>
+        <input id="seller-first-name" name="firstName" [(ngModel)]="firstName" autocomplete="given-name" placeholder="Ex. Awa" />
+      </label>
+
+      <label class="field" for="seller-last-name">
+        <span>Nom</span>
+        <input id="seller-last-name" name="lastName" [(ngModel)]="lastName" autocomplete="family-name" placeholder="Ex. Diop" />
+      </label>
+
+      <label class="field field-full" for="seller-phone">
+        <span>Téléphone</span>
+        <div class="phone-field">
+          <span>+221</span>
+          <input id="seller-phone" name="phoneNumber" [(ngModel)]="phoneNumber" inputmode="numeric" autocomplete="tel" placeholder="77 123 45 67" />
+        </div>
+      </label>
+
+      <label class="field" for="seller-email">
+        <span>Adresse email</span>
+        <input id="seller-email" name="email" [(ngModel)]="email" type="email" autocomplete="email" placeholder="Ex. awa@restaurant.sn" />
+      </label>
+
+      <div class="actions">
+        <button type="submit" class="primary-btn" [disabled]="saving()">
+          {{ saving() ? 'Création…' : 'Créer le vendeur' }}
+        </button>
+      </div>
+    </form>
+
+    @if (feedback()) {
+      <p class="feedback success" role="status">{{ feedback() }}</p>
+    }
+    @if (error()) {
+      <p class="feedback error" role="alert">{{ error() }}</p>
+    }
+  </article>
+
+  <article class="seller-card sellers-list-card">
+    <div class="section-head sellers-head">
+      <div>
+        <h2>Vendeurs existants</h2>
+        <p>Retrouvez ci-dessous les comptes déjà créés pour votre restaurant.</p>
+      </div>
+      <button type="button" class="secondary-btn" (click)="loadSellers()" [disabled]="loadingSellers()">
+        {{ loadingSellers() ? 'Chargement…' : 'Actualiser' }}
+      </button>
+    </div>
+
+    @if (error()) {
+      <p class="feedback error sellers-error" role="alert">{{ error() }}</p>
+    }
+
+    @if (sellers().length) {
+      <div class="seller-list">
+        @for (seller of sellers(); track sellerTrack($index, seller)) {
+          <article class="seller-item">
+            <div class="seller-item-main">
+              <h3>{{ seller.firstName }} {{ seller.lastName }}</h3>
+              <p>{{ seller.phoneNumber }}</p>
+            </div>
+            <div class="seller-item-meta">
+              <div class="seller-metrics">
+                <span class="seller-pill">{{ seller.status }}</span>
+                <span class="seller-id">#{{ seller.id }}</span>
+              </div>
+              <button
+                type="button"
+                class="danger-btn"
+                (click)="deleteSeller(seller)"
+                [disabled]="deletingSellerId() === seller.id"
+              >
+                {{ deletingSellerId() === seller.id ? 'Suppression…' : 'Supprimer' }}
+              </button>
+            </div>
+          </article>
+        }
+      </div>
+    } @else if (!loadingSellers()) {
+      <p class="empty-state">Aucun vendeur n’a encore été créé.</p>
+    }
+  </article>
+</section>
