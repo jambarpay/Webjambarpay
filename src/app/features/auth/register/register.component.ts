@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { BackendApiClient } from '../../../core/http/backend-api.client';
 import { ApiHttpError } from '../../../core/http/models/api-http.error';
@@ -41,6 +41,7 @@ interface RegisterForm {
 })
 export class RegisterComponent {
   private readonly api = inject(BackendApiClient);
+  private readonly route = inject(ActivatedRoute);
   accountType = signal<'enterprise' | 'restaurant'>('enterprise');
   step = signal<1 | 2>(1);
   showPassword = signal(false);
@@ -64,6 +65,12 @@ export class RegisterComponent {
   };
 
   readonly passwordMinLength = 8;
+
+  constructor() {
+    if (this.route.snapshot.queryParamMap.get('type') === 'restaurant') {
+      this.accountType.set('restaurant');
+    }
+  }
 
   private isFirstStepValid(): boolean {
     return !this.companyNameError

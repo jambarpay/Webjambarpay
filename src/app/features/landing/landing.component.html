@@ -31,15 +31,12 @@
       <div class="hero-copy">
         <p class="eyebrow"><span></span> La solution de paiement entreprise & restauration</p>
         <h1>Le déjeuner de vos équipes.<br /><em>Simple à gérer.</em></h1>
-        <p class="hero-description">
-          JambaarPay connecte entreprises, salariés et restaurants partenaires pour simplifier
-          les paiements, gérer les soldes et suivre chaque transaction.
-        </p>
         <div class="hero-actions">
-          <a class="button button-accent" routerLink="/register">Commencer gratuitement <span>↗</span></a>
-          <a class="play-link" routerLink="/fonctionnalites">
-            <span class="play-icon" aria-hidden="true">▶</span>
-            Découvrir JambaarPay
+          <a class="button button-accent" routerLink="/register" [queryParams]="{ type: 'enterprise' }">
+            Inscription entreprise <span>↗</span>
+          </a>
+          <a class="button button-light" routerLink="/register" [queryParams]="{ type: 'restaurant' }">
+            Inscription restaurant <span>↗</span>
           </a>
         </div>
         <div class="hero-proof">
