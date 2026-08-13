@@ -1,6 +1,6 @@
 {
   "/api/v1": {
-    "target": "http://localhost:8888",
+    "target": "http://149.202.61.30:30088",
     "secure": false,
     "changeOrigin": true,
     "headers": {
