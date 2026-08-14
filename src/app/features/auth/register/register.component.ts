@@ -43,7 +43,6 @@ export class RegisterComponent {
   private readonly api = inject(BackendApiClient);
   private readonly route = inject(ActivatedRoute);
   accountType = signal<'enterprise' | 'restaurant'>('enterprise');
-  step = signal<1 | 2>(1);
   showPassword = signal(false);
   showConfirmPassword = signal(false);
   submitted = signal(false);
@@ -72,39 +71,16 @@ export class RegisterComponent {
     }
   }
 
-  private isFirstStepValid(): boolean {
+  private isFormValid(): boolean {
     return !this.companyNameError
       && !this.emailError
       && !this.phoneError
       && !this.hrManagerError
-      && (this.accountType() === 'restaurant' || (!this.sectorError && !this.employeeCountError && !this.nineaError));
-  }
-
-  private isSecondStepValid(): boolean {
-    return !this.locationError
+      && (this.accountType() === 'restaurant' || (!this.sectorError && !this.employeeCountError && !this.nineaError))
+      && !this.locationError
       && !this.cityError
       && !this.passwordError
       && !this.confirmPasswordError;
-  }
-
-  nextStep(): void {
-    this.submitted.set(true);
-    this.successMessage.set('');
-    this.errorMessage.set('');
-
-    if (!this.isFirstStepValid()) {
-      return;
-    }
-
-    this.submitted.set(false);
-    this.step.set(2);
-  }
-
-  previousStep(): void {
-    this.submitted.set(false);
-    this.successMessage.set('');
-    this.errorMessage.set('');
-    this.step.set(1);
   }
 
   togglePassword(): void {
@@ -121,7 +97,7 @@ export class RegisterComponent {
     this.form.location = this.form.location.trim();
     this.form.city = this.form.city.trim();
 
-    if (!this.isSecondStepValid()) {
+    if (!this.isFormValid()) {
       return;
     }
 

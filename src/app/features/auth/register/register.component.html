@@ -7,27 +7,9 @@
   <main class="auth-card register-right">
     <section class="register-panel" aria-labelledby="register-title">
       <div class="register-topline">
-        @if (step() === 2) {
-          <button type="button" class="back-link" (click)="previousStep()">
-            <i class="pi pi-arrow-left"></i>
-            <span>Retour</span>
-          </button>
-        }
         <p class="eyebrow">CRÉEZ VOTRE ESPACE</p>
         <h1 id="register-title">Inscrire votre {{ accountType() === 'restaurant' ? 'restaurant' : 'entreprise' }}</h1>
         <p class="register-intro">Quelques informations suffisent pour démarrer avec Jambaar Pay.</p>
-      </div>
-
-      <div class="stepper" aria-label="Progression de l'inscription">
-        <div class="step" [class.active]="step() === 1" [class.done]="step() === 2">
-          <span class="step-number">1</span>
-          <span>Info de l'entreprise</span>
-        </div>
-        <div class="step-line"></div>
-        <div class="step" [class.active]="step() === 2">
-          <span class="step-number">2</span>
-          <span>Localisation et accès</span>
-        </div>
       </div>
 
       @if (successMessage()) {
@@ -44,8 +26,9 @@
         </div>
       }
 
-      @if (step() === 1) {
-        <form class="register-form" (ngSubmit)="nextStep()" novalidate>
+      <form class="register-form" (ngSubmit)="onSubmit()" novalidate>
+        <div class="form-section">
+          <h2>Informations de l'entreprise</h2>
           <div class="field">
             <label for="companyName">Nom {{ accountType() === 'restaurant' ? 'du restaurant' : "de l'entreprise" }}*</label>
             <div class="input-wrapper">
@@ -164,15 +147,10 @@
             }
           </div>
           }
-          <button type="submit" class="btn-submit">Continuer</button>
-          <p class="auth-switch">
-            J'ai déjà un compte ? <a routerLink="/login">Se connecter</a>
-          </p>
-        </form>
-      }
+        </div>
 
-      @if (step() === 2) {
-        <form class="register-form register-form-short" (ngSubmit)="onSubmit()" novalidate>
+        <div class="form-section">
+          <h2>Localisation et accès</h2>
           <div class="field">
             <label for="location">Localisation *</label>
             <input
@@ -243,12 +221,13 @@
               <small class="field-error">{{ confirmPasswordError }}</small>
             }
           </div>
-          <button type="submit" class="btn-submit">S'inscrire</button>
-          <p class="auth-switch">
-            J'ai déjà un compte ? <a routerLink="/login">Se connecter</a>
-          </p>
-        </form>
-      }
+        </div>
+
+        <button type="submit" class="btn-submit">S'inscrire</button>
+        <p class="auth-switch">
+          J'ai déjà un compte ? <a routerLink="/login">Se connecter</a>
+        </p>
+      </form>
     </section>
   </main>
 </div>
