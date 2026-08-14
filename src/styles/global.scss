@@ -379,10 +379,22 @@ textarea {
 // allow these public pages to scroll normally.
 html:has(.login-page),
 body:has(.login-page),
-app-root:has(.login-page),
+app-root:has(.login-page) {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
 html:has(.register-page),
 body:has(.register-page),
 app-root:has(.register-page) {
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden;
+}
+
+@media (max-width: 1000px) {
+  html:has(.register-page),
+  body:has(.register-page),
+  app-root:has(.register-page) {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
 }

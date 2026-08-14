@@ -29,6 +29,7 @@
       <form class="register-form" (ngSubmit)="onSubmit()" novalidate>
         <div class="form-section">
           <h2>Informations de l'entreprise</h2>
+          <div class="register-fields-grid">
           <div class="field">
             <label for="companyName">Nom {{ accountType() === 'restaurant' ? 'du restaurant' : "de l'entreprise" }}*</label>
             <div class="input-wrapper">
@@ -147,10 +148,12 @@
             }
           </div>
           }
+          </div>
         </div>
 
         <div class="form-section">
           <h2>Localisation et accès</h2>
+          <div class="register-fields-grid access-fields-grid">
           <div class="field">
             <label for="location">Localisation *</label>
             <input
@@ -220,6 +223,7 @@
             @if (showConfirmPasswordError()) {
               <small class="field-error">{{ confirmPasswordError }}</small>
             }
+          </div>
           </div>
         </div>
 
