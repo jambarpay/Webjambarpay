@@ -16,14 +16,31 @@ $orange-dark: #dc5d38;
 .auth-page {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
+  gap: clamp(2rem, 7vw, 8rem);
   min-height: 100vh;
   min-height: 100dvh;
-  padding: clamp(1.5rem, 4vw, 4rem) clamp(2rem, 11vw, 12rem) clamp(1.5rem, 4vw, 4rem) 1.25rem;
+  padding: clamp(1.5rem, 4vw, 4rem) clamp(2rem, 6vw, 7rem) clamp(1.5rem, 4vw, 4rem) clamp(1.25rem, 6vw, 7rem);
+}
+
+.auth-brand-panel {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  max-width: 34rem;
+}
+
+.auth-brand-logo {
+  display: block;
+  width: min(100%, 27rem);
+  max-height: 23rem;
+  object-fit: contain;
 }
 
 .auth-card {
   position: relative;
+  flex: 0 1 31rem;
   width: min(100%, 31rem);
   padding: clamp(2rem, 5vw, 3.5rem);
   border: 1px solid rgba(198, 207, 221, .8);
@@ -243,8 +260,27 @@ $orange-dark: #dc5d38;
 .register-link a { color: $orange-dark; font-weight: 800; text-decoration: none; }
 .register-link a:hover { text-decoration: underline; }
 
+@media (max-width: 900px) {
+  .auth-page {
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .auth-brand-panel {
+    flex: none;
+    width: 100%;
+    max-width: none;
+    padding-top: 1rem;
+  }
+
+  .auth-brand-logo { width: min(13rem, 70vw); max-height: 9rem; }
+  .auth-card { flex-basis: auto; width: min(100%, 31rem); }
+}
+
 @media (max-width: 480px) {
-  .auth-page { align-items: flex-start; justify-content: center; padding: 1rem; }
   .auth-card { margin-top: 1rem; padding: 1.5rem; border-radius: 1.25rem; }
   .back-link { margin: 1.75rem 0 2rem; }
   .login-header { margin-bottom: 1.5rem; }
