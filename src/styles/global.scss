@@ -373,3 +373,16 @@ textarea {
     border-color: $orange-hover !important;
   }
 }
+
+// Authentication forms can be taller than the viewport, especially during
+// organization registration. Keep the application shell fixed elsewhere, but
+// allow these public pages to scroll normally.
+html:has(.login-page),
+body:has(.login-page),
+app-root:has(.login-page),
+html:has(.register-page),
+body:has(.register-page),
+app-root:has(.register-page) {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
