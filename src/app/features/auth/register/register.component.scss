@@ -84,6 +84,21 @@ $orange-dark: #dc5d38;
 
 .brand-name strong { color: $orange; }
 
+.back-home-link {
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  gap: .5rem;
+  margin-bottom: .8rem;
+  color: var(--color-text-secondary);
+  font-size: .75rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color var(--motion-normal) ease, transform var(--motion-normal) ease;
+}
+
+.back-home-link:hover { color: $orange-dark; transform: translateX(-.2rem); }
+
 .register-panel { width: 100%; margin-top: 0; }
 
 .register-topline {
