@@ -1,9 +1,10 @@
-<div class="login-card">
-  <aside class="login-left" aria-hidden="true">
-    <img class="login-visual" src="assets/images/login-bg.jpg" alt="" />
-  </aside>
+<div class="auth-page login-page-layout">
+  <main class="auth-card login-card">
+    <div class="brand-lockup" aria-label="Jambaar Pay">
+      <span class="brand-mark" aria-hidden="true">JP</span>
+      <span class="brand-name">Jambaar <strong>Pay</strong></span>
+    </div>
 
-  <main class="login-right">
     <a class="back-link" routerLink="/" aria-label="Retour à la page d’accueil">
       <i class="pi pi-arrow-left" aria-hidden="true"></i>
       <span>Retour à l’accueil</span>
@@ -11,9 +12,9 @@
 
     <div class="login-form-card">
       <div class="login-header">
-        <img class="mobile-logo" src="assets/images/logo-jambaarpay.png" alt="Jambaar Pay" />
-        <h1>BIENVENUE</h1>
-        <p>Connectez-vous sur votre espace Jambaar Pay</p>
+        <p class="eyebrow">ESPACE SÉCURISÉ</p>
+        <h1>Bienvenue</h1>
+        <p>Connectez-vous à votre espace Jambaar Pay</p>
       </div>
 
       @if (error()) {

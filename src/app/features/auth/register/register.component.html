@@ -1,9 +1,10 @@
-<div class="register-shell">
-  <aside class="register-left" aria-hidden="true">
-    <img class="register-visual" src="assets/images/login-bg.jpg" alt="" />
-  </aside>
+<div class="auth-page register-page-layout">
+  <main class="auth-card register-right">
+    <div class="brand-lockup" aria-label="Jambaar Pay">
+      <span class="brand-mark" aria-hidden="true">JP</span>
+      <span class="brand-name">Jambaar <strong>Pay</strong></span>
+    </div>
 
-  <main class="register-right">
     <section class="register-panel" aria-labelledby="register-title">
       <div class="register-topline">
         @if (step() === 2) {
@@ -12,7 +13,9 @@
             <span>Retour</span>
           </button>
         }
+        <p class="eyebrow">CRÉEZ VOTRE ESPACE</p>
         <h1 id="register-title">Inscrire votre {{ accountType() === 'restaurant' ? 'restaurant' : 'entreprise' }}</h1>
+        <p class="register-intro">Quelques informations suffisent pour démarrer avec Jambaar Pay.</p>
       </div>
 
       <div class="stepper" aria-label="Progression de l'inscription">
@@ -35,7 +38,7 @@
       }
 
       @if (errorMessage()) {
-        <div class="success-alert" role="alert">
+        <div class="feedback error-feedback" role="alert">
           <i class="pi pi-exclamation-triangle"></i>
           <span>{{ errorMessage() }}</span>
         </div>
