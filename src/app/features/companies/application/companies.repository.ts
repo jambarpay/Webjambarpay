@@ -17,9 +17,10 @@ export interface CompanyRegistration {
   managerName: string;
   email: string;
   phone: string;
+  employeeCount: string;
   ninea: string;
-  address: string;
-  password: string;
+  location: string;
+  city: string;
 }
 
 export const COMPANIES_REPOSITORY = new InjectionToken<CompaniesRepository>('COMPANIES_REPOSITORY');

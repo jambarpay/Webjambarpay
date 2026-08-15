@@ -9,6 +9,7 @@ export interface Company {
   address?: string;
   firstName?: string;
   lastName?: string;
+  temporaryPassword?: string;
 }
 
 export interface CompanyFilter {

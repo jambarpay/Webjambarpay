@@ -16,6 +16,16 @@ interface BackendCompanyUserDto {
   createdAt: string;
 }
 
+interface CreateCompanyUserResponse {
+  id: string;
+  phoneNumber: string;
+  firstName: string;
+  lastName: string;
+  role: 'ENTREPRISE';
+  status: 'ACTIVE';
+  temporaryPassword?: string;
+}
+
 interface UpdateCompanyDto {
   phoneNumber: string;
   firstName: string;
@@ -77,17 +87,12 @@ export class BackendCompaniesRepository implements CompaniesRepository {
   register(input: CompanyRegistration): Observable<Company> {
     const [firstName, ...lastNameParts] = input.managerName.trim().split(/\s+/);
     const phone = input.phone.replace(/\D/g, '').replace(/^221/, '');
-    return this.api.post<ApiEnvelope<{ id: string }>, unknown>('auth/register/organization', {
+    return this.api.post<ApiEnvelope<CreateCompanyUserResponse>, unknown>('users/entreprise', {
       phoneNumber: phone,
       firstName,
       lastName: lastNameParts.join(' ') || firstName,
       email: input.email.trim(),
-      password: input.password,
-      role: 'ENTREPRISE',
-      organizationName: input.name.trim(),
-      sector: input.sector.trim(),
-      registrationNumber: input.ninea.trim() || undefined,
-      location: input.address.trim() || undefined,
+      address: [input.location.trim(), input.city.trim()].filter(Boolean).join(', '),
     }).pipe(map(response => ({
       id: response.data.id,
       name: input.name.trim(),
@@ -95,6 +100,9 @@ export class BackendCompaniesRepository implements CompaniesRepository {
       totalBalance: 0,
       registrationDate: new Date().toISOString().slice(0, 10),
       status: 'Actif' as const,
+      phoneNumber: phone,
+      address: [input.location.trim(), input.city.trim()].filter(Boolean).join(', '),
+      temporaryPassword: response.data.temporaryPassword,
     })));
   }
 

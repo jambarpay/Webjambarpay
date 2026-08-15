@@ -11,6 +11,7 @@ import { Restaurant } from '../domain/restaurant.model';
 import {
   hasMinLength,
   hasValue,
+  isValidEmail,
   isValidSenegalPhone,
 } from '../../../core/utils/form-validation';
 
@@ -32,10 +33,9 @@ export class RestaurantAddComponent {
 
   form = {
     name: '',
-    ownerFirstName: '',
-    ownerLastName: '',
-    ownerPhoneNumber: '',
-    phoneNumber: '',
+    ownerName: '',
+    ownerEmail: '',
+    phoneNumber: '+221 ',
     city: 'Dakar',
     location: '',
   };
@@ -54,7 +54,14 @@ export class RestaurantAddComponent {
 
     this.submitting.set(true);
     try {
-      await firstValueFrom(this.restaurantsRepository.upsert(this.buildRestaurant()));
+      const createdRestaurant = await firstValueFrom(this.restaurantsRepository.upsert(this.buildRestaurant()));
+      if (createdRestaurant.ownerTemporaryPassword) {
+        this.feedback.set({
+          type: 'success',
+          message: `Restaurant créé. Mot de passe temporaire du propriétaire : ${createdRestaurant.ownerTemporaryPassword}. Notez-le maintenant.`,
+        });
+        return;
+      }
       await this.router.navigate(['/restaurants']);
     } catch (error) {
       this.feedback.set({
@@ -70,9 +77,8 @@ export class RestaurantAddComponent {
 
   isFormValid(): boolean {
     return !this.nameError
-      && !this.ownerFirstNameError
-      && !this.ownerLastNameError
-      && !this.ownerPhoneNumberError
+      && !this.ownerNameError
+      && !this.ownerEmailError
       && !this.phoneNumberError
       && !this.cityError
       && !this.locationError;
@@ -84,21 +90,15 @@ export class RestaurantAddComponent {
     return '';
   }
 
-  get ownerFirstNameError(): string {
-    if (!hasValue(this.form.ownerFirstName)) return 'Le prénom du propriétaire est requis.';
-    if (!hasMinLength(this.form.ownerFirstName, 2)) return 'Le prénom doit contenir au moins 2 caractères.';
+  get ownerNameError(): string {
+    if (!hasValue(this.form.ownerName)) return 'Le nom du propriétaire est requis.';
+    if (!hasMinLength(this.form.ownerName, 3)) return 'Le nom du propriétaire doit contenir au moins 3 caractères.';
     return '';
   }
 
-  get ownerLastNameError(): string {
-    if (!hasValue(this.form.ownerLastName)) return 'Le nom du propriétaire est requis.';
-    if (!hasMinLength(this.form.ownerLastName, 2)) return 'Le nom doit contenir au moins 2 caractères.';
-    return '';
-  }
-
-  get ownerPhoneNumberError(): string {
-    if (!hasValue(this.form.ownerPhoneNumber)) return 'Le téléphone du propriétaire est requis.';
-    if (!isValidSenegalPhone(this.form.ownerPhoneNumber)) return 'Saisissez un numéro sénégalais valide sur 9 chiffres.';
+  get ownerEmailError(): string {
+    if (!hasValue(this.form.ownerEmail)) return 'L’adresse email est requise.';
+    if (!isValidEmail(this.form.ownerEmail)) return 'Veuillez saisir une adresse email valide.';
     return '';
   }
 
@@ -122,6 +122,7 @@ export class RestaurantAddComponent {
   private buildRestaurant(): Restaurant {
     const location = this.form.location.trim();
     const city = this.form.city.trim();
+    const [ownerFirstName, ...ownerLastName] = this.form.ownerName.trim().split(/\s+/);
 
     return {
       id: `restaurant-${Date.now()}`,
@@ -140,9 +141,10 @@ export class RestaurantAddComponent {
       district: location,
       street: location,
       paymentEligibilityStatus: this.backendMode ? 'NOT_ELIGIBLE' : undefined,
-      ownerFirstName: this.form.ownerFirstName.trim(),
-      ownerLastName: this.form.ownerLastName.trim(),
-      ownerPhoneNumber: this.form.ownerPhoneNumber.trim(),
+      ownerFirstName,
+      ownerLastName: ownerLastName.join(' ') || ownerFirstName,
+      ownerPhoneNumber: this.form.phoneNumber.trim(),
+      ownerEmail: this.form.ownerEmail.trim(),
       source: this.backendMode ? 'new' : 'local',
     };
   }

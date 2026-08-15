@@ -36,6 +36,8 @@ interface CreateRestaurantOwnerDto {
   phoneNumber: string;
   firstName: string;
   lastName: string;
+  email?: string;
+  password?: string;
 }
 
 interface CreateRestaurantOwnerResponse {
@@ -45,6 +47,7 @@ interface CreateRestaurantOwnerResponse {
     id: string;
     phoneNumber: string;
     status: string;
+    temporaryPassword?: string;
   } | null;
   errorCode: string | null;
   timestamp: unknown;
@@ -93,12 +96,16 @@ export class BackendRestaurantsRepository implements RestaurantsRepository {
       ));
     }
 
-    return this.resolveOwnerUserId(restaurant).pipe(
-      switchMap(ownerUserId => this.api.post<BackendRestaurantDto, CreateRestaurantDto>(
+    return this.resolveOwnerUser(restaurant).pipe(
+      switchMap(owner => this.api.post<BackendRestaurantDto, CreateRestaurantDto>(
         'restaurants',
-        this.toCreateDto(restaurant, ownerUserId),
+        this.toCreateDto(restaurant, owner.id),
+      ).pipe(
+        map(response => ({
+          ...this.toDomain(response),
+          ownerTemporaryPassword: owner.temporaryPassword,
+        })),
       )),
-      map(response => this.toDomain(response)),
     );
   }
 
@@ -175,9 +182,9 @@ export class BackendRestaurantsRepository implements RestaurantsRepository {
       && !!restaurant.street?.trim();
   }
 
-  private resolveOwnerUserId(restaurant: Restaurant): Observable<string> {
+  private resolveOwnerUser(restaurant: Restaurant): Observable<{ id: string; temporaryPassword?: string }> {
     if (restaurant.ownerId?.trim()) {
-      return of(restaurant.ownerId.trim());
+      return of({ id: restaurant.ownerId.trim() });
     }
 
     if (!restaurant.ownerFirstName?.trim()
@@ -192,6 +199,8 @@ export class BackendRestaurantsRepository implements RestaurantsRepository {
       phoneNumber: normalizePhone(restaurant.ownerPhoneNumber),
       firstName: restaurant.ownerFirstName.trim(),
       lastName: restaurant.ownerLastName.trim(),
+      ...(restaurant.ownerEmail?.trim() ? { email: restaurant.ownerEmail.trim() } : {}),
+      ...(restaurant.ownerPassword ? { password: restaurant.ownerPassword } : {}),
     };
 
     return this.api.post<CreateRestaurantOwnerResponse, CreateRestaurantOwnerDto>(
@@ -203,7 +212,10 @@ export class BackendRestaurantsRepository implements RestaurantsRepository {
         if (!response.success || !ownerUserId) {
           throw new Error(response.message || 'Le user-service n’a pas retourné l’identifiant du propriétaire.');
         }
-        return ownerUserId;
+        return {
+          id: ownerUserId,
+          temporaryPassword: response.data?.temporaryPassword,
+        };
       }),
     );
   }

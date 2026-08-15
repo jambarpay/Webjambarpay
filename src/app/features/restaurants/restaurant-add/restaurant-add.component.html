@@ -1,155 +1,68 @@
 <div class="form-card">
-  <h2 class="form-title">Inscrire un restaurant</h2>
+  <h2 class="form-title">Inscrire votre restaurant</h2>
 
   <form (ngSubmit)="onSubmit()" #restaurantForm="ngForm" novalidate>
-    <h3 class="form-section-title">Informations du propriétaire</h3>
+    <h3 class="form-section-title">Informations de l’entreprise</h3>
 
     <div class="form-row two-col">
       <div class="field">
-        <label class="field-label" for="owner-first-name">Prénom <span class="required">*</span></label>
-        <input
-          id="owner-first-name"
-          pInputText
-          type="text"
-          class="field-input"
-          [(ngModel)]="form.ownerFirstName"
-          name="ownerFirstName"
-          required
-          minlength="2"
-          [class.field-input-invalid]="submitted() && !!ownerFirstNameError"
-          placeholder="Ex : Moussa" />
-        @if (submitted() && !!ownerFirstNameError) {
-          <small class="field-error">{{ ownerFirstNameError }}</small>
-        }
-      </div>
-
-      <div class="field">
-        <label class="field-label" for="owner-last-name">Nom <span class="required">*</span></label>
-        <input
-          id="owner-last-name"
-          pInputText
-          type="text"
-          class="field-input"
-          [(ngModel)]="form.ownerLastName"
-          name="ownerLastName"
-          required
-          minlength="2"
-          [class.field-input-invalid]="submitted() && !!ownerLastNameError"
-          placeholder="Ex : Ndiaye" />
-        @if (submitted() && !!ownerLastNameError) {
-          <small class="field-error">{{ ownerLastNameError }}</small>
-        }
-      </div>
-    </div>
-
-    <div class="form-row">
-      <div class="field">
-        <label class="field-label" for="owner-phone-number">Téléphone du propriétaire <span class="required">*</span></label>
-        <div class="phone-input" [class.group-invalid]="submitted() && !!ownerPhoneNumberError">
-          <span class="phone-prefix">+221</span>
-          <input
-            id="owner-phone-number"
-            pInputText
-            type="tel"
-            class="field-input phone-number"
-            [(ngModel)]="form.ownerPhoneNumber"
-            name="ownerPhoneNumber"
-            required
-            inputmode="numeric"
-            [class.field-input-invalid]="submitted() && !!ownerPhoneNumberError"
-            placeholder="Ex : 77 123 45 67" />
-        </div>
-        @if (submitted() && !!ownerPhoneNumberError) {
-          <small class="field-error">{{ ownerPhoneNumberError }}</small>
-        }
-      </div>
-    </div>
-
-    <h3 class="form-section-title">Informations du restaurant</h3>
-
-    <div class="form-row">
-      <div class="field">
         <label class="field-label" for="restaurant-name">Nom du restaurant <span class="required">*</span></label>
-        <input
-          id="restaurant-name"
-          pInputText
-          type="text"
-          class="field-input"
-          [(ngModel)]="form.name"
-          name="name"
-          required
-          minlength="2"
-          [class.field-input-invalid]="submitted() && !!nameError"
-          placeholder="Ex : Restaurant Teranga" />
-        @if (submitted() && !!nameError) {
-          <small class="field-error">{{ nameError }}</small>
-        }
+        <input id="restaurant-name" pInputText type="text" class="field-input" [(ngModel)]="form.name"
+          name="name" required minlength="2" [class.field-input-invalid]="submitted() && !!nameError"
+          placeholder="Ex : Le Teranga" />
+        @if (submitted() && !!nameError) { <small class="field-error">{{ nameError }}</small> }
       </div>
-    </div>
 
-    <div class="form-row">
       <div class="field">
-        <label class="field-label" for="restaurant-phone-number">Téléphone du restaurant <span class="required">*</span></label>
-        <div class="phone-input" [class.group-invalid]="submitted() && !!phoneNumberError">
-          <span class="phone-prefix">+221</span>
-          <input
-            id="restaurant-phone-number"
-            pInputText
-            type="tel"
-            class="field-input phone-number"
-            [(ngModel)]="form.phoneNumber"
-            name="phoneNumber"
-            required
-            inputmode="numeric"
-            [class.field-input-invalid]="submitted() && !!phoneNumberError"
-            placeholder="Ex : 78 123 45 67" />
-        </div>
-        @if (submitted() && !!phoneNumberError) {
-          <small class="field-error">{{ phoneNumberError }}</small>
-        }
+        <label class="field-label" for="owner-email">Adresse email <span class="required">*</span></label>
+        <input id="owner-email" pInputText type="email" class="field-input" [(ngModel)]="form.ownerEmail"
+          name="ownerEmail" required [class.field-input-invalid]="submitted() && !!ownerEmailError"
+          placeholder="Ex : contact@restaurant.sn" />
+        @if (submitted() && !!ownerEmailError) { <small class="field-error">{{ ownerEmailError }}</small> }
       </div>
     </div>
 
-    <h3 class="form-section-title">Localisation</h3>
+    <div class="form-row two-col">
+      <div class="field">
+        <label class="field-label" for="restaurant-phone-number">Téléphone <span class="required">*</span></label>
+        <div class="phone-input" [class.group-invalid]="submitted() && !!phoneNumberError">
+          <input id="restaurant-phone-number" pInputText type="tel" class="field-input phone-number"
+            [(ngModel)]="form.phoneNumber" name="phoneNumber" required inputmode="numeric"
+            [class.field-input-invalid]="submitted() && !!phoneNumberError" placeholder="+221 77 123 45 67" />
+        </div>
+        @if (submitted() && !!phoneNumberError) { <small class="field-error">{{ phoneNumberError }}</small> }
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="owner-name">Propriétaire <span class="required">*</span></label>
+        <input id="owner-name" pInputText type="text" class="field-input" [(ngModel)]="form.ownerName"
+          name="ownerName" required minlength="3" [class.field-input-invalid]="submitted() && !!ownerNameError"
+          placeholder="Ex : Mariama Ndiaye" />
+        @if (submitted() && !!ownerNameError) { <small class="field-error">{{ ownerNameError }}</small> }
+      </div>
+    </div>
+
+    <h3 class="form-section-title">Localisation et accès</h3>
 
     <div class="form-row two-col">
       <div class="field">
         <label class="field-label" for="restaurant-location">Localisation <span class="required">*</span></label>
-        <input
-          id="restaurant-location"
-          pInputText
-          type="text"
-          class="field-input"
-          [(ngModel)]="form.location"
-          name="location"
-          required
-          [class.field-input-invalid]="submitted() && !!locationError"
+        <input id="restaurant-location" pInputText type="text" class="field-input" [(ngModel)]="form.location"
+          name="location" required [class.field-input-invalid]="submitted() && !!locationError"
           placeholder="Ex : Sacré-Cœur 3, VDN" />
-        @if (submitted() && !!locationError) {
-          <small class="field-error">{{ locationError }}</small>
-        }
+        @if (submitted() && !!locationError) { <small class="field-error">{{ locationError }}</small> }
       </div>
 
       <div class="field">
         <label class="field-label" for="restaurant-city">Ville <span class="required">*</span></label>
-        <input
-          id="restaurant-city"
-          pInputText
-          type="text"
-          class="field-input"
-          [(ngModel)]="form.city"
-          name="city"
-          required
-          [class.field-input-invalid]="submitted() && !!cityError" />
-        @if (submitted() && !!cityError) {
-          <small class="field-error">{{ cityError }}</small>
-        }
+        <input id="restaurant-city" pInputText type="text" class="field-input" [(ngModel)]="form.city"
+          name="city" required [class.field-input-invalid]="submitted() && !!cityError" placeholder="Ex : Dakar" />
+        @if (submitted() && !!cityError) { <small class="field-error">{{ cityError }}</small> }
       </div>
     </div>
 
     <p class="info-text">
-      En mode backend, le propriétaire RESTAURANT est créé en premier, puis son identifiant est utilisé pour
-      inscrire le restaurant avec le statut « En attente ». Le QR marchand sera généré après la création d’un point de vente.
+      Un mot de passe temporaire sécurisé sera généré automatiquement pour le propriétaire. Le restaurant sera créé avec le statut « En attente » et devra être activé avant la génération du QR.
     </p>
 
     <app-feedback-message [state]="feedback()" />

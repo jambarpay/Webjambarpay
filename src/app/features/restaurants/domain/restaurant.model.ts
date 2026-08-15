@@ -17,5 +17,8 @@ export interface Restaurant {
   ownerFirstName?: string;
   ownerLastName?: string;
   ownerPhoneNumber?: string;
+  ownerEmail?: string;
+  ownerPassword?: string;
+  ownerTemporaryPassword?: string;
   source?: 'local' | 'backend' | 'new';
 }

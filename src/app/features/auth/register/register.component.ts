@@ -4,6 +4,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { BackendApiClient } from '../../../core/http/backend-api.client';
 import { ApiHttpError } from '../../../core/http/models/api-http.error';
+import { AuthFacade } from '../../../core/auth/application/auth.facade';
 import { InputTextModule } from 'primeng/inputtext';
 import {
   hasMinLength,
@@ -41,6 +42,7 @@ interface RegisterForm {
 })
 export class RegisterComponent {
   private readonly api = inject(BackendApiClient);
+  private readonly auth = inject(AuthFacade);
   private readonly route = inject(ActivatedRoute);
   accountType = signal<'enterprise' | 'restaurant'>('enterprise');
   showPassword = signal(false);
@@ -121,6 +123,14 @@ export class RegisterComponent {
       }));
 
       if (this.accountType() === 'restaurant') {
+        const authenticated = await firstValueFrom(this.auth.login({
+          email: this.form.email.trim(),
+          password: this.form.password,
+        }));
+        if (!authenticated) {
+          throw new Error('Le compte restaurant a été créé, mais la connexion automatique a échoué.');
+        }
+
         await firstValueFrom(this.api.post('restaurants', {
           name: this.form.companyName,
           registrationNumber: this.form.ninea || `PENDING-${phoneNumber}`,

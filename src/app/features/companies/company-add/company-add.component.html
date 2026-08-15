@@ -1,165 +1,96 @@
 <div class="form-card">
-  <h2 class="form-title">Ajouter une Entreprise</h2>
+  <h2 class="form-title">Inscrire votre entreprise</h2>
 
   <form (ngSubmit)="onSubmit()" #companyForm="ngForm" novalidate>
-    <!-- Row 1: Nom entreprise + Secteur d'activité -->
+    <h3 class="form-section-title">Informations de l’entreprise</h3>
+
     <div class="form-row two-col">
       <div class="field">
-        <label class="field-label" for="company-name">Nom de l'entreprise <span class="required">*</span></label>
-        <input
-          id="company-name"
-          pInputText
-          type="text"
-          class="field-input"
-          [(ngModel)]="form.name"
-          name="name"
-          required
-          [class.field-input-invalid]="submitted() && !!nameError"
-          placeholder="Ex : Sonatel SA" />
-        @if (submitted() && !!nameError) {
-          <small class="field-error">{{ nameError }}</small>
-        }
+        <label class="field-label" for="company-name">Nom de l’entreprise <span class="required">*</span></label>
+        <input id="company-name" pInputText type="text" class="field-input" [(ngModel)]="form.name"
+          name="name" required [class.field-input-invalid]="submitted() && !!nameError"
+          placeholder="Ex : Jambaar Services" />
+        @if (submitted() && !!nameError) { <small class="field-error">{{ nameError }}</small> }
       </div>
-      <div class="field">
-        <label class="field-label" for="company-sector">Secteur d'activité <span class="required">*</span></label>
-        <input
-          id="company-sector"
-          pInputText
-          type="text"
-          class="field-input"
-          [(ngModel)]="form.sector"
-          name="sector"
-          required
-          [class.field-input-invalid]="submitted() && !!sectorError"
-          placeholder="Ex : Telecommunications" />
-        @if (submitted() && !!sectorError) {
-          <small class="field-error">{{ sectorError }}</small>
-        }
-      </div>
-    </div>
 
-    <div class="form-row">
       <div class="field">
-        <label class="field-label" for="company-password">Mot de passe initial<span class="required">*</span></label>
-        <input id="company-password" pInputText type="password" class="field-input" [(ngModel)]="form.password" name="password" required autocomplete="new-password" [class.field-input-invalid]="submitted() && !!passwordError" placeholder="Au moins 8 caracteres" />
-        @if (submitted() && !!passwordError) {
-          <small class="field-error">{{ passwordError }}</small>
-        }
-      </div>
-    </div>
-
-    <!-- Row 2: Nom du responsable -->
-    <div class="form-row">
-      <div class="field">
-        <label class="field-label" for="company-manager">Nom du responsable<span class="required">*</span></label>
-        <input
-          id="company-manager"
-          pInputText
-          type="text"
-          class="field-input"
-          [(ngModel)]="form.managerName"
-          name="managerName"
-          required
-          [class.field-input-invalid]="submitted() && !!managerNameError"
-          placeholder="Ex : Fatou Ndiaye" />
-        @if (submitted() && !!managerNameError) {
-          <small class="field-error">{{ managerNameError }}</small>
-        }
-      </div>
-    </div>
-
-    <!-- Row 3: Email + Téléphone -->
-    <div class="form-row two-col">
-      <div class="field">
-        <label class="field-label" for="company-email">Adresse e-mail<span class="required">*</span></label>
-        <input
-          id="company-email"
-          pInputText
-          type="email"
-          class="field-input"
-          [(ngModel)]="form.email"
-          name="email"
-          required
-          [class.field-input-invalid]="submitted() && !!emailError"
+        <label class="field-label" for="company-email">Adresse email <span class="required">*</span></label>
+        <input id="company-email" pInputText type="email" class="field-input" [(ngModel)]="form.email"
+          name="email" required [class.field-input-invalid]="submitted() && !!emailError"
           placeholder="Ex : contact@entreprise.sn" />
-        @if (submitted() && !!emailError) {
-          <small class="field-error">{{ emailError }}</small>
-        }
-      </div>
-      <div class="field">
-        <label class="field-label" for="company-phone">Numéro de téléphone<span class="required">*</span></label>
-        <input
-          id="company-phone"
-          pInputText
-          type="tel"
-          class="field-input"
-          [(ngModel)]="form.phone"
-          name="phone"
-          required
-          [class.field-input-invalid]="submitted() && !!phoneError"
-          placeholder="Ex : 77 123 45 67" />
-        @if (submitted() && !!phoneError) {
-          <small class="field-error">{{ phoneError }}</small>
-        }
+        @if (submitted() && !!emailError) { <small class="field-error">{{ emailError }}</small> }
       </div>
     </div>
 
-    <!-- Row 4: Ninéa + Solde Initial -->
     <div class="form-row two-col">
       <div class="field">
-        <label class="field-label" for="company-ninea">NINEA</label>
-        <input
-          id="company-ninea"
-          pInputText
-          type="text"
-          class="field-input"
-          [(ngModel)]="form.ninea"
-          name="ninea"
-          [class.field-input-invalid]="submitted() && !!nineaError"
-          placeholder="Ex : SN-DKR-2024-A-1234" />
-        @if (submitted() && !!nineaError) {
-          <small class="field-error">{{ nineaError }}</small>
-        }
+        <label class="field-label" for="company-phone">Téléphone <span class="required">*</span></label>
+        <div class="phone-input" [class.group-invalid]="submitted() && !!phoneError">
+          <input id="company-phone" pInputText type="tel" class="field-input phone-number" [(ngModel)]="form.phone"
+            name="phone" required inputmode="numeric" [class.field-input-invalid]="submitted() && !!phoneError"
+            placeholder="+221 77 123 45 67" />
+        </div>
+        @if (submitted() && !!phoneError) { <small class="field-error">{{ phoneError }}</small> }
       </div>
+
       <div class="field">
-        <label class="field-label" for="company-balance">Solde initial</label>
-        <input
-          id="company-balance"
-          pInputText
-          type="text"
-          class="field-input"
-          [(ngModel)]="form.initialBalance"
-          name="initialBalance"
-          [class.field-input-invalid]="submitted() && !!initialBalanceError"
-          placeholder="Ex : 500000" />
-        @if (submitted() && !!initialBalanceError) {
-          <small class="field-error">{{ initialBalanceError }}</small>
-        }
+        <label class="field-label" for="company-manager">Responsable RH <span class="required">*</span></label>
+        <input id="company-manager" pInputText type="text" class="field-input" [(ngModel)]="form.managerName"
+          name="managerName" required [class.field-input-invalid]="submitted() && !!managerNameError"
+          placeholder="Ex : Fatou Ndiaye" />
+        @if (submitted() && !!managerNameError) { <small class="field-error">{{ managerNameError }}</small> }
       </div>
     </div>
 
-    <!-- Row 5: Adresse -->
+    <div class="form-row two-col">
+      <div class="field">
+        <label class="field-label" for="company-sector">Secteur d’activité <span class="required">*</span></label>
+        <input id="company-sector" pInputText type="text" class="field-input" [(ngModel)]="form.sector"
+          name="sector" required [class.field-input-invalid]="submitted() && !!sectorError"
+          placeholder="Ex : Télécommunications" />
+        @if (submitted() && !!sectorError) { <small class="field-error">{{ sectorError }}</small> }
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="company-employees">Nombre de salariés <span class="required">*</span></label>
+        <input id="company-employees" pInputText type="number" class="field-input" [(ngModel)]="form.employeeCount"
+          name="employeeCount" required min="1" [class.field-input-invalid]="submitted() && !!employeeCountError"
+          placeholder="Ex : 150" />
+        @if (submitted() && !!employeeCountError) { <small class="field-error">{{ employeeCountError }}</small> }
+      </div>
+    </div>
+
     <div class="form-row">
       <div class="field">
-        <label class="field-label" for="company-address">Adresse</label>
-        <input
-          id="company-address"
-          pInputText
-          type="text"
-          class="field-input"
-          [(ngModel)]="form.address"
-          name="address"
-          [class.field-input-invalid]="submitted() && !!addressError"
-          placeholder="Ex : Route de l'Aeroport, Dakar" />
-        @if (submitted() && !!addressError) {
-          <small class="field-error">{{ addressError }}</small>
-        }
+        <label class="field-label" for="company-ninea">NINEA / RCCM <span class="required">*</span></label>
+        <input id="company-ninea" pInputText type="text" class="field-input" [(ngModel)]="form.ninea"
+          name="ninea" required [class.field-input-invalid]="submitted() && !!nineaError"
+          placeholder="Ex : SN-DKR-2024-A-1234" />
+        @if (submitted() && !!nineaError) { <small class="field-error">{{ nineaError }}</small> }
       </div>
     </div>
 
-    <!-- Info text + Actions -->
+    <h3 class="form-section-title">Localisation et accès</h3>
+
+    <div class="form-row two-col">
+      <div class="field">
+        <label class="field-label" for="company-location">Localisation <span class="required">*</span></label>
+        <input id="company-location" pInputText type="text" class="field-input" [(ngModel)]="form.location"
+          name="location" required [class.field-input-invalid]="submitted() && !!locationError"
+          placeholder="Ex : Sacré-Cœur 3, VDN" />
+        @if (submitted() && !!locationError) { <small class="field-error">{{ locationError }}</small> }
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="company-city">Ville <span class="required">*</span></label>
+        <input id="company-city" pInputText type="text" class="field-input" [(ngModel)]="form.city"
+          name="city" required [class.field-input-invalid]="submitted() && !!cityError" placeholder="Ex : Dakar" />
+        @if (submitted() && !!cityError) { <small class="field-error">{{ cityError }}</small> }
+      </div>
+    </div>
+
     <p class="info-text">
-      Le compte entreprise sera créé dans le user-service. Le solde initial sera chargé séparément depuis l’espace entreprise.
+      Un mot de passe temporaire sécurisé sera généré automatiquement pour le responsable de l’entreprise.
     </p>
 
     <app-feedback-message [state]="feedback()" />

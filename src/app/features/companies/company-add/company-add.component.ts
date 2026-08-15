@@ -10,8 +10,6 @@ import { COMPANIES_REPOSITORY, CompaniesRepository } from '../application/compan
 import {
   hasMinLength,
   hasValue,
-  isPositiveNumber,
-  isStrongPassword,
   isValidEmail,
   isValidNinea,
   isValidSenegalPhone,
@@ -37,11 +35,11 @@ export class CompanyAddComponent {
     sector: '',
     managerName: '',
     email: '',
-    phone: '',
+    phone: '+221 ',
+    employeeCount: '',
     ninea: '',
-    initialBalance: '',
-    address: '',
-    password: '',
+    location: '',
+    city: 'Dakar',
   };
 
   onCancel(): void {
@@ -58,7 +56,14 @@ export class CompanyAddComponent {
 
     this.submitting.set(true);
     try {
-      await firstValueFrom(this.companiesRepository.register(this.form));
+      const company = await firstValueFrom(this.companiesRepository.register(this.form));
+      if (company.temporaryPassword) {
+        this.feedback.set({
+          type: 'success',
+          message: `Entreprise créée. Mot de passe temporaire du responsable : ${company.temporaryPassword}. Notez-le maintenant.`,
+        });
+        return;
+      }
       await this.router.navigate(['/companies']);
     } catch (error) {
       this.feedback.set({
@@ -79,9 +84,9 @@ export class CompanyAddComponent {
       && !this.emailError
       && !this.phoneError
       && !this.nineaError
-      && !this.initialBalanceError
-      && !this.addressError
-      && !this.passwordError;
+      && !this.employeeCountError
+      && !this.locationError
+      && !this.cityError;
   }
 
   get nameError(): string {
@@ -119,23 +124,22 @@ export class CompanyAddComponent {
     return '';
   }
 
-  get initialBalanceError(): string {
-    if (!this.form.initialBalance.trim()) return '';
-    if (!isPositiveNumber(this.form.initialBalance)) return 'Le solde initial doit etre un montant positif.';
-    return '';
-  }
-
-  get addressError(): string {
-    if (!this.form.address.trim()) return '';
-    if (!hasMinLength(this.form.address, 5)) return 'L’adresse doit contenir au moins 5 caracteres.';
-    return '';
-  }
-
-  get passwordError(): string {
-    if (!hasValue(this.form.password)) return 'Le mot de passe est requis.';
-    if (this.form.password.length < 8 || !isStrongPassword(this.form.password)) {
-      return 'Le mot de passe doit contenir au moins 8 caracteres, une majuscule, une minuscule et un chiffre.';
+  get employeeCountError(): string {
+    if (!hasValue(this.form.employeeCount)) return 'Le nombre de salariés est requis.';
+    if (!Number.isInteger(Number(this.form.employeeCount)) || Number(this.form.employeeCount) <= 0) {
+      return 'Le nombre de salariés doit être un entier positif.';
     }
+    return '';
+  }
+
+  get locationError(): string {
+    if (!hasValue(this.form.location)) return 'La localisation est requise.';
+    if (!hasMinLength(this.form.location, 5)) return 'La localisation doit être plus précise.';
+    return '';
+  }
+
+  get cityError(): string {
+    if (!hasValue(this.form.city)) return 'La ville est requise.';
     return '';
   }
 
