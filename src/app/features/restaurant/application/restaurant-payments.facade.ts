@@ -74,7 +74,9 @@ export class RestaurantPaymentsFacade {
 
   private loadRestaurantContext(): void {
     const profile = this.auth.getProfile();
-    const ownerId = profile?.restaurantId?.trim() || profile?.id;
+    // The restaurant-service owner endpoint expects the authenticated user's id.
+    // `restaurantId` is a business id when present, so it must not be used here.
+    const ownerId = profile?.id?.trim();
     if (!ownerId) {
       this.clearQrImage();
       this.qrCodeStatus.set('error');
