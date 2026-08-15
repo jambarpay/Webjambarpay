@@ -102,6 +102,13 @@ export class BackendRestaurantsRepository implements RestaurantsRepository {
     );
   }
 
+  suspend(id: string): Observable<Restaurant> {
+    return this.api.patch<BackendRestaurantDto, Record<string, never>>(
+      `restaurants/${encodeURIComponent(id)}/suspend`,
+      {},
+    ).pipe(map(response => this.toDomain(response)));
+  }
+
   private toDomain(dto: BackendRestaurantDto): Restaurant {
     const address = [dto.street, dto.district, dto.city, dto.country]
       .filter(Boolean)

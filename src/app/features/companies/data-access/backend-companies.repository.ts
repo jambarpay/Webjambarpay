@@ -12,7 +12,15 @@ interface BackendCompanyUserDto {
   phoneNumber: string;
   role: 'ENTREPRISE';
   status: 'PENDING_OTP' | 'ACTIVE' | 'BLOCKED' | 'DISABLED';
+  address?: string;
   createdAt: string;
+}
+
+interface UpdateCompanyDto {
+  phoneNumber: string;
+  firstName: string;
+  lastName: string;
+  address?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -28,6 +36,10 @@ export class BackendCompaniesRepository implements CompaniesRepository {
         totalBalance: 0,
         registrationDate: company.createdAt?.slice(0, 10) ?? '',
         status: company.status === 'ACTIVE' ? 'Actif' : 'Inactif',
+        phoneNumber: company.phoneNumber,
+        address: company.address,
+        firstName: company.firstName,
+        lastName: company.lastName,
       }))),
     );
   }
@@ -40,6 +52,26 @@ export class BackendCompaniesRepository implements CompaniesRepository {
   upsert(company: Company): Observable<Company> {
     void company;
     return this.missingWriteContract();
+  }
+
+  update(company: Company): Observable<Company> {
+    const [firstName, ...lastNameParts] = company.name.trim().split(/\s+/);
+    return this.api.put<ApiEnvelope<BackendCompanyUserDto>, UpdateCompanyDto>(
+      `users/${encodeURIComponent(company.id)}`,
+      {
+        phoneNumber: normalizePhone(company.phoneNumber ?? ''),
+        firstName: firstName || 'Entreprise',
+        lastName: lastNameParts.join(' ') || 'Jambaar',
+        address: company.address?.trim() || undefined,
+      },
+    ).pipe(map(response => this.toDomain(response.data)));
+  }
+
+  disable(id: string): Observable<void> {
+    return this.api.post<ApiEnvelope<null>, { userId: string; status: string }>(
+      'users/admin/disable',
+      { userId: id, status: 'DISABLED' },
+    ).pipe(map(() => undefined));
   }
 
   register(input: CompanyRegistration): Observable<Company> {
@@ -71,4 +103,24 @@ export class BackendCompaniesRepository implements CompaniesRepository {
       'Le user-service ne fournit pas encore de route publique de création ou modification d’entreprise.',
     ));
   }
+
+  private toDomain(company: BackendCompanyUserDto): Company {
+    return {
+      id: company.id,
+      name: [company.firstName, company.lastName].filter(Boolean).join(' '),
+      employeeCount: 0,
+      totalBalance: 0,
+      registrationDate: company.createdAt?.slice(0, 10) ?? '',
+      status: company.status === 'ACTIVE' ? 'Actif' : 'Inactif',
+      phoneNumber: company.phoneNumber,
+      address: company.address,
+      firstName: company.firstName,
+      lastName: company.lastName,
+    };
+  }
+}
+
+function normalizePhone(value: string): string {
+  const digits = value.replace(/\D/g, '');
+  return digits.startsWith('221') && digits.length === 12 ? digits.slice(3) : digits;
 }

@@ -2,6 +2,54 @@
 
 @include list.entity-list('restaurants');
 
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.details-grid div {
+  display: grid;
+  gap: .3rem;
+}
+
+.details-grid span {
+  color: #71809b;
+  font-size: .78rem;
+}
+
+.details-grid strong {
+  color: #15223c;
+}
+
+.edit-form {
+  display: grid;
+  gap: .65rem;
+}
+
+.edit-form label {
+  color: #17223b;
+  font-size: .82rem;
+  font-weight: 600;
+}
+
+.edit-form input {
+  width: 100%;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: .75rem;
+  margin-top: .8rem;
+}
+
+@media (max-width: 520px) {
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 :host ::ng-deep .restaurants-table .p-datatable-thead > tr > th:last-child,
 :host ::ng-deep .restaurants-table .p-datatable-tbody > tr > td:last-child {
   width: 4.5rem !important;

@@ -146,6 +146,18 @@ export class CompaniesListFacade {
     this.setFeedback('success', 'Vue PDF ouverte pour la liste des entreprises.');
   }
 
+  async updateCompany(company: Company): Promise<void> {
+    const updatedCompany = await firstValueFrom(this.companiesRepository.update(company));
+    this.replaceCompany(updatedCompany);
+    this.setFeedback('success', 'Entreprise modifiée avec succès.');
+  }
+
+  async disableCompany(company: Company): Promise<void> {
+    await firstValueFrom(this.companiesRepository.disable(company.id));
+    this.replaceCompany({ ...company, status: 'Inactif' });
+    this.setFeedback('success', 'Entreprise désactivée avec succès.');
+  }
+
   setErrorFeedback(error: unknown, fallbackMessage: string): void {
     this.setFeedback('error', error instanceof Error ? error.message : fallbackMessage);
   }
@@ -217,6 +229,12 @@ export class CompaniesListFacade {
   private async persistCompanies(companies: Company[]): Promise<void> {
     await firstValueFrom(this.companiesRepository.saveAll(companies));
     this.allCompanies.set(companies);
+  }
+
+  private replaceCompany(updatedCompany: Company): void {
+    this.allCompanies.update(companies => companies.map(company =>
+      company.id === updatedCompany.id ? { ...company, ...updatedCompany } : company,
+    ));
   }
 
   private setFeedback(type: 'success' | 'error', message: string): void {

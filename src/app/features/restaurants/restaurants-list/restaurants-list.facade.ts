@@ -121,6 +121,18 @@ export class RestaurantsListFacade {
     this.setFeedback('success', 'Vue PDF ouverte pour la liste des restaurants.');
   }
 
+  async updateRestaurant(restaurant: Restaurant): Promise<void> {
+    const updatedRestaurant = await firstValueFrom(this.restaurantsRepository.upsert(restaurant));
+    this.replaceRestaurant(updatedRestaurant);
+    this.setFeedback('success', 'Restaurant modifié avec succès.');
+  }
+
+  async suspendRestaurant(restaurant: Restaurant): Promise<void> {
+    const updatedRestaurant = await firstValueFrom(this.restaurantsRepository.suspend(restaurant.id));
+    this.replaceRestaurant(updatedRestaurant);
+    this.setFeedback('success', 'Restaurant désactivé avec succès.');
+  }
+
   setErrorFeedback(error: unknown, fallbackMessage: string): void {
     this.setFeedback('error', error instanceof Error ? error.message : fallbackMessage);
   }
@@ -175,6 +187,12 @@ export class RestaurantsListFacade {
   private async persistRestaurants(restaurants: Restaurant[]): Promise<void> {
     await firstValueFrom(this.restaurantsRepository.saveAll(restaurants));
     this.allRestaurants.set(restaurants);
+  }
+
+  private replaceRestaurant(updatedRestaurant: Restaurant): void {
+    this.allRestaurants.update(restaurants => restaurants.map(restaurant =>
+      restaurant.id === updatedRestaurant.id ? { ...restaurant, ...updatedRestaurant } : restaurant,
+    ));
   }
 
   private setFeedback(type: 'success' | 'error', message: string): void {

@@ -5,6 +5,10 @@ export interface Company {
   totalBalance: number;
   registrationDate: string;
   status: 'Actif' | 'Inactif';
+  phoneNumber?: string;
+  address?: string;
+  firstName?: string;
+  lastName?: string;
 }
 
 export interface CompanyFilter {

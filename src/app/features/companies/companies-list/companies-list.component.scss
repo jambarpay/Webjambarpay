@@ -1,3 +1,59 @@
 @use '../../../design-system/styles/entity-list' as list;
 
 @include list.entity-list('companies');
+
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.details-grid div {
+  display: grid;
+  gap: .3rem;
+}
+
+.details-grid span {
+  color: #71809b;
+  font-size: .78rem;
+}
+
+.details-grid strong {
+  color: #15223c;
+}
+
+.details-wide {
+  grid-column: 1 / -1;
+}
+
+.edit-form {
+  display: grid;
+  gap: .65rem;
+}
+
+.edit-form label {
+  color: #17223b;
+  font-size: .82rem;
+  font-weight: 600;
+}
+
+.edit-form input {
+  width: 100%;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: .75rem;
+  margin-top: .8rem;
+}
+
+@media (max-width: 520px) {
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .details-wide {
+    grid-column: auto;
+  }
+}

@@ -74,7 +74,7 @@
           <button class="action-btn" (click)="actionMenu.toggle($event)" aria-label="Actions entreprise">
             <i class="pi pi-ellipsis-v"></i>
           </button>
-          <p-menu #actionMenu [popup]="true" [model]="menuItems" appendTo="body" styleClass="row-action-menu companies-action-menu"></p-menu>
+          <p-menu #actionMenu [popup]="true" [model]="menuItemsFor(company)" appendTo="body" styleClass="row-action-menu companies-action-menu"></p-menu>
         </td>
       </tr>
     </ng-template>
@@ -90,6 +90,46 @@
       </tr>
     </ng-template>
   </p-table>
+
+  <p-dialog
+    header="Détails de l’entreprise"
+    [visible]="selectedCompany() !== null"
+    [modal]="true"
+    [draggable]="false"
+    [style]="{ width: 'min(92vw, 34rem)' }"
+    (visibleChange)="!$event && closeDetails()">
+    @if (selectedCompany(); as company) {
+      <div class="details-grid">
+        <div><span>Nom</span><strong>{{ company.name }}</strong></div>
+        <div><span>Téléphone</span><strong>{{ company.phoneNumber || 'Non renseigné' }}</strong></div>
+        <div><span>Date d’inscription</span><strong>{{ company.registrationDate || 'Non renseignée' }}</strong></div>
+        <div><span>Statut</span><app-status-badge [status]="company.status"></app-status-badge></div>
+        <div class="details-wide"><span>Adresse</span><strong>{{ company.address || 'Non renseignée' }}</strong></div>
+      </div>
+    }
+  </p-dialog>
+
+  <p-dialog
+    header="Modifier l’entreprise"
+    [visible]="editingCompany() !== null"
+    [modal]="true"
+    [draggable]="false"
+    [closable]="!saving()"
+    [style]="{ width: 'min(92vw, 34rem)' }"
+    (visibleChange)="!$event && closeEdit()">
+    <form class="edit-form" (ngSubmit)="saveEdit()">
+      <label for="company-edit-name">Nom de l’entreprise *</label>
+      <input id="company-edit-name" pInputText [(ngModel)]="editForm.name" name="name" required />
+      <label for="company-edit-phone">Téléphone *</label>
+      <input id="company-edit-phone" pInputText [(ngModel)]="editForm.phoneNumber" name="phoneNumber" required />
+      <label for="company-edit-address">Adresse</label>
+      <input id="company-edit-address" pInputText [(ngModel)]="editForm.address" name="address" />
+      <div class="dialog-actions">
+        <button class="btn-secondary" type="button" (click)="closeEdit()">Annuler</button>
+        <button class="btn-add" type="submit" [disabled]="saving()">{{ saving() ? 'Enregistrement…' : 'Enregistrer' }}</button>
+      </div>
+    </form>
+  </p-dialog>
 
   <app-pagination
     [currentPage]="currentPage()"

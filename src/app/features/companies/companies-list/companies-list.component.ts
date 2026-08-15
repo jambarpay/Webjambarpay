@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
 import { TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { MenuModule } from 'primeng/menu';
+import { DialogModule } from 'primeng/dialog';
 import { MenuItem } from 'primeng/api';
 import { EmptyStateComponent } from '../../../design-system/components/empty-state/empty-state.component';
 import { FeedbackMessageComponent } from '../../../design-system/components/feedback-message/feedback-message.component';
@@ -16,10 +17,11 @@ import {
   CompanyDateFilter,
   CompanyStatusFilter,
 } from './companies-list.facade';
+import { Company } from '../domain/company.model';
 
 @Component({
     selector: 'app-companies-list',
-    imports: [DecimalPipe, FormsModule, RouterModule, TableModule, InputTextModule, MenuModule, EmptyStateComponent, FeedbackMessageComponent, LoadingStateComponent, PaginationComponent, StatusBadgeComponent],
+    imports: [DecimalPipe, FormsModule, RouterModule, TableModule, InputTextModule, MenuModule, DialogModule, EmptyStateComponent, FeedbackMessageComponent, LoadingStateComponent, PaginationComponent, StatusBadgeComponent],
     providers: [CompaniesListFacade],
     templateUrl: './companies-list.component.html',
     styleUrls: ['./companies-list.component.scss'],
@@ -45,11 +47,18 @@ export class CompaniesListComponent {
 
   readonly filterMenuOpen = signal(false);
   readonly exportMenuOpen = signal(false);
-  readonly menuItems: MenuItem[] = [
-    { label: 'Voir détails', icon: 'pi pi-eye' },
-    { label: 'Modifier', icon: 'pi pi-pencil' },
-    { label: 'Désactiver', icon: 'pi pi-ban', styleClass: 'danger-item' },
-  ];
+  readonly selectedCompany = signal<Company | null>(null);
+  readonly editingCompany = signal<Company | null>(null);
+  readonly saving = signal(false);
+  editForm = { name: '', phoneNumber: '', address: '' };
+
+  menuItemsFor(company: Company): MenuItem[] {
+    return [
+      { label: 'Voir détails', icon: 'pi pi-eye', command: () => this.viewDetails(company) },
+      { label: 'Modifier', icon: 'pi pi-pencil', command: () => this.startEdit(company) },
+      { label: 'Supprimer', icon: 'pi pi-trash', styleClass: 'danger-item', command: () => void this.disable(company) },
+    ];
+  }
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
@@ -118,6 +127,67 @@ export class CompaniesListComponent {
       this.facade.setErrorFeedback(error, 'Export PDF impossible.');
     } finally {
       this.exportMenuOpen.set(false);
+    }
+  }
+
+  viewDetails(company: Company): void {
+    this.selectedCompany.set(company);
+  }
+
+  closeDetails(): void {
+    this.selectedCompany.set(null);
+  }
+
+  startEdit(company: Company): void {
+    this.editingCompany.set(company);
+    this.editForm = {
+      name: company.name,
+      phoneNumber: company.phoneNumber ?? '',
+      address: company.address ?? '',
+    };
+  }
+
+  closeEdit(): void {
+    if (!this.saving()) {
+      this.editingCompany.set(null);
+    }
+  }
+
+  async saveEdit(): Promise<void> {
+    const company = this.editingCompany();
+    const name = this.editForm.name.trim();
+    const phoneNumber = this.editForm.phoneNumber.replace(/\D/g, '').replace(/^221/, '');
+
+    if (!company || name.length < 2 || !/^\d{9}$/.test(phoneNumber)) {
+      this.facade.setErrorFeedback(new Error('Saisissez un nom et un numéro sénégalais valide.'), 'Modification impossible.');
+      return;
+    }
+
+    this.saving.set(true);
+    try {
+      await this.facade.updateCompany({
+        ...company,
+        name,
+        phoneNumber,
+        address: this.editForm.address.trim(),
+      });
+      this.editingCompany.set(null);
+    } catch (error) {
+      this.facade.setErrorFeedback(error, 'Modification de l’entreprise impossible.');
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  async disable(company: Company): Promise<void> {
+    if (!window.confirm(`Supprimer l’entreprise « ${company.name} » ? Elle sera désactivée.`)) {
+      return;
+    }
+
+    try {
+      await this.facade.disableCompany(company);
+    } catch (error) {
+      this.facade.setErrorFeedback(error, 'Suppression de l’entreprise impossible.');
     }
   }
 }

@@ -65,7 +65,7 @@
           <button class="action-btn" (click)="actionMenu.toggle($event)" aria-label="Actions restaurant">
             <i class="pi pi-ellipsis-v"></i>
           </button>
-          <p-menu #actionMenu [popup]="true" [model]="menuItems" appendTo="body" styleClass="row-action-menu"></p-menu>
+          <p-menu #actionMenu [popup]="true" [model]="menuItemsFor(restaurant)" appendTo="body" styleClass="row-action-menu"></p-menu>
         </td>
       </tr>
     </ng-template>
@@ -81,6 +81,49 @@
       </tr>
     </ng-template>
   </p-table>
+
+  <p-dialog
+    header="Détails du restaurant"
+    [visible]="selectedRestaurant() !== null"
+    [modal]="true"
+    [draggable]="false"
+    [style]="{ width: 'min(92vw, 34rem)' }"
+    (visibleChange)="!$event && closeDetails()">
+    @if (selectedRestaurant(); as restaurant) {
+      <div class="details-grid">
+        <div><span>Nom</span><strong>{{ restaurant.name }}</strong></div>
+        <div><span>Téléphone</span><strong>{{ restaurant.phone || 'Non renseigné' }}</strong></div>
+        <div><span>Localisation</span><strong>{{ restaurant.address || 'Non renseignée' }}</strong></div>
+        <div><span>Statut</span><app-status-badge [status]="restaurant.status"></app-status-badge></div>
+        <div><span>Transactions</span><strong>{{ restaurant.totalTransactions }}</strong></div>
+        <div><span>Volume total</span><strong>{{ restaurant.totalVolume }}</strong></div>
+      </div>
+    }
+  </p-dialog>
+
+  <p-dialog
+    header="Modifier le restaurant"
+    [visible]="editingRestaurant() !== null"
+    [modal]="true"
+    [draggable]="false"
+    [closable]="!saving()"
+    [style]="{ width: 'min(92vw, 34rem)' }"
+    (visibleChange)="!$event && closeEdit()">
+    <form class="edit-form" (ngSubmit)="saveEdit()">
+      <label for="restaurant-edit-name">Nom du restaurant *</label>
+      <input id="restaurant-edit-name" pInputText [(ngModel)]="editForm.name" name="name" required />
+      <label for="restaurant-edit-phone">Téléphone *</label>
+      <input id="restaurant-edit-phone" pInputText [(ngModel)]="editForm.phone" name="phone" required />
+      <label for="restaurant-edit-location">Localisation *</label>
+      <input id="restaurant-edit-location" pInputText [(ngModel)]="editForm.location" name="location" required />
+      <label for="restaurant-edit-city">Ville *</label>
+      <input id="restaurant-edit-city" pInputText [(ngModel)]="editForm.city" name="city" required />
+      <div class="dialog-actions">
+        <button class="btn-secondary" type="button" (click)="closeEdit()">Annuler</button>
+        <button class="btn-add" type="submit" [disabled]="saving()">{{ saving() ? 'Enregistrement…' : 'Enregistrer' }}</button>
+      </div>
+    </form>
+  </p-dialog>
 
   <app-pagination
     [currentPage]="currentPage()"
