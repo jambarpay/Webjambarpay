@@ -405,3 +405,11 @@ $orange-dark: #dc5d38;
   .step { white-space: normal; }
   .field-grid { grid-template-columns: 1fr; gap: 0; }
 }
+
+@media (max-width: 768px) {
+  .field input,
+  .input-wrapper input {
+    // Empêche le zoom automatique des navigateurs mobiles au focus.
+    font-size: 16px !important;
+  }
+}

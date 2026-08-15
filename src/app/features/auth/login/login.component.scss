@@ -296,3 +296,10 @@ $orange-dark: #dc5d38;
   .back-link { margin: 1.75rem 0 2rem; }
   .login-header { margin-bottom: 1.5rem; }
 }
+
+@media (max-width: 768px) {
+  .input-wrapper input {
+    // Empêche le zoom automatique des navigateurs mobiles au focus.
+    font-size: 16px !important;
+  }
+}

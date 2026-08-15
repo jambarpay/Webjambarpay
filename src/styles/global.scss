@@ -11,6 +11,7 @@ html, body {
   overflow: hidden;
   font-family: var(--font-family-base);
   font-size: var(--font-size-base);
+  -webkit-text-size-adjust: 100%;
   color: var(--color-text-primary);
   background: var(--color-bg-main);
   line-height: 1.5;
@@ -249,6 +250,14 @@ textarea {
 
   .metrics-grid {
     grid-template-columns: 1fr;
+  }
+
+  // Une taille d'au moins 16 px évite le zoom automatique d'iOS/Android au
+  // focus, qui donne l'impression que le clavier s'ouvre avec retard.
+  input:not([type='checkbox']):not([type='radio']),
+  select,
+  textarea {
+    font-size: 16px !important;
   }
 
   .p-datatable,

@@ -1,4 +1,4 @@
-import { ApplicationConfig } from '@angular/core';
+import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
@@ -23,6 +23,9 @@ import { BackendPlatformSettingsRepository } from './features/settings/data-acce
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    // Regroupe les événements rapprochés (notamment sur mobile) afin d'éviter
+    // une détection Angular complète pour chaque événement DOM intermédiaire.
+    provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
     BackendAuthRepository,
     { provide: AUTH_REPOSITORY, useExisting: BackendAuthRepository },
@@ -34,7 +37,9 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptors([correlationInterceptor, authTokenInterceptor, errorInterceptor])),
     provideAnimationsAsync(),
     providePrimeNG({
-      ripple: true,
+      // Le ripple ajoute des traitements sur chaque interaction et n'est pas
+      // nécessaire au fonctionnement de l'interface.
+      ripple: false,
       theme: {
         preset: JAMBAAR_PRESET,
         options: {
