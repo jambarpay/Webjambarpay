@@ -67,7 +67,7 @@
 
     <h3 class="form-section-title">Informations du restaurant</h3>
 
-    <div class="form-row two-col">
+    <div class="form-row">
       <div class="field">
         <label class="field-label" for="restaurant-name">Nom du restaurant <span class="required">*</span></label>
         <input
@@ -83,23 +83,6 @@
           placeholder="Ex : Restaurant Teranga" />
         @if (submitted() && !!nameError) {
           <small class="field-error">{{ nameError }}</small>
-        }
-      </div>
-
-      <div class="field">
-        <label class="field-label" for="registration-number">Numéro d’immatriculation / NINEA <span class="required">*</span></label>
-        <input
-          id="registration-number"
-          pInputText
-          type="text"
-          class="field-input"
-          [(ngModel)]="form.registrationNumber"
-          name="registrationNumber"
-          required
-          [class.field-input-invalid]="submitted() && !!registrationNumberError"
-          placeholder="Ex : SN-DKR-2026-001" />
-        @if (submitted() && !!registrationNumberError) {
-          <small class="field-error">{{ registrationNumberError }}</small>
         }
       </div>
     </div>
@@ -127,22 +110,23 @@
       </div>
     </div>
 
-    <h3 class="form-section-title">Adresse</h3>
+    <h3 class="form-section-title">Localisation</h3>
 
     <div class="form-row two-col">
       <div class="field">
-        <label class="field-label" for="restaurant-country">Pays <span class="required">*</span></label>
+        <label class="field-label" for="restaurant-location">Localisation <span class="required">*</span></label>
         <input
-          id="restaurant-country"
+          id="restaurant-location"
           pInputText
           type="text"
           class="field-input"
-          [(ngModel)]="form.country"
-          name="country"
+          [(ngModel)]="form.location"
+          name="location"
           required
-          [class.field-input-invalid]="submitted() && !!countryError" />
-        @if (submitted() && !!countryError) {
-          <small class="field-error">{{ countryError }}</small>
+          [class.field-input-invalid]="submitted() && !!locationError"
+          placeholder="Ex : Sacré-Cœur 3, VDN" />
+        @if (submitted() && !!locationError) {
+          <small class="field-error">{{ locationError }}</small>
         }
       </div>
 
@@ -159,37 +143,6 @@
           [class.field-input-invalid]="submitted() && !!cityError" />
         @if (submitted() && !!cityError) {
           <small class="field-error">{{ cityError }}</small>
-        }
-      </div>
-    </div>
-
-    <div class="form-row two-col">
-      <div class="field">
-        <label class="field-label" for="restaurant-district">Quartier</label>
-        <input
-          id="restaurant-district"
-          pInputText
-          type="text"
-          class="field-input"
-          [(ngModel)]="form.district"
-          name="district"
-          placeholder="Ex : Mermoz" />
-      </div>
-
-      <div class="field">
-        <label class="field-label" for="restaurant-street">Rue ou adresse <span class="required">*</span></label>
-        <input
-          id="restaurant-street"
-          pInputText
-          type="text"
-          class="field-input"
-          [(ngModel)]="form.street"
-          name="street"
-          required
-          [class.field-input-invalid]="submitted() && !!streetError"
-          placeholder="Ex : Avenue Cheikh Anta Diop" />
-        @if (submitted() && !!streetError) {
-          <small class="field-error">{{ streetError }}</small>
         }
       </div>
     </div>

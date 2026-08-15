@@ -11,7 +11,6 @@ import { Restaurant } from '../domain/restaurant.model';
 import {
   hasMinLength,
   hasValue,
-  isValidNinea,
   isValidSenegalPhone,
 } from '../../../core/utils/form-validation';
 
@@ -33,15 +32,12 @@ export class RestaurantAddComponent {
 
   form = {
     name: '',
-    registrationNumber: '',
     ownerFirstName: '',
     ownerLastName: '',
     ownerPhoneNumber: '',
     phoneNumber: '',
-    country: 'Sénégal',
     city: 'Dakar',
-    district: '',
-    street: '',
+    location: '',
   };
 
   onCancel(): void {
@@ -74,25 +70,17 @@ export class RestaurantAddComponent {
 
   isFormValid(): boolean {
     return !this.nameError
-      && !this.registrationNumberError
       && !this.ownerFirstNameError
       && !this.ownerLastNameError
       && !this.ownerPhoneNumberError
       && !this.phoneNumberError
-      && !this.countryError
       && !this.cityError
-      && !this.streetError;
+      && !this.locationError;
   }
 
   get nameError(): string {
     if (!hasValue(this.form.name)) return 'Le nom du restaurant est requis.';
     if (!hasMinLength(this.form.name, 2)) return 'Le nom du restaurant doit contenir au moins 2 caracteres.';
-    return '';
-  }
-
-  get registrationNumberError(): string {
-    if (!hasValue(this.form.registrationNumber)) return 'Le numéro d’immatriculation/NINEA est requis.';
-    if (!isValidNinea(this.form.registrationNumber)) return 'Le numéro doit contenir entre 6 et 20 caractères valides.';
     return '';
   }
 
@@ -120,41 +108,37 @@ export class RestaurantAddComponent {
     return '';
   }
 
-  get countryError(): string {
-    if (!hasValue(this.form.country)) return 'Le pays est requis.';
-    return '';
-  }
-
   get cityError(): string {
     if (!hasValue(this.form.city)) return 'La ville est requise.';
     return '';
   }
 
-  get streetError(): string {
-    if (!hasValue(this.form.street)) return 'La rue ou l’adresse est requise.';
+  get locationError(): string {
+    if (!hasValue(this.form.location)) return 'La localisation est requise.';
+    if (!hasMinLength(this.form.location, 5)) return 'La localisation doit être plus précise.';
     return '';
   }
 
   private buildRestaurant(): Restaurant {
-    const address = [this.form.street, this.form.district, this.form.city, this.form.country]
-      .map(value => value.trim())
-      .filter(Boolean)
-      .join(', ');
+    const location = this.form.location.trim();
+    const city = this.form.city.trim();
 
     return {
       id: `restaurant-${Date.now()}`,
       name: this.form.name.trim(),
-      address,
+      address: [location, city, 'Sénégal'].filter(Boolean).join(', '),
       phone: this.form.phoneNumber.trim(),
       totalTransactions: 0,
       totalVolume: 0,
       registrationDate: new Date().toISOString().slice(0, 10),
       status: this.backendMode ? 'En attente' : 'Actif',
-      registrationNumber: this.form.registrationNumber.trim(),
-      country: this.form.country.trim(),
-      city: this.form.city.trim(),
-      district: this.form.district.trim() || undefined,
-      street: this.form.street.trim(),
+      // Le service restaurant exige encore une référence interne ; elle est générée
+      // automatiquement puisque le NINEA n'est plus demandé dans l'interface.
+      registrationNumber: `AUTO-${Date.now()}`,
+      country: 'Sénégal',
+      city,
+      district: location,
+      street: location,
       paymentEligibilityStatus: this.backendMode ? 'NOT_ELIGIBLE' : undefined,
       ownerFirstName: this.form.ownerFirstName.trim(),
       ownerLastName: this.form.ownerLastName.trim(),
