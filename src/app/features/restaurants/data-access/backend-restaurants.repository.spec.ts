@@ -56,7 +56,7 @@ describe('BackendRestaurantsRepository', () => {
     }));
   });
 
-  it('creates the owner then the restaurant with the two backend contracts', () => {
+  it('creates the owner and restaurant through one backend contract', () => {
     const restaurant: Restaurant = {
       id: 'temporary-id',
       name: 'Le Djolof',
@@ -70,6 +70,7 @@ describe('BackendRestaurantsRepository', () => {
       ownerFirstName: 'Moussa',
       ownerLastName: 'Ndiaye',
       ownerPhoneNumber: '+221 77 987 65 43',
+      ownerEmail: 'moussa@example.com',
       country: 'Sénégal',
       city: 'Dakar',
       district: 'Mermoz',
@@ -79,34 +80,15 @@ describe('BackendRestaurantsRepository', () => {
 
     repository.upsert(restaurant).subscribe();
 
-    const ownerRequest = httpTesting.expectOne('http://localhost:8888/api/v1/users/restaurant');
-    expect(ownerRequest.request.method).toBe('POST');
-    expect(ownerRequest.request.body).toEqual({
-      phoneNumber: '779876543',
-      firstName: 'Moussa',
-      lastName: 'Ndiaye',
-    });
-    ownerRequest.flush({
-      success: true,
-      message: 'Restaurant user created successfully',
-      data: {
-        id: 'user-1',
-        phoneNumber: '779876543',
-        status: 'ACTIVE',
-      },
-      errorCode: null,
-      timestamp: '2026-08-02T17:30:00Z',
-    });
-
     const request = httpTesting.expectOne('http://localhost:8888/api/v1/restaurants');
     expect(request.request.method).toBe('POST');
     expect(request.request.body).toEqual({
       name: 'Le Djolof',
       registrationNumber: 'SN-DKR-001',
-      ownerUserId: 'user-1',
       ownerFirstName: 'Moussa',
       ownerLastName: 'Ndiaye',
       ownerPhoneNumber: '779876543',
+      ownerEmail: 'moussa@example.com',
       phoneNumber: '771234567',
       country: 'Sénégal',
       city: 'Dakar',
@@ -125,6 +107,7 @@ describe('BackendRestaurantsRepository', () => {
       street: 'VDN',
       status: 'PENDING',
       paymentEligibilityStatus: 'NOT_ELIGIBLE',
+      ownerTemporaryPassword: 'temporary-password',
     });
   });
 

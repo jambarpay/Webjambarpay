@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { forkJoin, map, Observable, of, switchMap, throwError } from 'rxjs';
+import { forkJoin, map, Observable, throwError } from 'rxjs';
 import { BackendApiClient } from '../../../core/http/backend-api.client';
 import { RestaurantsRepository } from '../application/restaurants.repository';
 import { Restaurant } from '../domain/restaurant.model';
@@ -16,41 +16,22 @@ interface BackendRestaurantDto {
   street: string;
   status: 'PENDING' | 'ACTIVE' | 'SUSPENDED';
   paymentEligibilityStatus: 'ELIGIBLE' | 'NOT_ELIGIBLE' | 'SUSPENDED';
+  ownerTemporaryPassword?: string;
 }
 
 interface CreateRestaurantDto {
   name: string;
   registrationNumber: string;
-  ownerUserId: string;
+  ownerUserId?: string;
   ownerFirstName: string;
   ownerLastName: string;
   ownerPhoneNumber: string;
+  ownerEmail?: string;
   phoneNumber: string;
   country: string;
   city: string;
   district: string;
   street: string;
-}
-
-interface CreateRestaurantOwnerDto {
-  phoneNumber: string;
-  firstName: string;
-  lastName: string;
-  email?: string;
-  password?: string;
-}
-
-interface CreateRestaurantOwnerResponse {
-  success: boolean;
-  message: string;
-  data: {
-    id: string;
-    phoneNumber: string;
-    status: string;
-    temporaryPassword?: string;
-  } | null;
-  errorCode: string | null;
-  timestamp: unknown;
 }
 
 interface UpdateRestaurantDto {
@@ -96,17 +77,10 @@ export class BackendRestaurantsRepository implements RestaurantsRepository {
       ));
     }
 
-    return this.resolveOwnerUser(restaurant).pipe(
-      switchMap(owner => this.api.post<BackendRestaurantDto, CreateRestaurantDto>(
-        'restaurants',
-        this.toCreateDto(restaurant, owner.id),
-      ).pipe(
-        map(response => ({
-          ...this.toDomain(response),
-          ownerTemporaryPassword: owner.temporaryPassword,
-        })),
-      )),
-    );
+    return this.api.post<BackendRestaurantDto, CreateRestaurantDto>(
+      'restaurants',
+      this.toCreateDto(restaurant),
+    ).pipe(map(response => this.toDomain(response)));
   }
 
   suspend(id: string): Observable<Restaurant> {
@@ -137,18 +111,20 @@ export class BackendRestaurantsRepository implements RestaurantsRepository {
       district: dto.district,
       street: dto.street,
       paymentEligibilityStatus: dto.paymentEligibilityStatus,
+      ownerTemporaryPassword: dto.ownerTemporaryPassword,
       source: 'backend',
     };
   }
 
-  private toCreateDto(restaurant: Restaurant, ownerUserId: string): CreateRestaurantDto {
+  private toCreateDto(restaurant: Restaurant): CreateRestaurantDto {
     return {
       name: restaurant.name,
       registrationNumber: restaurant.registrationNumber!,
-      ownerUserId,
+      ...(restaurant.ownerId?.trim() ? { ownerUserId: restaurant.ownerId.trim() } : {}),
       ownerFirstName: restaurant.ownerFirstName ?? '',
       ownerLastName: restaurant.ownerLastName ?? '',
       ownerPhoneNumber: normalizePhone(restaurant.ownerPhoneNumber ?? ''),
+      ownerEmail: restaurant.ownerEmail?.trim() || undefined,
       phoneNumber: normalizePhone(restaurant.phone!),
       country: restaurant.country!,
       city: restaurant.city!,
@@ -172,7 +148,8 @@ export class BackendRestaurantsRepository implements RestaurantsRepository {
     const hasExistingOwner = !!restaurant.ownerId?.trim();
     const hasNewOwner = !!restaurant.ownerFirstName?.trim()
       && !!restaurant.ownerLastName?.trim()
-      && !!restaurant.ownerPhoneNumber?.trim();
+      && !!restaurant.ownerPhoneNumber?.trim()
+      && !!restaurant.ownerEmail?.trim();
 
     return !!restaurant.registrationNumber?.trim()
       && (hasExistingOwner || hasNewOwner)
@@ -180,44 +157,6 @@ export class BackendRestaurantsRepository implements RestaurantsRepository {
       && !!restaurant.country?.trim()
       && !!restaurant.city?.trim()
       && !!restaurant.street?.trim();
-  }
-
-  private resolveOwnerUser(restaurant: Restaurant): Observable<{ id: string; temporaryPassword?: string }> {
-    if (restaurant.ownerId?.trim()) {
-      return of({ id: restaurant.ownerId.trim() });
-    }
-
-    if (!restaurant.ownerFirstName?.trim()
-      || !restaurant.ownerLastName?.trim()
-      || !restaurant.ownerPhoneNumber?.trim()) {
-      return throwError(() => new Error(
-        'Le prénom, le nom et le téléphone du propriétaire sont requis par le user-service.',
-      ));
-    }
-
-    const request: CreateRestaurantOwnerDto = {
-      phoneNumber: normalizePhone(restaurant.ownerPhoneNumber),
-      firstName: restaurant.ownerFirstName.trim(),
-      lastName: restaurant.ownerLastName.trim(),
-      ...(restaurant.ownerEmail?.trim() ? { email: restaurant.ownerEmail.trim() } : {}),
-      ...(restaurant.ownerPassword ? { password: restaurant.ownerPassword } : {}),
-    };
-
-    return this.api.post<CreateRestaurantOwnerResponse, CreateRestaurantOwnerDto>(
-      'users/restaurant',
-      request,
-    ).pipe(
-      map(response => {
-        const ownerUserId = response.data?.id?.trim();
-        if (!response.success || !ownerUserId) {
-          throw new Error(response.message || 'Le user-service n’a pas retourné l’identifiant du propriétaire.');
-        }
-        return {
-          id: ownerUserId,
-          temporaryPassword: response.data?.temporaryPassword,
-        };
-      }),
-    );
   }
 
   private toDisplayStatus(status: BackendRestaurantDto['status']): Restaurant['status'] {
