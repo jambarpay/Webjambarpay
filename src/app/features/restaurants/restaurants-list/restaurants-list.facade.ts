@@ -5,12 +5,12 @@ import { sliceCurrentPage } from '../../../core/utils/pagination';
 import { RESTAURANTS_REPOSITORY, RestaurantsRepository } from '../application/restaurants.repository';
 import { Restaurant } from '../domain/restaurant.model';
 
-export type RestaurantStatusFilter = 'Tous' | 'Actif' | 'Inactif' | 'En attente' | 'Suspendu';
+export type RestaurantStatusFilter = 'Tous' | 'Actif' | 'Inactif' | 'En attente';
 export type RestaurantFeedbackState = { type: 'success' | 'error'; message: string } | null;
 
 const DEFAULT_PAGE_SIZE = 6;
 const PAGE_SIZE_OPTIONS = [6, 12, 18];
-const FILTER_OPTIONS: RestaurantStatusFilter[] = ['Tous', 'Actif', 'Inactif', 'En attente', 'Suspendu'];
+const FILTER_OPTIONS: RestaurantStatusFilter[] = ['Tous', 'Actif', 'Inactif', 'En attente'];
 
 @Injectable()
 export class RestaurantsListFacade {
@@ -173,7 +173,7 @@ export class RestaurantsListFacade {
 
   private normalizeStatus(value: string): Restaurant['status'] {
     const normalized = value.trim().toLowerCase();
-    if (normalized.startsWith('susp')) return 'Suspendu';
+    if (normalized.startsWith('susp')) return 'Inactif';
     if (normalized.startsWith('pending') || normalized.startsWith('attente')) return 'En attente';
     return normalized.startsWith('in') ? 'Inactif' : 'Actif';
   }

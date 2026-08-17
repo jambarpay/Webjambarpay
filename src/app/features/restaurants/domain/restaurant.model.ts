@@ -6,7 +6,7 @@ export interface Restaurant {
   totalTransactions: number;
   totalVolume: number;
   registrationDate: string;
-  status: 'Actif' | 'Inactif' | 'En attente' | 'Suspendu';
+  status: 'Actif' | 'Inactif' | 'En attente';
   registrationNumber?: string;
   ownerId?: string;
   country?: string;

@@ -49,7 +49,7 @@ export class RestaurantsListComponent {
     const items: MenuItem[] = [
       { label: 'Voir détails', icon: 'pi pi-eye', command: () => this.viewDetails(restaurant) },
       { label: 'Modifier', icon: 'pi pi-pencil', command: () => this.startEdit(restaurant) },
-      { label: 'Supprimer', icon: 'pi pi-trash', styleClass: 'danger-item', command: () => void this.disable(restaurant) },
+      { label: 'Désactiver', icon: 'pi pi-ban', styleClass: 'danger-item', command: () => void this.disable(restaurant) },
     ];
 
     if (restaurant.status !== 'Actif') {
@@ -185,14 +185,14 @@ export class RestaurantsListComponent {
   }
 
   async disable(restaurant: Restaurant): Promise<void> {
-    if (!window.confirm(`Supprimer le restaurant « ${restaurant.name} » ? Il sera désactivé.`)) {
+    if (!window.confirm(`Désactiver le restaurant « ${restaurant.name} » ? Il restera visible dans la liste admin.`)) {
       return;
     }
 
     try {
       await this.facade.suspendRestaurant(restaurant);
     } catch (error) {
-      this.facade.setErrorFeedback(error, 'Suppression du restaurant impossible.');
+      this.facade.setErrorFeedback(error, 'Désactivation du restaurant impossible.');
     }
   }
 

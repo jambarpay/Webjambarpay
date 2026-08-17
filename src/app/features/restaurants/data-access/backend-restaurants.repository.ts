@@ -14,7 +14,7 @@ interface BackendRestaurantDto {
   city: string;
   district: string;
   street: string;
-  status: 'PENDING' | 'ACTIVE' | 'SUSPENDED';
+  status: 'PENDING' | 'ACTIVE' | 'SUSPENDED' | 'DISABLED';
   paymentEligibilityStatus: 'ELIGIBLE' | 'NOT_ELIGIBLE' | 'SUSPENDED';
   ownerTemporaryPassword?: string;
 }
@@ -168,7 +168,7 @@ export class BackendRestaurantsRepository implements RestaurantsRepository {
 
   private toDisplayStatus(status: BackendRestaurantDto['status']): Restaurant['status'] {
     if (status === 'ACTIVE') return 'Actif';
-    if (status === 'SUSPENDED') return 'Suspendu';
+    if (status === 'SUSPENDED' || status === 'DISABLED') return 'Inactif';
     return 'En attente';
   }
 }
