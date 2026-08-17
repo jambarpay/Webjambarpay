@@ -6,6 +6,7 @@ export interface RestaurantsRepository {
   list(): Observable<Restaurant[]>;
   saveAll(restaurants: readonly Restaurant[]): Observable<void>;
   upsert(restaurant: Restaurant): Observable<Restaurant>;
+  activate(id: string): Observable<Restaurant>;
   suspend(id: string): Observable<Restaurant>;
 }
 

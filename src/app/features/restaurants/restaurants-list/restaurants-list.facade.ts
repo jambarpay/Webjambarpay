@@ -133,6 +133,12 @@ export class RestaurantsListFacade {
     this.setFeedback('success', 'Restaurant désactivé avec succès.');
   }
 
+  async activateRestaurant(restaurant: Restaurant): Promise<void> {
+    const updatedRestaurant = await firstValueFrom(this.restaurantsRepository.activate(restaurant.id));
+    this.replaceRestaurant(updatedRestaurant);
+    this.setFeedback('success', 'Restaurant activé avec succès. Le QR peut maintenant être généré.');
+  }
+
   setErrorFeedback(error: unknown, fallbackMessage: string): void {
     this.setFeedback('error', error instanceof Error ? error.message : fallbackMessage);
   }

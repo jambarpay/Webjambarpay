@@ -46,11 +46,21 @@ export class RestaurantsListComponent {
   editForm = { name: '', phone: '', city: '', location: '' };
 
   menuItemsFor(restaurant: Restaurant): MenuItem[] {
-    return [
+    const items: MenuItem[] = [
       { label: 'Voir détails', icon: 'pi pi-eye', command: () => this.viewDetails(restaurant) },
       { label: 'Modifier', icon: 'pi pi-pencil', command: () => this.startEdit(restaurant) },
       { label: 'Supprimer', icon: 'pi pi-trash', styleClass: 'danger-item', command: () => void this.disable(restaurant) },
     ];
+
+    if (restaurant.status !== 'Actif') {
+      items.splice(2, 0, {
+        label: 'Activer',
+        icon: 'pi pi-check-circle',
+        command: () => void this.activate(restaurant),
+      });
+    }
+
+    return items;
   }
 
   @HostListener('document:click', ['$event'])
@@ -183,6 +193,14 @@ export class RestaurantsListComponent {
       await this.facade.suspendRestaurant(restaurant);
     } catch (error) {
       this.facade.setErrorFeedback(error, 'Suppression du restaurant impossible.');
+    }
+  }
+
+  async activate(restaurant: Restaurant): Promise<void> {
+    try {
+      await this.facade.activateRestaurant(restaurant);
+    } catch (error) {
+      this.facade.setErrorFeedback(error, 'Activation du restaurant impossible.');
     }
   }
 }
