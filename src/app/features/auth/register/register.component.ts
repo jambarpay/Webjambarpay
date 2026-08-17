@@ -94,6 +94,7 @@ export class RegisterComponent {
   async onSubmit(): Promise<void> {
     this.submitted.set(true);
     this.successMessage.set('');
+    this.errorMessage.set('');
     this.form.location = this.form.location.trim();
     this.form.city = this.form.city.trim();
 

@@ -18,7 +18,7 @@
       </div>
 
       @if (successMessage()) {
-        <div class="success-alert">
+        <div class="success-alert" role="status" aria-live="polite">
           <i class="pi pi-check-circle"></i>
           <span>{{ successMessage() }}</span>
         </div>
