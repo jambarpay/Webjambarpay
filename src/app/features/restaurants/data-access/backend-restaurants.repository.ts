@@ -16,6 +16,8 @@ interface BackendRestaurantDto {
   street: string;
   status: 'PENDING' | 'ACTIVE' | 'SUSPENDED' | 'DISABLED';
   paymentEligibilityStatus: 'ELIGIBLE' | 'NOT_ELIGIBLE' | 'SUSPENDED';
+  createdAt?: string;
+  updatedAt?: string;
   ownerTemporaryPassword?: string;
 }
 
@@ -109,7 +111,7 @@ export class BackendRestaurantsRepository implements RestaurantsRepository {
       phone: dto.phoneNumber,
       totalTransactions: 0,
       totalVolume: 0,
-      registrationDate: '',
+      registrationDate: dto.createdAt?.slice(0, 10) ?? '',
       status: this.toDisplayStatus(dto.status),
       registrationNumber: dto.registrationNumber,
       ownerId: dto.ownerId,

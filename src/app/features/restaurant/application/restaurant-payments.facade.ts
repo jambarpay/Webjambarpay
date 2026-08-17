@@ -30,7 +30,7 @@ interface BackendRestaurantDto {
   city: string;
   district: string;
   street: string;
-  status: 'PENDING' | 'ACTIVE' | 'SUSPENDED';
+  status: 'PENDING' | 'ACTIVE' | 'SUSPENDED' | 'DISABLED';
 }
 
 interface PointOfSaleDto {
@@ -138,7 +138,7 @@ export class RestaurantPaymentsFacade {
   }
 
   private async generateRestaurantQr(restaurant: BackendRestaurantDto): Promise<void> {
-    if (restaurant.status === 'SUSPENDED') {
+    if (restaurant.status === 'SUSPENDED' || restaurant.status === 'DISABLED') {
       this.clearQrImage();
       this.qrCodeStatus.set('error');
       return;
@@ -153,25 +153,27 @@ export class RestaurantPaymentsFacade {
         return;
       }
 
-      let pointOfSaleId = localStorage.getItem(pointOfSaleKey);
+      const cachedPointOfSaleId = localStorage.getItem(pointOfSaleKey);
+      let pointOfSaleId = cachedPointOfSaleId;
       if (!pointOfSaleId) {
-        const pointOfSale = await firstValueFrom(this.api.post<PointOfSaleDto, unknown>(
-          `restaurants/${encodeURIComponent(restaurant.id)}/points-of-sale`,
-          {
-            name: 'Point de vente principal',
-            country: restaurant.country || 'Sénégal',
-            city: restaurant.city,
-            district: restaurant.district,
-            street: restaurant.street,
-          },
-        ));
+        const pointOfSale = await this.createPointOfSale(restaurant);
         pointOfSaleId = pointOfSale.id;
         localStorage.setItem(pointOfSaleKey, pointOfSaleId);
       }
 
-      await firstValueFrom(this.api.patch(
-        `restaurants/points-of-sale/${encodeURIComponent(pointOfSaleId)}/activate`, {},
-      ));
+      try {
+        await this.activatePointOfSale(pointOfSaleId);
+      } catch (error) {
+        // A browser can retain a POS id after the backend database is recreated.
+        // Drop that stale id and retry once with a fresh POS.
+        if (!cachedPointOfSaleId) throw error;
+        localStorage.removeItem(pointOfSaleKey);
+        const pointOfSale = await this.createPointOfSale(restaurant);
+        pointOfSaleId = pointOfSale.id;
+        localStorage.setItem(pointOfSaleKey, pointOfSaleId);
+        await this.activatePointOfSale(pointOfSaleId);
+      }
+
       const qr = await firstValueFrom(this.api.post<MerchantQrDto, unknown>(
         `restaurants/${encodeURIComponent(restaurant.id)}/points-of-sale/${encodeURIComponent(pointOfSaleId)}/qr`,
         {},
@@ -185,6 +187,25 @@ export class RestaurantPaymentsFacade {
       this.clearQrImage();
       this.qrCodeStatus.set('error');
     }
+  }
+
+  private createPointOfSale(restaurant: BackendRestaurantDto): Promise<PointOfSaleDto> {
+    return firstValueFrom(this.api.post<PointOfSaleDto, unknown>(
+      `restaurants/${encodeURIComponent(restaurant.id)}/points-of-sale`,
+      {
+        name: 'Point de vente principal',
+        country: restaurant.country || 'Sénégal',
+        city: restaurant.city,
+        district: restaurant.district,
+        street: restaurant.street,
+      },
+    ));
+  }
+
+  private activatePointOfSale(pointOfSaleId: string): Promise<unknown> {
+    return firstValueFrom(this.api.patch(
+      `restaurants/points-of-sale/${encodeURIComponent(pointOfSaleId)}/activate`, {},
+    ));
   }
 
   private replaceQrImage(image: Blob): void {
