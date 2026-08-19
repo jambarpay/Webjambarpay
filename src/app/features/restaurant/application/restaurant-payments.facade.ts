@@ -61,8 +61,6 @@ export class RestaurantPaymentsFacade {
   private readonly api = inject(BackendApiClient);
   private readonly auth = inject(AuthFacade);
   private readonly paymentsState = signal<RestaurantPaymentRecord[]>([]);
-  private qrImageObjectUrl?: string;
-
   readonly payments = computed(() => this.paymentsState());
   readonly qrPhoneNumber = signal('Indisponible');
   readonly qrCodeUrl = signal('');
@@ -181,7 +179,7 @@ export class RestaurantPaymentsFacade {
       const image = await firstValueFrom(this.api.getBlob(
         `qrs/${encodeURIComponent(qr.qrReference)}/image`,
       ));
-      this.replaceQrImage(image);
+      await this.replaceQrImage(image);
       this.qrCodeStatus.set('ready');
     } catch {
       this.clearQrImage();
@@ -208,17 +206,25 @@ export class RestaurantPaymentsFacade {
     ));
   }
 
-  private replaceQrImage(image: Blob): void {
+  private replaceQrImage(image: Blob): Promise<void> {
     this.clearQrImage();
-    this.qrImageObjectUrl = URL.createObjectURL(image);
-    this.qrCodeUrl.set(this.qrImageObjectUrl);
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result !== 'string') {
+          reject(new Error('QR image could not be converted to a data URL.'));
+          return;
+        }
+
+        this.qrCodeUrl.set(reader.result);
+        resolve();
+      };
+      reader.onerror = () => reject(reader.error ?? new Error('QR image could not be read.'));
+      reader.readAsDataURL(image);
+    });
   }
 
   private clearQrImage(): void {
-    if (this.qrImageObjectUrl) {
-      URL.revokeObjectURL(this.qrImageObjectUrl);
-      this.qrImageObjectUrl = undefined;
-    }
     this.qrCodeUrl.set('');
   }
 }
