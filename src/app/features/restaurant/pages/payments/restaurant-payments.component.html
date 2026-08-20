@@ -37,6 +37,14 @@
           <span>Numéro lié {{ qrPhoneNumber() }}</span>
           <span>Le paiement est initié et confirmé depuis le mobile du salarié.</span>
         </div>
+        <button
+          type="button"
+          class="qr-download-btn"
+          [disabled]="qrCodeStatus() !== 'ready'"
+          (click)="downloadQrPoster()">
+          <i class="pi pi-download" aria-hidden="true"></i>
+          Télécharger l’affiche QR
+        </button>
       </aside>
     </div>
   </article>

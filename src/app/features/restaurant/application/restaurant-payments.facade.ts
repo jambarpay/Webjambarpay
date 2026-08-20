@@ -62,6 +62,7 @@ export class RestaurantPaymentsFacade {
   private readonly auth = inject(AuthFacade);
   private readonly paymentsState = signal<RestaurantPaymentRecord[]>([]);
   readonly payments = computed(() => this.paymentsState());
+  readonly restaurantName = signal('Votre restaurant');
   readonly qrPhoneNumber = signal('Indisponible');
   readonly qrCodeUrl = signal('');
   readonly qrCodeStatus = signal<'loading' | 'ready' | 'error'>('loading');
@@ -90,6 +91,7 @@ export class RestaurantPaymentsFacade {
           this.qrCodeStatus.set('error');
           return;
         }
+        this.restaurantName.set(restaurant.name || 'Votre restaurant');
         this.qrPhoneNumber.set(restaurant.phoneNumber);
         this.loadPayments(restaurant.id);
         this.generateRestaurantQr(restaurant);
@@ -226,5 +228,94 @@ export class RestaurantPaymentsFacade {
 
   private clearQrImage(): void {
     this.qrCodeUrl.set('');
+  }
+
+  async downloadQrPoster(): Promise<void> {
+    const qrUrl = this.qrCodeUrl();
+    if (this.qrCodeStatus() !== 'ready' || !qrUrl) {
+      throw new Error('Le QR code n’est pas encore disponible.');
+    }
+
+    const [qrImage, logoImage] = await Promise.all([
+      this.loadImage(qrUrl),
+      this.loadImage('/assets/images/logo-jambaarpay.png'),
+    ]);
+    const canvas = document.createElement('canvas');
+    canvas.width = 1200;
+    canvas.height = 1500;
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('Impossible de préparer l’affiche QR.');
+
+    context.fillStyle = '#ffffff';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = '#fff5ee';
+    context.fillRect(0, 0, canvas.width, 310);
+
+    const logoWidth = 260;
+    const logoHeight = 240;
+    context.drawImage(
+      logoImage,
+      (canvas.width - logoWidth) / 2,
+      34,
+      logoWidth,
+      logoHeight,
+    );
+
+    context.fillStyle = '#1f1e34';
+    context.textAlign = 'center';
+    context.font = '700 44px Arial';
+    context.fillText('Scannez pour payer', canvas.width / 2, 380);
+    context.fillStyle = '#777485';
+    context.font = '400 28px Arial';
+    context.fillText(this.restaurantName(), canvas.width / 2, 430);
+
+    const qrSize = 760;
+    const qrX = (canvas.width - qrSize) / 2;
+    const qrY = 490;
+    context.fillStyle = '#ffffff';
+    context.shadowColor = 'rgba(24, 23, 47, 0.16)';
+    context.shadowBlur = 28;
+    context.shadowOffsetY = 12;
+    this.roundRect(context, qrX - 28, qrY - 28, qrSize + 56, qrSize + 56, 34);
+    context.fill();
+    context.shadowColor = 'transparent';
+    context.drawImage(qrImage, qrX, qrY, qrSize, qrSize);
+
+    context.fillStyle = '#f07a2a';
+    context.font = '700 30px Arial';
+    context.fillText(`Téléphone lié : ${this.qrPhoneNumber()}`, canvas.width / 2, 1335);
+    context.fillStyle = '#8b8897';
+    context.font = '400 24px Arial';
+    context.fillText('Paiement sécurisé avec Jambaar Pay', canvas.width / 2, 1390);
+
+    const link = document.createElement('a');
+    const fileName = this.restaurantName()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/gi, '-')
+      .replace(/^-|-$/g, '') || 'restaurant';
+    link.download = `jambaar-pay-qr-${fileName}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }
+
+  private loadImage(source: string): Promise<HTMLImageElement> {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error('Une image QR est indisponible.'));
+      image.src = source;
+    });
+  }
+
+  private roundRect(
+    context: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    radius: number,
+  ): void {
+    context.beginPath();
+    context.roundRect(x, y, width, height, radius);
   }
 }

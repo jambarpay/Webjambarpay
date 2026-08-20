@@ -17,6 +17,7 @@ export class RestaurantPaymentsComponent {
 
   feedback = signal<{ type: 'success' | 'error'; message: string } | null>(null);
   readonly qrPhoneNumber = this.restaurantPayments.qrPhoneNumber;
+  readonly restaurantName = this.restaurantPayments.restaurantName;
   readonly qrCodeUrl = this.restaurantPayments.qrCodeUrl;
   readonly qrCodeStatus = this.restaurantPayments.qrCodeStatus;
 
@@ -25,5 +26,20 @@ export class RestaurantPaymentsComponent {
       type: 'success',
       message: 'Demandez au salarié de scanner le QR avec Jambaar Pay Mobile. Il vérifiera le montant et confirmera le paiement avec son PIN sur son téléphone.',
     });
+  }
+
+  async downloadQrPoster(): Promise<void> {
+    try {
+      await this.restaurantPayments.downloadQrPoster();
+      this.feedback.set({
+        type: 'success',
+        message: 'Affiche QR téléchargée. Vous pouvez maintenant l’imprimer pour la caisse.',
+      });
+    } catch (error) {
+      this.feedback.set({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Le téléchargement du QR a échoué.',
+      });
+    }
   }
 }

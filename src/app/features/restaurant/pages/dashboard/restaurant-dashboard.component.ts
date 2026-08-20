@@ -1,5 +1,5 @@
 
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { EmptyStateComponent } from '../../../../design-system/components/empty-state/empty-state.component';
 import { LoadingStateComponent } from '../../../../design-system/components/loading-state/loading-state.component';
@@ -32,8 +32,10 @@ export class RestaurantDashboardComponent {
   private readonly restaurantPayments = inject(RestaurantPaymentsFacade);
 
   readonly qrPhoneNumber = this.restaurantPayments.qrPhoneNumber;
+  readonly restaurantName = this.restaurantPayments.restaurantName;
   readonly qrCodeUrl = this.restaurantPayments.qrCodeUrl;
   readonly qrCodeStatus = this.restaurantPayments.qrCodeStatus;
+  readonly qrDownloadState = signal<'idle' | 'downloading' | 'success' | 'error'>('idle');
   readonly recentPayments = computed<RecentPayment[]>(() => this.restaurantPayments.payments().slice(0, 4).map(payment => ({
     initials: payment.customerPhone.slice(-2).toUpperCase(),
     customer: payment.customerPhone,
@@ -44,4 +46,14 @@ export class RestaurantDashboardComponent {
   })));
 
   readonly partnerCompanies: PartnerCompany[] = [];
+
+  async downloadQrPoster(): Promise<void> {
+    this.qrDownloadState.set('downloading');
+    try {
+      await this.restaurantPayments.downloadQrPoster();
+      this.qrDownloadState.set('success');
+    } catch {
+      this.qrDownloadState.set('error');
+    }
+  }
 }

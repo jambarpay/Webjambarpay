@@ -23,6 +23,16 @@
     </article>
 
     <aside class="panel qr-panel" aria-label="Code QR du restaurant">
+      <div class="qr-panel-heading">
+        <div class="qr-brand-mark">
+          <img src="assets/images/logo-jp.png" alt="Jambaar Pay" />
+        </div>
+        <div>
+          <span class="qr-eyebrow">QR de paiement</span>
+          <strong>{{ restaurantName() }}</strong>
+          <small>Prêt à être affiché en caisse</small>
+        </div>
+      </div>
       <div class="qr-frame">
         @if (qrCodeStatus() === 'ready') {
           <img
@@ -35,6 +45,23 @@
           <app-loading-state message="Génération du QR code…" />
         }
       </div>
+      <div class="qr-details">
+        <span>QR fixe téléphone</span>
+        <strong>{{ qrPhoneNumber() }}</strong>
+      </div>
+      <button
+        type="button"
+        class="qr-download-btn"
+        [disabled]="qrCodeStatus() !== 'ready' || qrDownloadState() === 'downloading'"
+        (click)="downloadQrPoster()">
+        <i class="pi" [class.pi-download]="qrDownloadState() !== 'downloading'" [class.pi-spin]="qrDownloadState() === 'downloading'" [class.pi-spinner]="qrDownloadState() === 'downloading'" aria-hidden="true"></i>
+        {{ qrDownloadState() === 'downloading' ? 'Préparation…' : 'Télécharger pour la caisse' }}
+      </button>
+      @if (qrDownloadState() === 'success') {
+        <span class="qr-feedback success"><i class="pi pi-check-circle"></i> Affiche prête à imprimer</span>
+      } @else if (qrDownloadState() === 'error') {
+        <span class="qr-feedback error"><i class="pi pi-exclamation-circle"></i> Téléchargement impossible</span>
+      }
     </aside>
   </section>
 
