@@ -33,7 +33,6 @@ export class RestaurantSettingsComponent {
   phone = '';
   email = '';
   address = '';
-  ninea = '';
   currentPassword = '';
   newPassword = '';
   confirmPassword = '';
@@ -103,8 +102,10 @@ export class RestaurantSettingsComponent {
     this.restaurant = restaurant;
     if (!restaurant) return;
     this.restaurantName = restaurant.name;
+    const profile = this.auth.getProfile();
+    this.managerName = profile?.name ?? '';
+    this.email = profile?.email ?? '';
     this.phone = restaurant.phoneNumber;
     this.address = [restaurant.street, restaurant.district, restaurant.city, restaurant.country].filter(Boolean).join(', ');
-    this.ninea = restaurant.registrationNumber;
   }
 }

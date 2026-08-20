@@ -13,12 +13,12 @@
 
       <label class="field" for="restaurant-manager">
         <span>Responsable</span>
-        <input id="restaurant-manager" [(ngModel)]="managerName" type="text" />
+        <input id="restaurant-manager" [(ngModel)]="managerName" type="text" readonly />
       </label>
 
       <label class="field" for="restaurant-email">
         <span>Email</span>
-        <input id="restaurant-email" [(ngModel)]="email" type="email" />
+        <input id="restaurant-email" [(ngModel)]="email" type="email" readonly />
       </label>
 
       <label class="field" for="restaurant-phone">
@@ -26,14 +26,9 @@
         <input id="restaurant-phone" [(ngModel)]="phone" type="text" />
       </label>
 
-      <label class="field" for="restaurant-address">
+      <label class="field field-full" for="restaurant-address">
         <span>Adresse</span>
         <input id="restaurant-address" [(ngModel)]="address" type="text" />
-      </label>
-
-      <label class="field" for="restaurant-ninea">
-        <span>NINEA</span>
-        <input id="restaurant-ninea" [(ngModel)]="ninea" type="text" />
       </label>
     </div>
 
