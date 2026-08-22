@@ -281,12 +281,9 @@ export class RestaurantPaymentsFacade {
     context.shadowColor = 'transparent';
     context.drawImage(qrImage, qrX, qrY, qrSize, qrSize);
 
-    context.fillStyle = '#f07a2a';
-    context.font = '700 30px Arial';
-    context.fillText(`Téléphone lié : ${this.qrPhoneNumber()}`, canvas.width / 2, 1335);
     context.fillStyle = '#8b8897';
     context.font = '400 24px Arial';
-    context.fillText('Paiement sécurisé avec Jambaar Pay', canvas.width / 2, 1390);
+    context.fillText('Paiement sécurisé avec Jambaar Pay', canvas.width / 2, 1335);
 
     const link = document.createElement('a');
     const fileName = this.restaurantName()
