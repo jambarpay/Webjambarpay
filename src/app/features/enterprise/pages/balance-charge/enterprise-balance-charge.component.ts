@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -26,6 +26,14 @@ export class EnterpriseBalanceChargeComponent {
   private readonly facade = inject(EnterpriseEmployeesFacade);
 
   readonly employees = this.facade.employeeOptions;
+  readonly employeeSearchTerm = signal('');
+  readonly filteredEmployees = computed(() => {
+    const query = this.employeeSearchTerm().trim().toLowerCase();
+    if (!query) return this.employees();
+
+    return this.employees().filter(employee => [employee.name, employee.id, employee.phone, employee.email]
+      .some(value => value.toLowerCase().includes(query)));
+  });
   readonly step = signal<1 | 2 | 3>(1);
   readonly submitted = signal(false);
   readonly errorMessage = signal('');

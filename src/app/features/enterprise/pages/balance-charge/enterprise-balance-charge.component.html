@@ -37,19 +37,39 @@
         </div>
 
         @if (scope === 'selected') {
-          <div class="employee-picker">
-            @for (employee of employees(); track employee.id) {
-              <label [for]="'employee-' + employee.id">
-                <input
-                  [id]="'employee-' + employee.id"
-                  type="checkbox"
-                  [checked]="isSelected(employee.id)"
-                  (change)="toggleEmployee(employee.id, $any($event.target).checked)" />
-                <span><strong>{{ employee.name }}</strong><small>{{ employee.email }}</small></span>
-                <em>{{ employee.balance }}</em>
-              </label>
+          <div class="employee-search">
+            <i class="pi pi-search" aria-hidden="true"></i>
+            <input
+              type="search"
+              [ngModel]="employeeSearchTerm()"
+              (ngModelChange)="employeeSearchTerm.set($event)"
+              placeholder="Rechercher par nom ou identifiant..."
+              aria-label="Rechercher un salarié par nom ou identifiant" />
+            @if (employeeSearchTerm()) {
+              <button type="button" class="clear-search" (click)="employeeSearchTerm.set('')" aria-label="Effacer la recherche">
+                <i class="pi pi-times" aria-hidden="true"></i>
+              </button>
             }
           </div>
+          @if (employeeSearchTerm().trim()) {
+            <div class="employee-picker">
+              @for (employee of filteredEmployees(); track employee.id) {
+                <label [for]="'employee-' + employee.id">
+                  <input
+                    [id]="'employee-' + employee.id"
+                    type="checkbox"
+                    [checked]="isSelected(employee.id)"
+                    (change)="toggleEmployee(employee.id, $any($event.target).checked)" />
+                  <span><strong>{{ employee.name }}</strong><small>{{ employee.email }}</small></span>
+                  <em>{{ employee.balance }}</em>
+                </label>
+              } @empty {
+                <p class="empty-search">Aucun salarié ne correspond à votre recherche.</p>
+              }
+            </div>
+          } @else {
+            <p class="search-hint">Saisissez le nom ou l’identifiant du salarié pour afficher un résultat.</p>
+          }
           @if (submitted() && !selectedEmployeeIds.length) {
             <p class="field-error">Sélectionnez au moins un salarié.</p>
           }

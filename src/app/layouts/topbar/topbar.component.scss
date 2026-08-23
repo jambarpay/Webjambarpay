@@ -168,12 +168,19 @@
   font-weight: 500;
 }
 
-.avatar-photo {
+.avatar-initials {
+  display: grid;
+  place-items: center;
   width: 2.5rem;
   height: 2.5rem;
-  border-radius: 50%;
-  object-fit: cover;
   flex-shrink: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, $orange-accent, #f5a05f);
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
 }
 
 // ── Responsive ────────────────────────────────────────────────────────────────
@@ -224,7 +231,7 @@
     display: grid;
   }
 
-  .avatar-photo {
+  .avatar-initials {
     width: 2.5rem;
     height: 2.5rem;
   }

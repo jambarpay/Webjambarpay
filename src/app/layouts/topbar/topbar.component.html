@@ -57,11 +57,12 @@
           <span class="user-name">{{ profile?.name ?? 'Admin' }}</span>
           <span class="user-role">{{ profile?.role }}</span>
         </div>
-        <img
-          src="assets/images/avatar-admin.png"
-          [alt]="profile?.name ?? 'Admin'"
-          class="avatar-photo"
-          />
+        <span
+          class="avatar-initials"
+          role="img"
+          [attr.aria-label]="'Initiales de ' + (profile?.name ?? 'Admin')">
+          {{ profileInitials }}
+        </span>
       </div>
     }
   </div>
