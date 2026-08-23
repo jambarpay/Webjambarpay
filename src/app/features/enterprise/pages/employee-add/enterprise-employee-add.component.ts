@@ -8,11 +8,13 @@ import { ApiEnvelope } from '../../../../core/http/models/api-response';
 import {
   hasMinLength,
   hasValue,
+  isValidEmail,
   isValidSenegalPhone,
 } from '../../../../core/utils/form-validation';
 
 interface EmployeeForm {
   name: string;
+  email: string;
   phone: string;
 }
 
@@ -33,6 +35,7 @@ export class EnterpriseEmployeeAddComponent {
 
   form: EmployeeForm = {
     name: '',
+    email: '',
     phone: '',
   };
 
@@ -51,10 +54,12 @@ export class EnterpriseEmployeeAddComponent {
         phoneNumber: string;
         firstName: string;
         lastName: string;
+        email: string;
       }>('users/register/employee', {
         phoneNumber: this.form.phone.replace(/\D/g, '').replace(/^221/, ''),
         firstName,
         lastName: lastNameParts.join(' ') || firstName,
+        email: this.form.email.trim().toLowerCase(),
       }));
       await this.router.navigate(['/enterprise-employees']);
     } catch (error) {
@@ -66,6 +71,7 @@ export class EnterpriseEmployeeAddComponent {
 
   private isFormValid(): boolean {
     return !this.nameError
+      && !this.emailError
       && !this.phoneError;
   }
 
@@ -78,6 +84,12 @@ export class EnterpriseEmployeeAddComponent {
   get phoneError(): string {
     if (!hasValue(this.form.phone)) return 'Le numero de telephone est requis.';
     if (!isValidSenegalPhone(this.form.phone)) return 'Veuillez saisir un numero senegalais valide sur 9 chiffres.';
+    return '';
+  }
+
+  get emailError(): string {
+    if (!hasValue(this.form.email)) return 'L’adresse e-mail est requise.';
+    if (!isValidEmail(this.form.email)) return 'Veuillez saisir une adresse e-mail valide.';
     return '';
   }
 

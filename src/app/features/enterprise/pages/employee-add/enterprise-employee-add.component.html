@@ -11,6 +11,14 @@
         }
       </label>
 
+      <label class="field" for="employee-email">
+        <span>Adresse e-mail<strong>*</strong></span>
+        <input id="employee-email" type="email" name="email" [(ngModel)]="form.email" [class.input-invalid]="submitted() && !!emailError" placeholder="Ex : awa.diop@entreprise.com" autocomplete="email" />
+        @if (submitted() && !!emailError) {
+          <small class="field-error">{{ emailError }}</small>
+        }
+      </label>
+
       <label class="field" for="employee-phone">
         <span>Numero de t&eacute;l&eacute;phone<strong>*</strong></span>
         <input id="employee-phone" type="tel" name="phone" [(ngModel)]="form.phone" [class.input-invalid]="submitted() && !!phoneError" placeholder="Ex : 77 123 45 67" />
@@ -22,7 +30,7 @@
     </div>
 
     <p class="helper-text">
-      Le user-service enregistre le nom et le num&eacute;ro puis envoie un code OTP par WhatsApp au salari&eacute;.
+      L’adresse e-mail est enregistrée avec le salarié. Le user-service envoie toujours le code OTP par WhatsApp.
     </p>
 
     @if (errorMessage()) {

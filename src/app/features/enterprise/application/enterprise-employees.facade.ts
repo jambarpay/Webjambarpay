@@ -27,6 +27,7 @@ interface BackendUserDto {
   phoneNumber: string;
   firstName: string;
   lastName: string;
+  email?: string | null;
   status: 'PENDING_OTP' | 'ACTIVE' | 'BLOCKED' | 'DISABLED';
 }
 
@@ -238,7 +239,7 @@ export class EnterpriseEmployeesFacade {
       id: user.id,
       walletId: wallet?.id ?? null,
       name: [user.firstName, user.lastName].filter(Boolean).join(' '),
-      email: '—',
+      email: user.email?.trim() || '—',
       phone: user.phoneNumber,
       balance: wallet ? `${new Intl.NumberFormat('fr-FR').format(wallet.balance)} ${wallet.currency}` : 'Indisponible',
       status: user.status === 'ACTIVE' && (wallet?.active ?? true) ? 'Validé' : 'Inactif',
@@ -247,10 +248,11 @@ export class EnterpriseEmployeesFacade {
 
   private toRegistrationRequest(record: ImportedRecord): RegistrationRequest | null {
     const name = this.dataTransfer.getValue(record, ['name', 'nom', 'employee', 'salarie']).trim();
+    const email = this.dataTransfer.getValue(record, ['email', 'mail', 'e-mail']).trim().toLowerCase();
     const phoneNumber = this.dataTransfer.getValue(record, ['phone', 'telephone']).replace(/\D/g, '').replace(/^221/, '');
     const [firstName, ...lastNameParts] = name.split(/\s+/);
-    if (!firstName || !lastNameParts.length || !/^\d{9}$/.test(phoneNumber)) return null;
-    return { phoneNumber, firstName, lastName: lastNameParts.join(' ') };
+    if (!firstName || !lastNameParts.length || !/^\d{9}$/.test(phoneNumber) || !email) return null;
+    return { phoneNumber, firstName, lastName: lastNameParts.join(' '), email };
   }
 
   private handleLoadError(error: unknown): void {
@@ -268,6 +270,7 @@ interface RegistrationRequest {
   phoneNumber: string;
   firstName: string;
   lastName: string;
+  email: string;
 }
 
 function isRegistrationRequest(value: RegistrationRequest | null): value is RegistrationRequest {
