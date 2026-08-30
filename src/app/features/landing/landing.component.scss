@@ -325,7 +325,7 @@ h1 em, h2 em { color: white; font-weight: 400; }
 .contact-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 50px; padding: 0 24px; border-radius: 9px; font-size: 14px; font-weight: 800; text-decoration: none; }
 .contact-button-whatsapp { color: #ffffff; background: #22c55e; }
 .contact-button-email { color: var(--ink); border: 1px solid var(--ink); background: #ffffff; }
-.contact-button-whatsapp span { font-size: 10px; letter-spacing: -2px; }
+.contact-button i { font-size: 1.05rem; }
 
 .numbers { padding-block: 110px; }
 .numbers-grid { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 55px; border-top: 1px solid #d7ddd7; border-bottom: 1px solid #d7ddd7; }
