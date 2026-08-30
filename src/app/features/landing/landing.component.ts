@@ -1,6 +1,6 @@
 import { DOCUMENT } from '@angular/common';
-import { AfterViewInit, ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { AfterViewInit, ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 
 interface PortalCard {
   readonly title: string;
@@ -27,10 +27,8 @@ interface PricingPlan {
   readonly name: string;
   readonly audience: string;
   readonly description: string;
-  readonly monthlyPrice: string;
   readonly features: readonly string[];
   readonly featured?: boolean;
-  readonly amount: number;
 }
 
 @Component({
@@ -46,8 +44,8 @@ interface PricingPlan {
 export class LandingComponent implements AfterViewInit {
   private readonly document = inject(DOCUMENT);
   private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
-  readonly paymentMessage = signal('');
+
+  readonly whatsappHref = 'https://wa.me/221780001122?text=Bonjour%20JambaarPay%2C%20je%20souhaite%20demander%20une%20offre.';
 
   readonly benefits: readonly PortalCard[] = [
     {
@@ -88,16 +86,12 @@ export class LandingComponent implements AfterViewInit {
       name: 'Essentiel',
       audience: 'Petites équipes',
       description: 'Pour démarrer simplement la gestion des repas de vos salariés.',
-      monthlyPrice: '75 000',
-      amount: 75000,
       features: ['Gestion des salariés', 'Chargement des soldes', 'Historique des transactions'],
     },
     {
       name: 'Entreprise',
       audience: 'Équipes en croissance',
       description: 'Pour piloter les paiements et les données de plusieurs équipes.',
-      monthlyPrice: '150 000',
-      amount: 150000,
       features: ['Toutes les fonctions Essentiel', 'Exports CSV et PDF', 'Suivi et reporting avancés'],
       featured: true,
     },
@@ -105,8 +99,6 @@ export class LandingComponent implements AfterViewInit {
       name: 'Sur mesure',
       audience: 'Grandes organisations',
       description: 'Un accompagnement adapté à vos volumes et à votre organisation.',
-      monthlyPrice: '250 000',
-      amount: 250000,
       features: ['Configuration personnalisée', 'Accompagnement au déploiement', 'Support dédié'],
     },
   ];
@@ -148,16 +140,5 @@ export class LandingComponent implements AfterViewInit {
     if (target) {
       target.scrollIntoView({ block: 'start' });
     }
-    if (this.route.snapshot.queryParamMap.get('status') === 'success') {
-      this.paymentMessage.set('Paiement reçu. Votre demande d’activation est en cours de vérification.');
-    }
-  }
-
-  startPlanRegistration(plan: PricingPlan): void {
-    sessionStorage.setItem('jp_pending_subscription_plan', JSON.stringify({
-      name: plan.name,
-      amount: plan.amount,
-    }));
-    void this.router.navigate(['/register'], { queryParams: { plan: plan.name } });
   }
 }

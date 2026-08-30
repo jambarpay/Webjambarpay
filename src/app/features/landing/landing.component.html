@@ -139,6 +139,10 @@
 
     <section id="securite" class="security-section">
       <div class="security-visual">
+        <img
+          class="security-image"
+          src="assets/images/landing-dashboard-preview.png"
+          alt="Aperçu sécurisé du tableau de bord JambaarPay" />
         <div class="shield" aria-hidden="true"><span>✓</span></div>
         <div class="security-badge badge-top"><span>JWT</span> Session sécurisée</div>
         <div class="security-badge badge-bottom"><span>Audit</span> Actions traçables</div>
@@ -161,10 +165,8 @@
 
     <section id="forfaits" class="pricing section-container">
       <div class="pricing-heading">
-        <div>
-          <p class="eyebrow eyebrow-dark"><span></span> Des offres adaptées à votre organisation</p>
-          <h2>Choisissez votre forfait.</h2>
-        </div>
+        <p class="eyebrow eyebrow-dark"><span></span> Des offres adaptées à votre organisation</p>
+        <h2>Une offre taillée<br /><em>pour vos besoins.</em></h2>
         <p>
           Les tarifs sont établis selon le nombre de salariés, les volumes de paiement et le
           niveau d’accompagnement souhaité.
@@ -180,23 +182,36 @@
             <p class="plan-audience">{{ plan.audience }}</p>
             <h3>{{ plan.name }}</h3>
             <p class="plan-description">{{ plan.description }}</p>
-            <div class="plan-price">
-              <strong>{{ plan.monthlyPrice }}</strong>
-              <span>FCFA / mois + 1 % sur le volume</span>
-            </div>
             <ul>
               @for (feature of plan.features; track feature) {
                 <li><span>✓</span>{{ feature }}</li>
               }
             </ul>
-            <button type="button" class="plan-button" (click)="startPlanRegistration(plan)">
-              S'inscrire <span aria-hidden="true">↗</span>
-            </button>
+            <a
+              class="plan-button"
+              routerLink="/a-propos"
+              [queryParams]="{ offre: plan.name }">
+              Demander une offre <span aria-hidden="true">→</span>
+            </a>
           </article>
         }
       </div>
-      @if (paymentMessage()) { <p class="pricing-note">{{ paymentMessage() }}</p> }
-      <p class="pricing-note">Aucun montant n’est prélevé depuis cette page. Notre équipe confirme avec vous l’offre choisie avant toute souscription.</p>
+
+      <div class="offer-contact">
+        <div>
+          <h3>Pas sûr de l’offre qui vous convient&nbsp;?</h3>
+          <p>Contactez-nous directement — on vous propose une offre adaptée sous 24h.</p>
+        </div>
+        <div class="contact-actions">
+          <a class="contact-button contact-button-whatsapp" [href]="whatsappHref" target="_blank" rel="noopener noreferrer">
+            <span aria-hidden="true">•••</span> WhatsApp
+          </a>
+          <a class="contact-button contact-button-email" href="mailto:support@jambaarpay.com?subject=Demande%20d'offre">
+            Nous écrire <span aria-hidden="true">→</span>
+          </a>
+        </div>
+      </div>
+      <p class="pricing-note">Aucun montant n’est prélevé sur cette page. Notre équipe confirme l’offre adaptée après étude de vos besoins.</p>
     </section>
 
     <section class="numbers section-container">

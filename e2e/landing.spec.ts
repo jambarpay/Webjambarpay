@@ -33,10 +33,10 @@ test.describe('page publique Jambaar Pay', () => {
 
     await expect(page).toHaveURL(/\/forfaits$/);
     await expect(page.locator('#forfaits')).toBeInViewport();
-    await expect(page.locator('#forfaits')).toContainText('75 000');
-    await expect(page.locator('#forfaits')).toContainText('150 000');
-    await expect(page.locator('#forfaits')).toContainText('250 000');
-    await expect(page.locator('#forfaits')).toContainText('FCFA / mois + 1 % sur le volume');
+    await expect(page.locator('#forfaits')).toContainText('Une offre taillée');
+    await expect(page.locator('#forfaits')).toContainText('Demander une offre');
+    await expect(page.locator('#forfaits')).toContainText('Pas sûr de l’offre qui vous convient');
+    await expect(page.locator('#forfaits')).toContainText('Aucun montant n’est prélevé');
     expect(new URL(page.url()).hash).toBe('');
   });
 });
