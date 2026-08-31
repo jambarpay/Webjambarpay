@@ -34,10 +34,12 @@ export class EnterpriseEmployeesComponent {
   readonly pageSizeOptions = this.facade.pageSizeOptions;
   readonly totalPages = this.facade.totalPages;
   readonly employees = this.facade.employees;
+  readonly loading = this.facade.loading;
 
   readonly filterMenuOpen = signal(false);
 
   constructor() {
+    this.facade.loadEmployeesPage();
     const successMessage = this.router.getCurrentNavigation()?.extras.state?.['balanceChargeSuccess'];
     if (typeof successMessage === 'string') {
       this.facade.setSuccessFeedback(successMessage);

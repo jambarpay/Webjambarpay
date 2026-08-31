@@ -1,5 +1,5 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
-import { catchError, firstValueFrom, forkJoin, map, of } from 'rxjs';
+import { catchError, finalize, firstValueFrom, forkJoin, map, of, switchMap } from 'rxjs';
 import { AuthFacade } from '../../../core/auth/application/auth.facade';
 import { BackendApiClient } from '../../../core/http/backend-api.client';
 import { ApiEnvelope } from '../../../core/http/models/api-response';
@@ -31,6 +31,14 @@ interface BackendUserDto {
   status: 'PENDING_OTP' | 'ACTIVE' | 'BLOCKED' | 'DISABLED';
 }
 
+interface BackendEmployeePage {
+  content: BackendUserDto[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
 interface BackendWalletDto {
   id: string;
   balance: number;
@@ -50,7 +58,7 @@ interface BackendBulkTransferResponse {
 export type EmployeeStatusFilter = 'Tous' | EmployeeRow['status'];
 export type EmployeeFeedbackState = { type: 'success' | 'error'; message: string } | null;
 
-const DEFAULT_PAGE_SIZE = 5;
+const DEFAULT_PAGE_SIZE = 10;
 const PAGE_SIZE_OPTIONS = [5, 10];
 const STATUS_OPTIONS: EmployeeStatusFilter[] = ['Tous', 'Validé', 'Inactif'];
 
@@ -61,6 +69,10 @@ export class EnterpriseEmployeesFacade {
   private readonly monitoringRepository = inject<MonitoringRepository>(MONITORING_REPOSITORY);
   private readonly dataTransfer = inject(DataTransferService);
   private readonly allEmployees = signal<EmployeeRow[]>([]);
+  private readonly pageEmployees = signal<EmployeeRow[]>([]);
+  private readonly serverTotalPages = signal(1);
+  private readonly paginatedMode = signal(false);
+  private searchRequestTimer: ReturnType<typeof setTimeout> | undefined;
   private readonly exportColumns: ExportColumn<EmployeeRow>[] = [
     { header: 'ID', value: employee => employee.id },
     { header: 'Nom', value: employee => employee.name },
@@ -88,31 +100,53 @@ export class EnterpriseEmployeesFacade {
       return matchesSearch && (status === 'Tous' || employee.status === status);
     });
   });
-  readonly totalPages = computed(() => Math.max(1, Math.ceil(this.filteredEmployees().length / this.pageSize())));
-  readonly employees = computed(() => sliceCurrentPage(this.filteredEmployees(), this.currentPage(), this.pageSize()));
+  readonly totalPages = computed(() => this.paginatedMode()
+    ? this.serverTotalPages()
+    : Math.max(1, Math.ceil(this.filteredEmployees().length / this.pageSize())));
+  readonly employees = computed(() => this.paginatedMode()
+    ? this.filterEmployees(this.pageEmployees())
+    : sliceCurrentPage(this.filteredEmployees(), this.currentPage(), this.pageSize()));
   readonly employeeOptions = computed(() => this.allEmployees());
 
-  constructor() {
-    this.loadEmployees();
+  loadEmployeesPage(): void {
+    this.paginatedMode.set(true);
+    this.fetchEmployeesPage();
+  }
+
+  loadAllEmployees(): void {
+    this.paginatedMode.set(false);
+    this.fetchAllEmployees();
   }
 
   setSearchTerm(value: string): void {
     this.searchTerm.set(value);
     this.currentPage.set(1);
+    if (this.paginatedMode()) {
+      if (this.searchRequestTimer) clearTimeout(this.searchRequestTimer);
+      this.searchRequestTimer = setTimeout(() => {
+        this.searchRequestTimer = undefined;
+        this.fetchEmployeesPage();
+      }, 250);
+    }
   }
 
   setStatusFilter(status: EmployeeStatusFilter): void {
     this.statusFilter.set(status);
     this.currentPage.set(1);
+    this.refreshEmployees();
   }
 
   setPageSize(size: number): void {
     this.pageSize.set(size);
     this.currentPage.set(1);
+    this.refreshEmployees();
   }
 
   setPage(page: number): void {
-    if (page >= 1 && page <= this.totalPages()) this.currentPage.set(page);
+    if (page >= 1 && page <= this.totalPages()) {
+      this.currentPage.set(page);
+      if (this.paginatedMode()) this.fetchEmployeesPage();
+    }
   }
 
   async importEmployees(file: File): Promise<void> {
@@ -124,7 +158,7 @@ export class EnterpriseEmployeesFacade {
       this.api.post<ApiEnvelope<BackendUserDto>, RegistrationRequest>('users/register/employee', request),
     )));
     this.setFeedback('success', `${requests.length} salarié(s) transmis au user-service.`);
-    this.loadEmployees();
+    this.refreshEmployees();
   }
 
   async importBalances(): Promise<void> {
@@ -201,7 +235,7 @@ export class EnterpriseEmployeesFacade {
     this.setFeedback('success', message);
   }
 
-  private loadEmployees(): void {
+  private fetchAllEmployees(): void {
     this.loading.set(true);
     const companyId = this.auth.getProfile()?.id;
     if (!companyId) {
@@ -210,17 +244,63 @@ export class EnterpriseEmployeesFacade {
     }
     this.api.get<ApiEnvelope<BackendUserDto[]>>(`users/company/${encodeURIComponent(companyId)}/employees`).pipe(
       map(response => response.data),
-      map(users => users.map(user => this.loadEmployeeWallet(user))),
-      map(requests => requests.length ? forkJoin(requests) : of([])),
+      switchMap(users => users.length
+        ? forkJoin(users.map(user => this.loadEmployeeWallet(user)))
+        : of([])),
+      finalize(() => this.loading.set(false)),
     ).subscribe({
-      next: employeesRequest => employeesRequest.subscribe({
-        next: employees => {
-          this.allEmployees.set(employees);
-          this.loading.set(false);
-        },
-        error: error => this.handleLoadError(error),
-      }),
+      next: employees => this.allEmployees.set(employees),
       error: error => this.handleLoadError(error),
+    });
+  }
+
+  private fetchEmployeesPage(): void {
+    this.loading.set(true);
+    const companyId = this.auth.getProfile()?.id;
+    if (!companyId) {
+      this.handleLoadError(new Error('La session entreprise est requise pour charger les salariés.'));
+      return;
+    }
+    this.api.get<ApiEnvelope<BackendEmployeePage>>(`users/company/${encodeURIComponent(companyId)}/employees/page`, {
+      params: {
+        page: this.currentPage() - 1,
+        size: this.pageSize(),
+        search: this.searchTerm().trim(),
+      },
+    }).pipe(
+      map(response => response.data),
+      switchMap(page => (page.content.length
+        ? forkJoin(page.content.map(user => this.loadEmployeeWallet(user)))
+        : of([])).pipe(map(employees => ({ page, employees })))),
+      finalize(() => this.loading.set(false)),
+    ).subscribe({
+      next: ({ page, employees }) => {
+        const totalPages = Math.max(1, page.totalPages);
+        if (this.currentPage() > totalPages) {
+          this.currentPage.set(totalPages);
+          this.fetchEmployeesPage();
+          return;
+        }
+        this.pageEmployees.set(employees);
+        this.serverTotalPages.set(totalPages);
+      },
+      error: error => this.handleLoadError(error),
+    });
+  }
+
+  private refreshEmployees(): void {
+    if (this.paginatedMode()) {
+      this.fetchEmployeesPage();
+    }
+  }
+
+  private filterEmployees(employees: readonly EmployeeRow[]): EmployeeRow[] {
+    const query = this.searchTerm().trim().toLowerCase();
+    const status = this.statusFilter();
+    return employees.filter(employee => {
+      const matchesSearch = !query || [employee.name, employee.email, employee.phone, employee.balance]
+        .some(value => value.toLowerCase().includes(query));
+      return matchesSearch && (status === 'Tous' || employee.status === status);
     });
   }
 
@@ -257,6 +337,8 @@ export class EnterpriseEmployeesFacade {
 
   private handleLoadError(error: unknown): void {
     this.allEmployees.set([]);
+    this.pageEmployees.set([]);
+    this.serverTotalPages.set(1);
     this.loading.set(false);
     this.setErrorFeedback(error, 'Le user-service est indisponible.');
   }

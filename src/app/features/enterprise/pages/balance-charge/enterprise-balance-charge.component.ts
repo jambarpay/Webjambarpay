@@ -44,6 +44,7 @@ export class EnterpriseBalanceChargeComponent {
   reason = '';
 
   constructor() {
+    this.facade.loadAllEmployees();
     void this.completeKkiapayCheckout();
   }
 

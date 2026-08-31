@@ -118,7 +118,13 @@
     </ng-template>
     <ng-template pTemplate="emptymessage">
       <tr>
-        <td colspan="6" class="empty-message"><app-empty-state message="Aucun salarié trouvé." /></td>
+        <td colspan="6" class="empty-message">
+          @if (loading()) {
+            Chargement des salariés…
+          } @else {
+            <app-empty-state message="Aucun salarié trouvé." />
+          }
+        </td>
       </tr>
     </ng-template>
   </p-table>
