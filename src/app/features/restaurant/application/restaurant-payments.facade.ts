@@ -56,8 +56,19 @@ interface BackendPaymentPage {
   content: BackendPaymentDto[];
 }
 
+interface CachedRestaurantQr {
+  ownerId: string;
+  restaurantId: string;
+  restaurantName: string;
+  phoneNumber: string;
+  qrCodeUrl: string;
+  cachedAt: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class RestaurantPaymentsFacade {
+  private static readonly qrCacheKeyPrefix = 'jp_restaurant_qr_';
+
   private readonly api = inject(BackendApiClient);
   private readonly auth = inject(AuthFacade);
   private readonly paymentsState = signal<RestaurantPaymentRecord[]>([]);
@@ -82,24 +93,41 @@ export class RestaurantPaymentsFacade {
       return;
     }
 
+    // The merchant QR is fixed. Restore it before contacting the backend so
+    // the restaurant can keep accepting scans when the network is down.
+    this.restoreCachedQr(ownerId);
+
     this.api.get<BackendRestaurantDto[]>(`restaurants/owner/${encodeURIComponent(ownerId)}`).subscribe({
       next: restaurants => {
         const restaurant = restaurants[0];
         if (!restaurant) {
           this.paymentsState.set([]);
+          this.clearCachedQr(ownerId);
           this.clearQrImage();
           this.qrCodeStatus.set('error');
           return;
         }
         this.restaurantName.set(restaurant.name || 'Votre restaurant');
         this.qrPhoneNumber.set(restaurant.phoneNumber);
+        const cachedQr = this.readCachedQr(ownerId);
+        if (cachedQr && cachedQr.restaurantId !== restaurant.id) {
+          // Do not show a QR belonging to a previous restaurant after the
+          // backend has confirmed that the account now points elsewhere.
+          this.clearCachedQr(ownerId);
+          this.clearQrImage();
+          this.qrCodeStatus.set('loading');
+        }
         this.loadPayments(restaurant.id);
-        this.generateRestaurantQr(restaurant);
+        this.generateRestaurantQr(restaurant, ownerId);
       },
       error: () => {
         this.paymentsState.set([]);
-        this.clearQrImage();
-        this.qrCodeStatus.set('error');
+        // Keep the last valid QR visible. It is a fixed merchant QR and does
+        // not need to be regenerated for every offline session.
+        if (!this.restoreCachedQr(ownerId)) {
+          this.clearQrImage();
+          this.qrCodeStatus.set('error');
+        }
       },
     });
   }
@@ -137,8 +165,12 @@ export class RestaurantPaymentsFacade {
     };
   }
 
-  private async generateRestaurantQr(restaurant: BackendRestaurantDto): Promise<void> {
+  private async generateRestaurantQr(
+    restaurant: BackendRestaurantDto,
+    ownerId: string,
+  ): Promise<void> {
     if (restaurant.status === 'SUSPENDED' || restaurant.status === 'DISABLED') {
+      this.clearCachedQr(ownerId);
       this.clearQrImage();
       this.qrCodeStatus.set('error');
       return;
@@ -148,6 +180,7 @@ export class RestaurantPaymentsFacade {
     try {
       // Restaurant activation is a back-office compliance decision, not an owner action.
       if (restaurant.status !== 'ACTIVE') {
+        this.clearCachedQr(ownerId);
         this.clearQrImage();
         this.qrCodeStatus.set('error');
         return;
@@ -181,11 +214,19 @@ export class RestaurantPaymentsFacade {
       const image = await firstValueFrom(this.api.getBlob(
         `qrs/${encodeURIComponent(qr.qrReference)}/image`,
       ));
-      await this.replaceQrImage(image);
+      const qrCodeUrl = await this.replaceQrImage(image);
+      this.saveCachedQr({
+        ownerId,
+        restaurantId: restaurant.id,
+        restaurantName: restaurant.name || 'Votre restaurant',
+        phoneNumber: restaurant.phoneNumber,
+        qrCodeUrl,
+        cachedAt: new Date().toISOString(),
+      });
       this.qrCodeStatus.set('ready');
     } catch {
-      this.clearQrImage();
-      this.qrCodeStatus.set('error');
+      // A previously cached image remains usable when the refresh fails.
+      this.qrCodeStatus.set(this.qrCodeUrl() ? 'ready' : 'error');
     }
   }
 
@@ -208,8 +249,7 @@ export class RestaurantPaymentsFacade {
     ));
   }
 
-  private replaceQrImage(image: Blob): Promise<void> {
-    this.clearQrImage();
+  private replaceQrImage(image: Blob): Promise<string> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => {
@@ -219,7 +259,7 @@ export class RestaurantPaymentsFacade {
         }
 
         this.qrCodeUrl.set(reader.result);
-        resolve();
+        resolve(reader.result);
       };
       reader.onerror = () => reject(reader.error ?? new Error('QR image could not be read.'));
       reader.readAsDataURL(image);
@@ -228,6 +268,65 @@ export class RestaurantPaymentsFacade {
 
   private clearQrImage(): void {
     this.qrCodeUrl.set('');
+  }
+
+  private qrCacheKey(ownerId: string): string {
+    return `${RestaurantPaymentsFacade.qrCacheKeyPrefix}${ownerId}`;
+  }
+
+  private readCachedQr(ownerId: string): CachedRestaurantQr | null {
+    try {
+      const raw = localStorage.getItem(this.qrCacheKey(ownerId));
+      if (!raw) return null;
+
+      const cached = JSON.parse(raw) as Partial<CachedRestaurantQr>;
+      if (
+        cached.ownerId !== ownerId
+        || typeof cached.restaurantId !== 'string'
+        || typeof cached.qrCodeUrl !== 'string'
+        || !cached.qrCodeUrl.startsWith('data:image/')
+      ) {
+        return null;
+      }
+
+      return {
+        ownerId,
+        restaurantId: cached.restaurantId,
+        restaurantName: typeof cached.restaurantName === 'string' ? cached.restaurantName : 'Votre restaurant',
+        phoneNumber: typeof cached.phoneNumber === 'string' ? cached.phoneNumber : 'Indisponible',
+        qrCodeUrl: cached.qrCodeUrl,
+        cachedAt: typeof cached.cachedAt === 'string' ? cached.cachedAt : '',
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  private restoreCachedQr(ownerId: string): boolean {
+    const cachedQr = this.readCachedQr(ownerId);
+    if (!cachedQr) return false;
+
+    this.restaurantName.set(cachedQr.restaurantName);
+    this.qrPhoneNumber.set(cachedQr.phoneNumber);
+    this.qrCodeUrl.set(cachedQr.qrCodeUrl);
+    this.qrCodeStatus.set('ready');
+    return true;
+  }
+
+  private saveCachedQr(qr: CachedRestaurantQr): void {
+    try {
+      localStorage.setItem(this.qrCacheKey(qr.ownerId), JSON.stringify(qr));
+    } catch {
+      // Storage can be unavailable in private browsing; the live QR still works.
+    }
+  }
+
+  private clearCachedQr(ownerId: string): void {
+    try {
+      localStorage.removeItem(this.qrCacheKey(ownerId));
+    } catch {
+      // Ignore storage cleanup failures.
+    }
   }
 
   async downloadQrPoster(): Promise<void> {
