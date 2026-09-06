@@ -1,6 +1,8 @@
 User-agent: *
 Allow: /
 
+Disallow: /login
+Disallow: /register
 Disallow: /dashboard
 Disallow: /companies
 Disallow: /restaurants
@@ -9,3 +11,5 @@ Disallow: /audit
 Disallow: /settings
 Disallow: /enterprise-
 Disallow: /restaurant-
+
+Sitemap: https://jambaarpay.com/sitemap.xml
