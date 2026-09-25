@@ -12,6 +12,12 @@ import { protectedPage } from './core/routing/protected-page';
 const landingComponent = () =>
   import('./features/landing/landing.component').then(module => module.LandingComponent);
 
+const privacyPolicyRoute = {
+  path: 'privacy-policy',
+  title: 'Politique de confidentialité | JambaarPay',
+  loadComponent: () => import('./features/privacy/privacy-policy.component').then(module => module.PrivacyPolicyComponent),
+};
+
 const PUBLIC_LANDING_ROUTES: Routes = [
   {
     path: '',
@@ -59,6 +65,7 @@ const PUBLIC_LANDING_ROUTES: Routes = [
 ];
 
 export const routes: Routes = [
+  privacyPolicyRoute,
   ...PUBLIC_LANDING_ROUTES,
   ...AUTH_ROUTES,
   {
