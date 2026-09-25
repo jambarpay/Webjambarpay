@@ -113,6 +113,15 @@
             (click)="exportMonthlyReport(row)">
             <i class="pi pi-file-pdf"></i>
           </button>
+          <button
+            type="button"
+            class="row-action row-action-danger"
+            [disabled]="deletingEmployeeId() === row.id"
+            [attr.aria-label]="'Supprimer le salarié ' + row.name"
+            [title]="deletingEmployeeId() === row.id ? 'Suppression en cours…' : 'Supprimer le salarié'"
+            (click)="deleteEmployee(row)">
+            <i [class]="deletingEmployeeId() === row.id ? 'pi pi-spin pi-spinner' : 'pi pi-trash'"></i>
+          </button>
         </td>
       </tr>
     </ng-template>

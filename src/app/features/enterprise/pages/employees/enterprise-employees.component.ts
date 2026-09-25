@@ -35,6 +35,7 @@ export class EnterpriseEmployeesComponent {
   readonly totalPages = this.facade.totalPages;
   readonly employees = this.facade.employees;
   readonly loading = this.facade.loading;
+  readonly deletingEmployeeId = this.facade.deletingEmployeeId;
 
   readonly filterMenuOpen = signal(false);
 
@@ -94,6 +95,16 @@ export class EnterpriseEmployeesComponent {
     } catch (error) {
       this.facade.setErrorFeedback(error, 'Génération du rapport mensuel impossible.');
     }
+  }
+
+  async deleteEmployee(employee: Parameters<EnterpriseEmployeesFacade['deleteEmployee']>[0]): Promise<void> {
+    const confirmed = typeof window === 'undefined'
+      ? true
+      : window.confirm(
+        'Désactiver le compte de ' + employee.name + ' ? Ses opérations passées seront conservées.',
+      );
+    if (!confirmed) return;
+    await this.facade.deleteEmployee(employee);
   }
 
   onSearchChange(value: string): void {

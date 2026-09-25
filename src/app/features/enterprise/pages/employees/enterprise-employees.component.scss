@@ -275,6 +275,20 @@
   }
 }
 
+.row-action-danger {
+  color: $red-danger;
+
+  &:hover {
+    background: rgba($red-danger, 0.1);
+    color: $red-danger;
+  }
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.55;
+  }
+}
+
 .employees-pagination {
   display: flex;
   align-items: center;

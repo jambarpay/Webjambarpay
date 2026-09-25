@@ -88,6 +88,7 @@ export class EnterpriseEmployeesFacade {
   readonly currentPage = signal(1);
   readonly feedback = signal<EmployeeFeedbackState>(null);
   readonly loading = signal(true);
+  readonly deletingEmployeeId = signal<string | null>(null);
   readonly statusOptions = STATUS_OPTIONS;
   readonly pageSizeOptions = PAGE_SIZE_OPTIONS;
 
@@ -159,6 +160,21 @@ export class EnterpriseEmployeesFacade {
     )));
     this.setFeedback('success', `${requests.length} salarié(s) transmis au user-service.`);
     this.refreshEmployees();
+  }
+
+  async deleteEmployee(employee: EmployeeRow): Promise<void> {
+    if (this.deletingEmployeeId()) return;
+
+    this.deletingEmployeeId.set(employee.id);
+    try {
+      await firstValueFrom(this.api.delete('users/' + encodeURIComponent(employee.id)));
+      this.setFeedback('success', 'Le compte de ' + employee.name + ' a été désactivé.');
+      this.refreshEmployees();
+    } catch (error) {
+      this.setErrorFeedback(error, 'La suppression de ' + employee.name + ' a échoué.');
+    } finally {
+      this.deletingEmployeeId.set(null);
+    }
   }
 
   async importBalances(): Promise<void> {
