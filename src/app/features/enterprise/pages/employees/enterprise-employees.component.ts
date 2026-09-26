@@ -101,7 +101,7 @@ export class EnterpriseEmployeesComponent {
     const confirmed = typeof window === 'undefined'
       ? true
       : window.confirm(
-        'Désactiver le compte de ' + employee.name + ' ? Ses opérations passées seront conservées.',
+        'Supprimer définitivement le salarié ' + employee.name + ' ? Cette action est irréversible. Les opérations passées pourront rester conservées.',
       );
     if (!confirmed) return;
     await this.facade.deleteEmployee(employee);

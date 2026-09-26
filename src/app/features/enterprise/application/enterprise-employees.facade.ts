@@ -165,10 +165,18 @@ export class EnterpriseEmployeesFacade {
   async deleteEmployee(employee: EmployeeRow): Promise<void> {
     if (this.deletingEmployeeId()) return;
 
+    const companyId = this.auth.getProfile()?.id;
+    if (!companyId) {
+      this.setFeedback('error', 'La session entreprise est requise pour supprimer un salarié.');
+      return;
+    }
+
     this.deletingEmployeeId.set(employee.id);
     try {
-      await firstValueFrom(this.api.delete('users/' + encodeURIComponent(employee.id)));
-      this.setFeedback('success', 'Le compte de ' + employee.name + ' a été désactivé.');
+      await firstValueFrom(this.api.delete(
+        `users/company/${encodeURIComponent(companyId)}/employees/${encodeURIComponent(employee.id)}`,
+      ));
+      this.setFeedback('success', 'Le salarié ' + employee.name + ' a été supprimé.');
       this.refreshEmployees();
     } catch (error) {
       this.setErrorFeedback(error, 'La suppression de ' + employee.name + ' a échoué.');
