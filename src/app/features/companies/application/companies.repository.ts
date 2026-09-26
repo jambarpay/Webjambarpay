@@ -7,6 +7,7 @@ export interface CompaniesRepository {
   saveAll(companies: readonly Company[]): Observable<void>;
   upsert(company: Company): Observable<Company>;
   update(company: Company): Observable<Company>;
+  delete(id: string): Observable<void>;
   disable(id: string): Observable<void>;
   register(input: CompanyRegistration): Observable<Company>;
 }

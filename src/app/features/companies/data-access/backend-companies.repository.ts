@@ -84,6 +84,11 @@ export class BackendCompaniesRepository implements CompaniesRepository {
     ).pipe(map(() => undefined));
   }
 
+  delete(id: string): Observable<void> {
+    return this.api.delete<ApiEnvelope<null>>(`users/admin/${encodeURIComponent(id)}`)
+      .pipe(map(() => undefined));
+  }
+
   register(input: CompanyRegistration): Observable<Company> {
     const [firstName, ...lastNameParts] = input.managerName.trim().split(/\s+/);
     const phone = input.phone.replace(/\D/g, '').replace(/^221/, '');

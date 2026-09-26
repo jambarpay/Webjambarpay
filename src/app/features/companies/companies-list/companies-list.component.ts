@@ -53,11 +53,23 @@ export class CompaniesListComponent {
   editForm = { name: '', phoneNumber: '', address: '' };
 
   menuItemsFor(company: Company): MenuItem[] {
-    return [
+    const items: MenuItem[] = [
       { label: 'Voir détails', icon: 'pi pi-eye', command: () => this.viewDetails(company) },
       { label: 'Modifier', icon: 'pi pi-pencil', command: () => this.startEdit(company) },
-      { label: 'Supprimer', icon: 'pi pi-trash', styleClass: 'danger-item', command: () => void this.disable(company) },
     ];
+
+    if (company.status === 'Actif') {
+      items.push({ label: 'Désactiver', icon: 'pi pi-ban', command: () => void this.disable(company) });
+    }
+
+    items.push({
+      label: 'Supprimer définitivement',
+      icon: 'pi pi-trash',
+      styleClass: 'danger-item',
+      command: () => void this.delete(company),
+    });
+
+    return items;
   }
 
   @HostListener('document:click', ['$event'])
@@ -180,14 +192,26 @@ export class CompaniesListComponent {
   }
 
   async disable(company: Company): Promise<void> {
-    if (!window.confirm(`Supprimer l’entreprise « ${company.name} » ? Elle sera désactivée.`)) {
+    if (!window.confirm(`Désactiver l’entreprise « ${company.name} » ?`)) {
       return;
     }
 
     try {
       await this.facade.disableCompany(company);
     } catch (error) {
-      this.facade.setErrorFeedback(error, 'Suppression de l’entreprise impossible.');
+      this.facade.setErrorFeedback(error, 'Désactivation de l’entreprise impossible.');
+    }
+  }
+
+  async delete(company: Company): Promise<void> {
+    if (!window.confirm(`Supprimer définitivement l’entreprise « ${company.name} » ? Cette action est irréversible. Elle sera refusée si des comptes y sont encore rattachés.`)) {
+      return;
+    }
+
+    try {
+      await this.facade.deleteCompany(company);
+    } catch (error) {
+      this.facade.setErrorFeedback(error, 'Suppression définitive de l’entreprise impossible.');
     }
   }
 }

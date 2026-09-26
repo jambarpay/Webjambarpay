@@ -158,6 +158,13 @@ export class CompaniesListFacade {
     this.setFeedback('success', 'Entreprise désactivée avec succès.');
   }
 
+  async deleteCompany(company: Company): Promise<void> {
+    await firstValueFrom(this.companiesRepository.delete(company.id));
+    this.allCompanies.update(companies => companies.filter(item => item.id !== company.id));
+    this.currentPage.set(Math.min(this.currentPage(), this.totalPages()));
+    this.setFeedback('success', 'Entreprise supprimée définitivement.');
+  }
+
   setErrorFeedback(error: unknown, fallbackMessage: string): void {
     this.setFeedback('error', error instanceof Error ? error.message : fallbackMessage);
   }
