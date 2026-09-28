@@ -30,7 +30,7 @@
     "@angular/router": "20.3.28",
     "@primeuix/themes": "^3.0.0",
     "chart.js": "^4.5.1",
-    "primeicons": "^8.0.0",
+    "primeicons": "^8.0.2",
     "primeng": "^20.4.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
