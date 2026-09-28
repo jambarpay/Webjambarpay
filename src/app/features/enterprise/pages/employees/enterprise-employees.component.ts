@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
+import { MenuModule } from 'primeng/menu';
+import { MenuItem } from 'primeng/api';
 import { EmptyStateComponent } from '../../../../design-system/components/empty-state/empty-state.component';
 import { FeedbackMessageComponent } from '../../../../design-system/components/feedback-message/feedback-message.component';
 import { PaginationComponent } from '../../../../design-system/components/pagination/pagination.component';
@@ -14,7 +16,7 @@ import {
 
 @Component({
     selector: 'app-enterprise-employees',
-    imports: [FormsModule, TableModule, InputTextModule, EmptyStateComponent, FeedbackMessageComponent, PaginationComponent],
+    imports: [FormsModule, TableModule, InputTextModule, MenuModule, EmptyStateComponent, FeedbackMessageComponent, PaginationComponent],
     providers: [EnterpriseEmployeesFacade],
     templateUrl: './enterprise-employees.component.html',
     styleUrls: ['./enterprise-employees.component.scss'],
@@ -38,6 +40,28 @@ export class EnterpriseEmployeesComponent {
   readonly deletingEmployeeId = this.facade.deletingEmployeeId;
 
   readonly filterMenuOpen = signal(false);
+
+  menuItemsFor(employee: Parameters<EnterpriseEmployeesFacade['deleteEmployee']>[0]): MenuItem[] {
+    return [
+      {
+        label: 'Voir l’historique',
+        icon: 'pi pi-history',
+        command: () => this.goToEmployeeHistory(employee.name),
+      },
+      {
+        label: 'Rapport mensuel PDF',
+        icon: 'pi pi-file-pdf',
+        command: () => void this.exportMonthlyReport(employee),
+      },
+      {
+        label: 'Supprimer le salarié',
+        icon: 'pi pi-trash',
+        styleClass: 'danger-item',
+        disabled: this.deletingEmployeeId() === employee.id,
+        command: () => void this.deleteEmployee(employee),
+      },
+    ];
+  }
 
   constructor() {
     this.facade.loadEmployeesPage();

@@ -100,28 +100,12 @@
           <button
             type="button"
             class="row-action"
-            [attr.aria-label]="'Voir l’historique de ' + row.name"
-            title="Voir l’historique"
-            (click)="goToEmployeeHistory(row.name)">
-            <i class="pi pi-history"></i>
+            [attr.aria-label]="'Actions pour ' + row.name"
+            title="Actions"
+            (click)="employeeActionMenu.toggle($event)">
+            <i class="pi pi-ellipsis-v" aria-hidden="true"></i>
           </button>
-          <button
-            type="button"
-            class="row-action"
-            [attr.aria-label]="'Télécharger le rapport mensuel de ' + row.name"
-            title="Rapport mensuel PDF"
-            (click)="exportMonthlyReport(row)">
-            <i class="pi pi-file-pdf"></i>
-          </button>
-          <button
-            type="button"
-            class="row-action row-action-danger"
-            [disabled]="deletingEmployeeId() === row.id"
-            [attr.aria-label]="'Supprimer le salarié ' + row.name"
-            [title]="deletingEmployeeId() === row.id ? 'Suppression en cours…' : 'Supprimer le salarié'"
-            (click)="deleteEmployee(row)">
-            <i [class]="deletingEmployeeId() === row.id ? 'pi pi-spin pi-spinner' : 'pi pi-trash'"></i>
-          </button>
+          <p-menu #employeeActionMenu [popup]="true" [model]="menuItemsFor(row)" appendTo="body" styleClass="row-action-menu"></p-menu>
         </td>
       </tr>
     </ng-template>
