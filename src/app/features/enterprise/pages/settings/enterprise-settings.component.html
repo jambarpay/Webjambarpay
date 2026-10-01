@@ -1,0 +1,58 @@
+<section class="settings-page">
+  <article class="settings-card">
+    <header class="section-head">
+      <h2>Informations du compte</h2>
+      <p>Les informations principales associées à votre compte entreprise.</p>
+    </header>
+
+    <div class="settings-grid">
+      <label class="field" for="enterprise-name">
+        <span>Nom du compte</span>
+        <input id="enterprise-name" [value]="profile?.name ?? ''" type="text" readonly />
+      </label>
+
+      <label class="field" for="enterprise-email">
+        <span>Adresse e-mail</span>
+        <input id="enterprise-email" [value]="profile?.email ?? ''" type="email" readonly />
+      </label>
+    </div>
+
+    <p class="readonly-note">Pour modifier ces informations, contactez le support Jambaar Pay.</p>
+  </article>
+
+  <article class="settings-card">
+    <header class="section-head">
+      <h2>Sécurité</h2>
+      <p>Choisissez un mot de passe robuste pour protéger votre espace entreprise.</p>
+    </header>
+
+    <form class="password-form" (ngSubmit)="updatePassword()" autocomplete="on">
+      <label class="field" for="current-password">
+        <span>Mot de passe actuel</span>
+        <input id="current-password" name="currentPassword" [(ngModel)]="currentPassword" type="password" autocomplete="current-password" required />
+      </label>
+
+      <label class="field" for="new-password">
+        <span>Nouveau mot de passe</span>
+        <input id="new-password" name="newPassword" [(ngModel)]="newPassword" type="password" autocomplete="new-password" required />
+      </label>
+
+      <label class="field" for="confirm-password">
+        <span>Confirmer le nouveau mot de passe</span>
+        <input id="confirm-password" name="confirmPassword" [(ngModel)]="confirmPassword" type="password" autocomplete="new-password" required />
+      </label>
+
+      <div class="settings-actions">
+        <button class="primary-btn" type="submit" [disabled]="saving()">
+          {{ saving() ? 'Mise à jour…' : 'Mettre à jour le mot de passe' }}
+        </button>
+      </div>
+    </form>
+  </article>
+
+  @if (feedback(); as state) {
+    <p class="feedback" [class.is-error]="state.type === 'error'" role="status" aria-live="polite">
+      {{ state.message }}
+    </p>
+  }
+</section>

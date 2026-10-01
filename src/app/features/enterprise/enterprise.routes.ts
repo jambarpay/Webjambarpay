@@ -35,4 +35,10 @@ export const ENTERPRISE_ROUTES: Routes = [
     data: { subtitle: 'Consultez toutes les transactions' },
     loadComponent: () => import('./pages/history/enterprise-history.component').then(module => module.EnterpriseHistoryComponent),
   }, ENTERPRISE_ROLES),
+  protectedPage({
+    path: 'enterprise-settings',
+    title: 'Paramètres de l’entreprise',
+    data: { subtitle: 'Gérez votre compte et sa sécurité' },
+    loadComponent: () => import('./pages/settings/enterprise-settings.component').then(module => module.EnterpriseSettingsComponent),
+  }, ENTERPRISE_ROLES),
 ];

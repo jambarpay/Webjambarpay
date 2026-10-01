@@ -25,13 +25,14 @@
     }
 
     @if (isEnterprise) {
-      <button
-        type="button"
-        class="icon-btn icon-btn-disabled"
-        aria-label="Paramètres non disponibles"
-        aria-disabled="true">
+      <a
+        routerLink="/enterprise-settings"
+        routerLinkActive="settings-active"
+        class="icon-btn"
+        aria-label="Paramètres de l’entreprise"
+        title="Paramètres de l’entreprise">
         <img src="assets/icons/icon-settings.svg" alt="" class="settings-icon" aria-hidden="true" />
-      </button>
+      </a>
     }
 
     @if (isRestaurant) {
