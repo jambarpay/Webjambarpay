@@ -3,10 +3,11 @@ import { ChangeDetectionStrategy, Component, Input, inject } from '@angular/core
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthFacade } from '../../core/auth/application/auth.facade';
 import { AdminProfile, USER_ROLES } from '../../core/auth/domain/auth.models';
+import { NotificationInboxComponent } from '../notification-inbox/notification-inbox.component';
 
 @Component({
     selector: 'app-topbar',
-    imports: [RouterLink, RouterLinkActive],
+    imports: [RouterLink, RouterLinkActive, NotificationInboxComponent],
     templateUrl: './topbar.component.html',
     styleUrls: ['./topbar.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush

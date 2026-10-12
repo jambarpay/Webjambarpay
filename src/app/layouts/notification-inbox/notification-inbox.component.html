@@ -1,0 +1,55 @@
+<button type="button" class="notification-toggle" aria-label="Notifications internes"
+  aria-controls="notification-inbox-panel" [attr.aria-expanded]="opened()" (click)="toggle()">
+  <i class="pi pi-bell" aria-hidden="true"></i>
+  @if (inbox.unreadCount() > 0) {
+    <span class="notification-count" [attr.aria-label]="inbox.unreadCount() + ' notifications non lues'">
+      {{ inbox.unreadCount() > 99 ? '99+' : inbox.unreadCount() }}
+    </span>
+  }
+</button>
+
+@if (opened()) {
+  <section id="notification-inbox-panel" class="notification-panel" aria-labelledby="notification-inbox-title">
+    <div class="notification-heading">
+      <h2 id="notification-inbox-title">Notifications</h2>
+      <button type="button" class="text-button" (click)="close()" aria-label="Fermer les notifications">Fermer</button>
+    </div>
+    <div class="notification-actions">
+      <button type="button" class="text-button" (click)="inbox.refresh()" [disabled]="inbox.loading()">Actualiser</button>
+      <button type="button" class="text-button" (click)="inbox.markAllRead()"
+        [disabled]="inbox.updating() || inbox.loading() || inbox.unreadCount() === 0">Tout marquer comme lu</button>
+    </div>
+    @if (inbox.error()) { <p class="notification-error" role="alert">{{ inbox.error() }}</p> }
+    @if (inbox.loading()) { <p class="notification-empty" role="status">Chargement…</p> }
+    @else if (inbox.items().length === 0 && !inbox.error()) {
+      <p class="notification-empty">Aucune notification pour le moment.</p>
+    }
+    <ul class="notification-list">
+      @for (item of inbox.items(); track item.id) {
+        <li class="notification-item" [class.unread]="!item.readAt">
+          <h3>{{ item.title }}</h3>
+          <p>{{ item.message }}</p>
+          <time [attr.datetime]="item.createdAt">{{ item.createdAt | date:'dd/MM/yyyy HH:mm' }}</time>
+          <div class="item-actions">
+            @if (!item.readAt) {
+              <button type="button" class="text-button" (click)="inbox.markRead(item)"
+                [disabled]="inbox.updating() || inbox.loading()">Marquer comme lu</button>
+            } @else { <span class="read-label">Lu</span> }
+            @if (item.targetPath === '/companies') {
+              <a routerLink="/companies" (click)="inbox.markRead(item); close()">Voir les entreprises</a>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+    @if (inbox.totalPages() > 1) {
+      <nav class="notification-pagination" aria-label="Pages des notifications">
+        <button type="button" class="text-button" (click)="inbox.refresh(inbox.page() - 1)"
+          [disabled]="inbox.page() === 0 || inbox.loading()">Précédent</button>
+        <span>{{ inbox.page() + 1 }} / {{ inbox.totalPages() }}</span>
+        <button type="button" class="text-button" (click)="inbox.refresh(inbox.page() + 1)"
+          [disabled]="inbox.page() + 1 >= inbox.totalPages() || inbox.loading()">Suivant</button>
+      </nav>
+    }
+  </section>
+}
