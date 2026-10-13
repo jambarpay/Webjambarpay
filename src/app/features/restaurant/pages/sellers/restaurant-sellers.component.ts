@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { BackendApiClient } from '../../../../core/http/backend-api.client';
 import { ApiHttpError } from '../../../../core/http/models/api-http.error';
+import { ConfirmationDialogService } from '../../../../core/ui/confirmation-dialog.service';
 
 interface CreateSellerRequest {
   phoneNumber: string;
@@ -50,6 +51,7 @@ interface SellerListItem {
 })
 export class RestaurantSellersComponent {
   private readonly api = inject(BackendApiClient);
+  private readonly confirmation = inject(ConfirmationDialogService);
 
   firstName = '';
   lastName = '';
@@ -116,9 +118,11 @@ export class RestaurantSellersComponent {
   async deleteSeller(seller: SellerListItem): Promise<void> {
     if (this.deletingSellerId()) return;
 
-    const confirmed = typeof window === 'undefined'
-      ? true
-      : window.confirm(`Supprimer le vendeur ${seller.firstName} ${seller.lastName} ?`);
+    const confirmed = await this.confirmation.confirm({
+      title: 'Supprimer le vendeur ?',
+      message: `Supprimer le vendeur « ${seller.firstName} ${seller.lastName} » ?`,
+      confirmLabel: 'Supprimer le vendeur',
+    });
     if (!confirmed) return;
 
     this.deletingSellerId.set(seller.id);

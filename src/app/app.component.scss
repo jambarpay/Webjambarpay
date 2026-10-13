@@ -1,0 +1,25 @@
+.confirmation-status {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  max-width: calc(100vw - 2rem);
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-white-card);
+  color: var(--color-text-primary);
+  box-shadow: var(--shadow-overlay);
+
+  button {
+    padding: 0.5rem;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface-soft);
+    color: inherit;
+    cursor: pointer;
+  }
+}

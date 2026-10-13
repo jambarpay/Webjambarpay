@@ -1,0 +1,43 @@
+<p-dialog
+  [visible]="confirmation.request() !== null"
+  [header]="confirmation.request()?.title ?? 'Confirmation'"
+  [role]="'alertdialog'"
+  [attr.aria-describedby]="confirmation.request()?.details ? 'app-confirmation-message app-confirmation-details' : 'app-confirmation-message'"
+  [modal]="true"
+  [blockScroll]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [dismissableMask]="false"
+  [closeOnEscape]="true"
+  closeAriaLabel="Fermer sans confirmer"
+  appendTo="body"
+  [style]="{ width: '30rem', maxWidth: 'calc(100vw - 2rem)', padding: '1.5rem', borderRadius: '1rem' }"
+  (visibleChange)="onVisibleChange($event)"
+  (onShow)="onShow()"
+  (onHide)="confirmation.restoreFocus()">
+  @if (confirmation.request(); as request) {
+    <div class="confirmation-content" [class.is-warning]="request.tone === 'warning'">
+      <span class="confirmation-icon" aria-hidden="true">
+        <i [class]="request.tone === 'warning' ? 'pi pi-exclamation-triangle' : 'pi pi-trash'"></i>
+      </span>
+      <p id="app-confirmation-message" class="confirmation-message">{{ request.message }}</p>
+      @if (request.details) {
+        <p id="app-confirmation-details" class="confirmation-details">{{ request.details }}</p>
+      }
+    </div>
+  }
+  <ng-template #footer>
+    <div class="confirmation-actions">
+      <button id="app-confirmation-cancel" type="button" class="confirmation-cancel" (click)="confirmation.respond(false)">
+        Annuler
+      </button>
+      <button
+        type="button"
+        class="confirmation-submit"
+        [class.is-warning]="confirmation.request()?.tone === 'warning'"
+        (click)="confirmation.respond(true)">
+        {{ confirmation.request()?.confirmLabel ?? 'Confirmer' }}
+      </button>
+    </div>
+  </ng-template>
+</p-dialog>

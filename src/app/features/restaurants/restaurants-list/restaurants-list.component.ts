@@ -14,6 +14,7 @@ import { PaginationComponent } from '../../../design-system/components/paginatio
 import { StatusBadgeComponent } from '../../../design-system/components/status-badge/status-badge.component';
 import { RestaurantsListFacade, RestaurantStatusFilter } from './restaurants-list.facade';
 import { Restaurant } from '../domain/restaurant.model';
+import { ConfirmationDialogService } from '../../../core/ui/confirmation-dialog.service';
 
 @Component({
     selector: 'app-restaurants-list',
@@ -26,6 +27,7 @@ import { Restaurant } from '../domain/restaurant.model';
 export class RestaurantsListComponent {
   private readonly el = inject(ElementRef);
   private readonly facade = inject(RestaurantsListFacade);
+  private readonly confirmation = inject(ConfirmationDialogService);
 
   readonly searchTerm = this.facade.searchTerm;
   readonly statusFilter = this.facade.statusFilter;
@@ -185,7 +187,13 @@ export class RestaurantsListComponent {
   }
 
   async disable(restaurant: Restaurant): Promise<void> {
-    if (!window.confirm(`Désactiver le restaurant « ${restaurant.name} » ? Il restera visible dans la liste admin.`)) {
+    if (!await this.confirmation.confirm({
+      title: 'Désactiver le restaurant ?',
+      message: `Désactiver le restaurant « ${restaurant.name} » ?`,
+      details: 'Il restera visible dans la liste administrateur.',
+      confirmLabel: 'Désactiver le restaurant',
+      tone: 'warning',
+    })) {
       return;
     }
 

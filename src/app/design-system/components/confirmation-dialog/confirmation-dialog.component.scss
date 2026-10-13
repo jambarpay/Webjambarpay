@@ -1,0 +1,103 @@
+:host {
+  display: contents;
+}
+
+.confirmation-content {
+  margin-top: 1rem;
+  color: var(--color-text-primary);
+  font-family: var(--font-family-base);
+}
+
+.confirmation-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 1rem;
+  border-radius: var(--radius-md);
+  background: var(--color-danger-surface);
+  color: var(--color-red-danger);
+  font-size: 1.25rem;
+}
+
+.is-warning .confirmation-icon {
+  background: var(--color-orange-light);
+  color: var(--color-orange-hover);
+}
+
+.confirmation-message {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.confirmation-details {
+  margin: 1rem 0 0;
+  padding: 0.875rem 1rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-soft);
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.confirmation-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  width: 100%;
+  padding-top: 1.25rem;
+}
+
+.confirmation-actions button {
+  min-height: 2.75rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-family-base);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 3px solid var(--color-focus-ring);
+    outline-offset: 3px;
+  }
+}
+
+.confirmation-cancel {
+  border-color: var(--color-border-strong) !important;
+  background: var(--color-white-card);
+  color: var(--color-text-primary);
+
+  &:hover {
+    background: var(--color-surface-subtle);
+  }
+}
+
+.confirmation-submit {
+  background: #c33232;
+  color: var(--color-white-card);
+
+  &:hover {
+    background: #bd3535;
+  }
+
+  &.is-warning {
+    background: var(--color-orange-accent);
+    color: var(--color-text-primary);
+
+    &:hover {
+      background: var(--color-orange-hover);
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .confirmation-actions button {
+    flex: 1 1 auto;
+  }
+}

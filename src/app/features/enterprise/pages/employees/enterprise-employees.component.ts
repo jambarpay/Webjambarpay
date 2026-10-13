@@ -6,6 +6,7 @@ import { TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
+import { ConfirmationDialogService } from '../../../../core/ui/confirmation-dialog.service';
 import { EmptyStateComponent } from '../../../../design-system/components/empty-state/empty-state.component';
 import { FeedbackMessageComponent } from '../../../../design-system/components/feedback-message/feedback-message.component';
 import { PaginationComponent } from '../../../../design-system/components/pagination/pagination.component';
@@ -26,6 +27,7 @@ export class EnterpriseEmployeesComponent {
   private readonly router = inject(Router);
   private readonly el = inject(ElementRef);
   private readonly facade = inject(EnterpriseEmployeesFacade);
+  private readonly confirmation = inject(ConfirmationDialogService);
 
   readonly searchTerm = this.facade.searchTerm;
   readonly statusFilter = this.facade.statusFilter;
@@ -122,11 +124,13 @@ export class EnterpriseEmployeesComponent {
   }
 
   async deleteEmployee(employee: Parameters<EnterpriseEmployeesFacade['deleteEmployee']>[0]): Promise<void> {
-    const confirmed = typeof window === 'undefined'
-      ? true
-      : window.confirm(
-        'Supprimer définitivement le salarié ' + employee.name + ' ? Cette action est irréversible. Les opérations passées pourront rester conservées.',
-      );
+    if (this.deletingEmployeeId()) return;
+    const confirmed = await this.confirmation.confirm({
+      title: 'Supprimer le salarié ?',
+      message: `Supprimer définitivement le salarié « ${employee.name} » ?`,
+      details: 'Cette action est irréversible. Les opérations passées pourront rester conservées.',
+      confirmLabel: 'Supprimer le salarié',
+    });
     if (!confirmed) return;
     await this.facade.deleteEmployee(employee);
   }

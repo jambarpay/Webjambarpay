@@ -18,6 +18,7 @@ import {
   CompanyStatusFilter,
 } from './companies-list.facade';
 import { Company } from '../domain/company.model';
+import { ConfirmationDialogService } from '../../../core/ui/confirmation-dialog.service';
 
 @Component({
     selector: 'app-companies-list',
@@ -30,6 +31,7 @@ import { Company } from '../domain/company.model';
 export class CompaniesListComponent {
   private readonly el = inject(ElementRef);
   private readonly facade = inject(CompaniesListFacade);
+  private readonly confirmation = inject(ConfirmationDialogService);
 
   readonly searchTerm = this.facade.searchTerm;
   readonly statusFilter = this.facade.statusFilter;
@@ -192,7 +194,12 @@ export class CompaniesListComponent {
   }
 
   async disable(company: Company): Promise<void> {
-    if (!window.confirm(`Désactiver l’entreprise « ${company.name} » ?`)) {
+    if (!await this.confirmation.confirm({
+      title: 'Désactiver l’entreprise ?',
+      message: `Désactiver l’entreprise « ${company.name} » ?`,
+      confirmLabel: 'Désactiver l’entreprise',
+      tone: 'warning',
+    })) {
       return;
     }
 
@@ -204,7 +211,12 @@ export class CompaniesListComponent {
   }
 
   async delete(company: Company): Promise<void> {
-    if (!window.confirm(`Supprimer définitivement l’entreprise « ${company.name} » ? Cette action est irréversible. Elle sera refusée si des comptes y sont encore rattachés.`)) {
+    if (!await this.confirmation.confirm({
+      title: 'Supprimer l’entreprise ?',
+      message: `Supprimer définitivement l’entreprise « ${company.name} » ?`,
+      details: 'Cette action est irréversible. Elle sera refusée si des comptes y sont encore rattachés.',
+      confirmLabel: 'Supprimer l’entreprise',
+    })) {
       return;
     }
 

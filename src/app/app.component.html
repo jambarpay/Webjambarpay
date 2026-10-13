@@ -1,1 +1,16 @@
 <router-outlet></router-outlet>
+@defer (when confirmation.request() !== null; prefetch on idle) {
+  <app-confirmation-dialog />
+} @loading (after 150ms) {
+  <div class="confirmation-status" role="status">
+    Ouverture de la confirmation…
+    <button type="button" (click)="confirmation.respond(false)">Annuler</button>
+  </div>
+} @error {
+  @if (confirmation.request()) {
+    <div class="confirmation-status" role="alert">
+      La confirmation est indisponible. Actualisez la page avant de réessayer.
+      <button type="button" (click)="confirmation.respond(false)">Annuler</button>
+    </div>
+  }
+}
