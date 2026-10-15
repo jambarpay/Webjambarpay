@@ -8,6 +8,7 @@ export interface RestaurantsRepository {
   upsert(restaurant: Restaurant): Observable<Restaurant>;
   activate(id: string): Observable<Restaurant>;
   suspend(id: string): Observable<Restaurant>;
+  delete(id: string): Observable<void>;
 }
 
 export const RESTAURANTS_REPOSITORY = new InjectionToken<RestaurantsRepository>('RESTAURANTS_REPOSITORY');

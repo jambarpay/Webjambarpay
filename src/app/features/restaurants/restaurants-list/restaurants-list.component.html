@@ -62,7 +62,8 @@
         <td data-label="Transactions">{{ restaurant.totalTransactions }}</td>
         <td data-label="Statut"><app-status-badge [status]="restaurant.status"></app-status-badge></td>
         <td data-label="Action">
-          <button class="action-btn" (click)="actionMenu.toggle($event)" aria-label="Actions restaurant">
+          <button class="action-btn" (click)="actionMenu.toggle($event)" aria-label="Actions restaurant"
+            [disabled]="deletingRestaurantId() !== null" [attr.aria-busy]="deletingRestaurantId() === restaurant.id">
             <i class="pi pi-ellipsis-v"></i>
           </button>
           <p-menu #actionMenu [popup]="true" [model]="menuItemsFor(restaurant)" appendTo="body" styleClass="row-action-menu"></p-menu>

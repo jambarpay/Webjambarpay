@@ -35,6 +35,7 @@ export class RestaurantsListComponent {
   readonly currentPage = this.facade.currentPage;
   readonly feedback = this.facade.feedback;
   readonly loading = this.facade.loading;
+  readonly deletingRestaurantId = this.facade.deletingRestaurantId;
   readonly pageSizeOptions = this.facade.pageSizeOptions;
   readonly filterOptions = this.facade.filterOptions;
   readonly totalPages = this.facade.totalPages;
@@ -61,6 +62,14 @@ export class RestaurantsListComponent {
         command: () => void this.activate(restaurant),
       });
     }
+
+    items.push({
+      label: 'Supprimer',
+      icon: 'pi pi-trash',
+      styleClass: 'danger-item',
+      disabled: this.deletingRestaurantId() !== null,
+      command: () => void this.delete(restaurant),
+    });
 
     return items;
   }
@@ -209,6 +218,26 @@ export class RestaurantsListComponent {
       await this.facade.activateRestaurant(restaurant);
     } catch (error) {
       this.facade.setErrorFeedback(error, 'Activation du restaurant impossible.');
+    }
+  }
+
+  async delete(restaurant: Restaurant): Promise<void> {
+    if (this.deletingRestaurantId() !== null) return;
+    if (!await this.confirmation.confirm({
+      title: 'Supprimer le restaurant ?',
+      message: `Supprimer le restaurant « ${restaurant.name} » ?`,
+      details: 'Il sera retiré des listes et ne pourra plus recevoir de paiements. Son historique, ses points de vente et le compte propriétaire seront conservés.',
+      confirmLabel: 'Supprimer le restaurant',
+    })) {
+      return;
+    }
+
+    try {
+      await this.facade.deleteRestaurant(restaurant);
+      if (this.selectedRestaurant()?.id === restaurant.id) this.selectedRestaurant.set(null);
+      if (this.editingRestaurant()?.id === restaurant.id) this.editingRestaurant.set(null);
+    } catch (error) {
+      this.facade.setErrorFeedback(error, 'Suppression du restaurant impossible.');
     }
   }
 }

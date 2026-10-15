@@ -35,6 +35,7 @@ export class RestaurantsListFacade {
   readonly currentPage = signal(1);
   readonly feedback = signal<RestaurantFeedbackState>(null);
   readonly loading = signal(true);
+  readonly deletingRestaurantId = signal<string | null>(null);
 
   readonly pageSizeOptions = PAGE_SIZE_OPTIONS;
   readonly filterOptions = FILTER_OPTIONS;
@@ -137,6 +138,19 @@ export class RestaurantsListFacade {
     const updatedRestaurant = await firstValueFrom(this.restaurantsRepository.activate(restaurant.id));
     this.replaceRestaurant(updatedRestaurant);
     this.setFeedback('success', 'Restaurant activé avec succès. Le QR peut maintenant être généré.');
+  }
+
+  async deleteRestaurant(restaurant: Restaurant): Promise<void> {
+    if (this.deletingRestaurantId() !== null) return;
+    this.deletingRestaurantId.set(restaurant.id);
+    try {
+      await firstValueFrom(this.restaurantsRepository.delete(restaurant.id));
+      this.allRestaurants.update(restaurants => restaurants.filter(item => item.id !== restaurant.id));
+      this.currentPage.set(Math.min(this.currentPage(), this.totalPages()));
+      this.setFeedback('success', `Le restaurant ${restaurant.name} a été supprimé. Son historique est conservé.`);
+    } finally {
+      this.deletingRestaurantId.set(null);
+    }
   }
 
   setErrorFeedback(error: unknown, fallbackMessage: string): void {

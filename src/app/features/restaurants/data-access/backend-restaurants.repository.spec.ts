@@ -151,4 +151,15 @@ describe('BackendRestaurantsRepository', () => {
       paymentEligibilityStatus: 'NOT_ELIGIBLE',
     });
   });
+
+  it('deletes only the selected restaurant through the gateway and accepts a 204 response', () => {
+    let completed = false;
+    repository.delete('restaurant-1').subscribe(() => completed = true);
+    const request = httpTesting.expectOne('http://localhost:8888/api/v1/restaurants/restaurant-1');
+    expect(request.request.method).toBe('DELETE');
+    expect(completed).toBeFalse();
+    request.flush(null, { status: 204, statusText: 'No Content' });
+    expect(completed).toBeTrue();
+    httpTesting.expectNone(request => request.url.includes('/users/') || request.url.includes('/wallets/'));
+  });
 });

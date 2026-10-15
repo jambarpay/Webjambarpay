@@ -99,6 +99,11 @@ export class BackendRestaurantsRepository implements RestaurantsRepository {
     ).pipe(map(response => this.toDomain(response)));
   }
 
+  delete(id: string): Observable<void> {
+    return this.api.delete<null>(`restaurants/${encodeURIComponent(id)}`)
+      .pipe(map(() => undefined));
+  }
+
   private toDomain(dto: BackendRestaurantDto): Restaurant {
     const address = [dto.street, dto.district, dto.city, dto.country]
       .filter(Boolean)
