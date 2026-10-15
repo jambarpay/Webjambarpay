@@ -22,6 +22,7 @@ describe('RestaurantsListComponent deletion confirmation', () => {
       pageSizeOptions: [6, 12, 18], filterOptions: ['Tous', 'Actif', 'Inactif', 'En attente'],
       totalPages: signal(1), restaurants: signal([restaurant]), deletingRestaurantId: signal<string | null>(null),
       deleteRestaurant: jasmine.createSpy('deleteRestaurant').and.resolveTo(undefined),
+      updateRestaurant: jasmine.createSpy('updateRestaurant').and.resolveTo(undefined),
       setErrorFeedback: jasmine.createSpy('setErrorFeedback'),
     };
   }
@@ -80,5 +81,21 @@ describe('RestaurantsListComponent deletion confirmation', () => {
     await deletion;
     expect(facade.setErrorFeedback).toHaveBeenCalledOnceWith(error, 'Suppression du restaurant impossible.');
     expect(fixture.componentInstance.selectedRestaurant()).toEqual(restaurant);
+  });
+
+  it('loads and persists a changed category without changing the owner or status', async () => {
+    const partner: Restaurant = {
+      ...restaurant, partnerType: 'SHOP', ownerId: 'owner-kept', status: 'Inactif',
+      phone: '770001122', city: 'Dakar', street: 'Grand Yoff',
+    };
+    const component = fixture.componentInstance;
+    component.startEdit(partner);
+    expect(component.editForm.partnerType).toBe('SHOP');
+    component.editForm.partnerType = 'SUPERMARKET';
+    await component.saveEdit();
+    expect(facade.updateRestaurant).toHaveBeenCalledOnceWith(jasmine.objectContaining({
+      partnerType: 'SUPERMARKET', ownerId: 'owner-kept', status: 'Inactif',
+    }));
+    expect(component.editingRestaurant()).toBeNull();
   });
 });

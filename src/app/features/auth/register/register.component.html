@@ -1,7 +1,14 @@
 <div class="auth-page register-page-layout">
   <aside class="auth-brand-panel" aria-label="Jambaar Pay">
     <img class="auth-brand-logo" src="assets/images/logo-jambaarpay.png" alt="Jambaar Pay" />
-    <p class="auth-welcome">Bienvenue</p>
+    <p class="auth-welcome">{{ accountType() === 'restaurant' ? 'Faites grandir votre activité.' : 'Bienvenue' }}</p>
+    @if (accountType() === 'restaurant') {
+      <p class="brand-description">Restaurant, boutique, supermarché ou marché : rejoignez les partenaires Jambaar Pay.</p>
+      <div class="brand-benefits">
+        <span><i class="pi pi-qrcode" aria-hidden="true"></i> Paiement par QR</span>
+        <span><i class="pi pi-chart-line" aria-hidden="true"></i> Suivi des transactions</span>
+      </div>
+    }
   </aside>
 
   <main class="auth-card register-right">
@@ -13,8 +20,10 @@
     <section class="register-panel" aria-labelledby="register-title">
       <div class="register-topline">
         <p class="eyebrow">CRÉEZ VOTRE ESPACE</p>
-        <h1 id="register-title">Inscrire votre {{ accountType() === 'restaurant' ? 'restaurant' : 'entreprise' }}</h1>
-        <p class="register-intro">Quelques informations suffisent pour démarrer avec Jambaar Pay.</p>
+        <h1 id="register-title">{{ accountType() === 'restaurant' ? 'Devenir partenaire' : 'Inscrire votre entreprise' }}</h1>
+        <p class="register-intro">{{ accountType() === 'restaurant'
+          ? 'Choisissez votre activité, puis créez votre espace professionnel.'
+          : 'Quelques informations suffisent pour démarrer avec Jambaar Pay.' }}</p>
       </div>
 
       @if (successMessage()) {
@@ -32,11 +41,40 @@
       }
 
       <form class="register-form" (ngSubmit)="onSubmit()" novalidate>
+        @if (accountType() === 'restaurant') {
+          <ol class="registration-progress" aria-label="Étapes d’inscription">
+            <li [class.active]="registrationStep() === 1" [class.done]="registrationStep() === 2"
+              [attr.aria-current]="registrationStep() === 1 ? 'step' : null">
+              <span class="progress-number">{{ registrationStep() === 2 ? '✓' : '1' }}</span>
+              Votre activité
+            </li>
+            <li [class.active]="registrationStep() === 2" [attr.aria-current]="registrationStep() === 2 ? 'step' : null">
+              <span class="progress-number">2</span> Votre établissement
+            </li>
+          </ol>
+        }
+
+        @if (accountType() === 'restaurant' && registrationStep() === 1) {
+          <app-partner-type-picker [value]="form.partnerType" (valueChange)="form.partnerType = $event"
+            name="registrationPartnerType" />
+          <button type="button" class="btn-submit" (click)="continueToDetails()">
+            Continuer <i class="pi pi-arrow-right" aria-hidden="true"></i>
+          </button>
+        } @else {
+        <fieldset class="registration-details" [disabled]="submitting() || !!successMessage()">
+          <legend class="visually-hidden">Informations d’inscription</legend>
+          @if (accountType() === 'restaurant' && selectedPartnerType; as category) {
+            <div class="selected-category">
+              <span class="selected-category-icon"><i [class]="category.icon" aria-hidden="true"></i></span>
+              <div><span>Votre activité</span><strong>{{ category.label }}</strong></div>
+              <button type="button" (click)="backToCategory()">Modifier</button>
+            </div>
+          }
         <div class="form-section">
-          <h2>Informations de l'entreprise</h2>
+          <h2>{{ accountType() === 'restaurant' ? 'Votre établissement' : 'Informations de l’entreprise' }}</h2>
           <div class="register-fields-grid">
           <div class="field">
-            <label for="companyName">Nom {{ accountType() === 'restaurant' ? 'du restaurant' : "de l'entreprise" }}*</label>
+            <label for="companyName">{{ accountType() === 'restaurant' ? 'Nom de l’établissement' : 'Nom de l’entreprise' }} *</label>
             <div class="input-wrapper">
               <i class="pi pi-building input-icon"></i>
               <input
@@ -45,7 +83,7 @@
                 name="companyName"
                 type="text"
                 [(ngModel)]="form.companyName"
-                [placeholder]="accountType() === 'restaurant' ? 'Ex : Le Teranga' : 'Ex : Jambaar Services'"
+                [placeholder]="accountType() === 'restaurant' ? 'Ex : Le Teranga, Boutique Awa…' : 'Ex : Jambaar Services'"
                 autocomplete="organization"
                 [class.input-invalid]="submitted() && !!companyNameError" />
             </div>
@@ -157,7 +195,7 @@
         </div>
 
         <div class="form-section">
-          <h2>Localisation et accès</h2>
+          <h2>Votre adresse</h2>
           <div class="register-fields-grid access-fields-grid">
           <div class="field">
             <label for="location">Localisation *</label>
@@ -189,6 +227,13 @@
               <small class="field-error">{{ cityError }}</small>
             }
           </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h2>Accès à votre compte</h2>
+          <p class="password-hint">Au moins 8 caractères, avec une majuscule, une minuscule et un chiffre.</p>
+          <div class="register-fields-grid">
           <div class="field">
             <label for="password">Mot de passe *</label>
             <div class="input-wrapper">
@@ -232,7 +277,11 @@
           </div>
         </div>
 
-        <button type="submit" class="btn-submit">S'inscrire</button>
+        <button type="submit" class="btn-submit" [disabled]="submitting() || !!successMessage()" [attr.aria-busy]="submitting()">
+          {{ submitting() ? 'Création en cours…' : (accountType() === 'restaurant' ? 'Créer mon compte partenaire' : 'S’inscrire') }}
+        </button>
+        </fieldset>
+        }
         <p class="auth-switch">
           J'ai déjà un compte ? <a routerLink="/login">Se connecter</a>
         </p>

@@ -7,7 +7,8 @@ import { InputTextModule } from 'primeng/inputtext';
 import { firstValueFrom } from 'rxjs';
 import { FeedbackMessage, FeedbackMessageComponent } from '../../../design-system/components/feedback-message/feedback-message.component';
 import { RESTAURANTS_REPOSITORY, RestaurantsRepository } from '../application/restaurants.repository';
-import { Restaurant } from '../domain/restaurant.model';
+import { Restaurant, PartnerType, isPartnerType } from '../domain/restaurant.model';
+import { PartnerTypePickerComponent } from '../partner-type-picker/partner-type-picker.component';
 import {
   hasMinLength,
   hasValue,
@@ -17,7 +18,7 @@ import {
 
 @Component({
     selector: 'app-restaurant-add',
-    imports: [FormsModule, RouterModule, InputTextModule, FeedbackMessageComponent],
+    imports: [FormsModule, RouterModule, InputTextModule, FeedbackMessageComponent, PartnerTypePickerComponent],
     templateUrl: './restaurant-add.component.html',
     styleUrls: ['./restaurant-add.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
@@ -32,6 +33,7 @@ export class RestaurantAddComponent {
   feedback = signal<FeedbackMessage | null>(null);
 
   form = {
+    partnerType: 'RESTAURANT' as PartnerType,
     name: '',
     ownerName: '',
     ownerEmail: '',
@@ -76,7 +78,7 @@ export class RestaurantAddComponent {
   }
 
   isFormValid(): boolean {
-    return !this.nameError
+    return isPartnerType(this.form.partnerType) && !this.nameError
       && !this.ownerNameError
       && !this.ownerEmailError
       && !this.phoneNumberError
@@ -127,6 +129,7 @@ export class RestaurantAddComponent {
     return {
       id: `restaurant-${Date.now()}`,
       name: this.form.name.trim(),
+      partnerType: this.form.partnerType,
       address: [location, city, 'Sénégal'].filter(Boolean).join(', '),
       phone: this.form.phoneNumber.trim(),
       totalTransactions: 0,

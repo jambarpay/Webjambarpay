@@ -53,6 +53,7 @@ describe('BackendRestaurantsRepository', () => {
       totalTransactions: 0,
       totalVolume: 0,
       source: 'backend',
+      partnerType: 'RESTAURANT',
     }));
   });
 
@@ -84,6 +85,7 @@ describe('BackendRestaurantsRepository', () => {
     expect(request.request.method).toBe('POST');
     expect(request.request.body).toEqual({
       name: 'Le Djolof',
+      partnerType: 'RESTAURANT',
       registrationNumber: 'SN-DKR-001',
       ownerFirstName: 'Moussa',
       ownerLastName: 'Ndiaye',
@@ -161,5 +163,42 @@ describe('BackendRestaurantsRepository', () => {
     request.flush(null, { status: 204, statusText: 'No Content' });
     expect(completed).toBeTrue();
     httpTesting.expectNone(request => request.url.includes('/users/') || request.url.includes('/wallets/'));
+  });
+
+  it('reads the real category returned by the backend', () => {
+    let result: Restaurant[] = [];
+    repository.list().subscribe(restaurants => result = restaurants);
+    httpTesting.expectOne('http://localhost:8888/api/v1/restaurants').flush([
+      { id: 'shop-1', name: 'Boutique', partnerType: 'SHOP', status: 'SUSPENDED' },
+      { id: 'market-1', name: 'Marché', partnerType: 'MARKET', status: 'ACTIVE' },
+    ]);
+    expect(result.map(partner => partner.partnerType)).toEqual(['SHOP', 'MARKET']);
+    expect(result[0].status).toBe('Inactif');
+  });
+
+  it('sends a changed category with an update without changing owner or payment rules', () => {
+    const restaurant: Restaurant = {
+      id: 'partner-1', name: 'Boutique', address: 'Dakar', phone: '770001122',
+      totalTransactions: 0, totalVolume: 0, registrationDate: '', status: 'Inactif',
+      ownerId: 'owner-kept', partnerType: 'SHOP', source: 'backend',
+    };
+    repository.upsert(restaurant).subscribe();
+    const request = httpTesting.expectOne('http://localhost:8888/api/v1/restaurants/partner-1');
+    expect(request.request.method).toBe('PUT');
+    expect(request.request.body.partnerType).toBe('SHOP');
+    expect(request.request.body.ownerId).toBeUndefined();
+    expect(request.request.body.status).toBeUndefined();
+    expect(request.request.body.paymentEligibilityStatus).toBeUndefined();
+    request.flush({ id: 'partner-1', name: 'Boutique', partnerType: 'SHOP', status: 'SUSPENDED' });
+  });
+
+  it('omits an absent type on old updates so it cannot reset an existing category', () => {
+    repository.upsert({
+      id: 'partner-1', name: 'Ancien client', address: 'Dakar',
+      totalTransactions: 0, totalVolume: 0, registrationDate: '', status: 'Actif', source: 'backend',
+    }).subscribe();
+    const request = httpTesting.expectOne('http://localhost:8888/api/v1/restaurants/partner-1');
+    expect(request.request.body.partnerType).toBeUndefined();
+    request.flush({ id: 'partner-1', name: 'Ancien client', partnerType: 'MARKET', status: 'ACTIVE' });
   });
 });

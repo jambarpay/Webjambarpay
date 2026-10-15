@@ -1,6 +1,6 @@
 <section class="restaurants-card">
   <div class="restaurants-toolbar">
-    <h2>Liste des restaurants</h2>
+    <h2>Liste des partenaires</h2>
 
     <div class="toolbar-actions">
       <div class="table-search">
@@ -39,7 +39,7 @@
         }
       </div>
 
-      <button class="btn-add" type="button" routerLink="/restaurants/add">Ajouter un restaurant</button>
+      <button class="btn-add" type="button" routerLink="/restaurants/add">Ajouter un partenaire</button>
     </div>
   </div>
 
@@ -48,7 +48,8 @@
   <p-table [value]="restaurants()" styleClass="restaurants-table">
     <ng-template pTemplate="header">
       <tr>
-        <th>Restaurants</th>
+        <th>Partenaires</th>
+        <th>Catégorie</th>
         <th>Localisation</th>
         <th>Transactions</th>
         <th>Statut</th>
@@ -58,6 +59,7 @@
     <ng-template pTemplate="body" let-restaurant>
       <tr>
         <td data-label="Restaurant">{{ restaurant.name }}</td>
+        <td data-label="Catégorie">{{ partnerTypeLabel(restaurant.partnerType) }}</td>
         <td data-label="Localisation">{{ restaurant.address }}</td>
         <td data-label="Transactions">{{ restaurant.totalTransactions }}</td>
         <td data-label="Statut"><app-status-badge [status]="restaurant.status"></app-status-badge></td>
@@ -72,7 +74,7 @@
     </ng-template>
     <ng-template pTemplate="emptymessage">
       <tr>
-        <td colspan="5" class="empty-message">
+        <td colspan="6" class="empty-message">
           @if (loading()) {
             <app-loading-state message="Chargement des restaurants…" />
           } @else {
@@ -93,6 +95,7 @@
     @if (selectedRestaurant(); as restaurant) {
       <div class="details-grid">
         <div><span>Nom</span><strong>{{ restaurant.name }}</strong></div>
+        <div><span>Type de partenaire</span><strong>{{ partnerTypeLabel(restaurant.partnerType) }}</strong></div>
         <div><span>Téléphone</span><strong>{{ restaurant.phone || 'Non renseigné' }}</strong></div>
         <div><span>Localisation</span><strong>{{ restaurant.address || 'Non renseignée' }}</strong></div>
         <div><span>Statut</span><app-status-badge [status]="restaurant.status"></app-status-badge></div>
@@ -111,6 +114,8 @@
     [style]="{ width: 'min(92vw, 34rem)' }"
     (visibleChange)="!$event && closeEdit()">
     <form class="edit-form" (ngSubmit)="saveEdit()">
+      <app-partner-type-picker [value]="editForm.partnerType" (valueChange)="editForm.partnerType = $event"
+        name="editPartnerType" [disabled]="saving()" />
       <label for="restaurant-edit-name">Nom du restaurant *</label>
       <input id="restaurant-edit-name" pInputText [(ngModel)]="editForm.name" name="name" required />
       <label for="restaurant-edit-phone">Téléphone *</label>

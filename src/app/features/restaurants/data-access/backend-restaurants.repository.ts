@@ -2,11 +2,12 @@ import { inject, Injectable } from '@angular/core';
 import { forkJoin, map, Observable, throwError } from 'rxjs';
 import { BackendApiClient } from '../../../core/http/backend-api.client';
 import { RestaurantsRepository } from '../application/restaurants.repository';
-import { Restaurant } from '../domain/restaurant.model';
+import { Restaurant, PartnerType, isPartnerType } from '../domain/restaurant.model';
 
 interface BackendRestaurantDto {
   id: string;
   name: string;
+  partnerType?: PartnerType;
   registrationNumber: string;
   ownerId: string;
   phoneNumber: string;
@@ -23,6 +24,7 @@ interface BackendRestaurantDto {
 
 interface CreateRestaurantDto {
   name: string;
+  partnerType: PartnerType;
   registrationNumber: string;
   ownerUserId?: string;
   ownerFirstName: string;
@@ -38,6 +40,7 @@ interface CreateRestaurantDto {
 
 interface UpdateRestaurantDto {
   name: string;
+  partnerType?: PartnerType;
   phoneNumber: string;
   country: string;
   city: string;
@@ -112,6 +115,7 @@ export class BackendRestaurantsRepository implements RestaurantsRepository {
     return {
       id: dto.id,
       name: dto.name,
+      partnerType: isPartnerType(dto.partnerType) ? dto.partnerType : 'RESTAURANT',
       address,
       phone: dto.phoneNumber,
       totalTransactions: 0,
@@ -133,6 +137,7 @@ export class BackendRestaurantsRepository implements RestaurantsRepository {
   private toCreateDto(restaurant: Restaurant): CreateRestaurantDto {
     return {
       name: restaurant.name,
+      partnerType: restaurant.partnerType ?? 'RESTAURANT',
       registrationNumber: restaurant.registrationNumber!,
       ...(restaurant.ownerId?.trim() ? { ownerUserId: restaurant.ownerId.trim() } : {}),
       ownerFirstName: restaurant.ownerFirstName ?? '',
@@ -150,6 +155,8 @@ export class BackendRestaurantsRepository implements RestaurantsRepository {
   private toUpdateDto(restaurant: Restaurant): UpdateRestaurantDto {
     return {
       name: restaurant.name,
+      // Omitted categories from older clients must not reset an existing shop.
+      ...(restaurant.partnerType ? { partnerType: restaurant.partnerType } : {}),
       phoneNumber: normalizePhone(restaurant.phone ?? ''),
       country: restaurant.country ?? '',
       city: restaurant.city ?? '',

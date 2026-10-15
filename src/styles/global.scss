@@ -396,14 +396,8 @@ app-root:has(.login-page) {
 html:has(.register-page),
 body:has(.register-page),
 app-root:has(.register-page) {
-  overflow: hidden;
-}
-
-@media (max-width: 1000px) {
-  html:has(.register-page),
-  body:has(.register-page),
-  app-root:has(.register-page) {
-    overflow-x: hidden;
-    overflow-y: auto;
-  }
+  height: auto;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: auto;
 }

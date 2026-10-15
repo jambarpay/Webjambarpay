@@ -13,12 +13,13 @@ import { LoadingStateComponent } from '../../../design-system/components/loading
 import { PaginationComponent } from '../../../design-system/components/pagination/pagination.component';
 import { StatusBadgeComponent } from '../../../design-system/components/status-badge/status-badge.component';
 import { RestaurantsListFacade, RestaurantStatusFilter } from './restaurants-list.facade';
-import { Restaurant } from '../domain/restaurant.model';
+import { Restaurant, PartnerType, isPartnerType, partnerTypeLabel } from '../domain/restaurant.model';
+import { PartnerTypePickerComponent } from '../partner-type-picker/partner-type-picker.component';
 import { ConfirmationDialogService } from '../../../core/ui/confirmation-dialog.service';
 
 @Component({
     selector: 'app-restaurants-list',
-    imports: [FormsModule, RouterModule, TableModule, InputTextModule, MenuModule, DialogModule, EmptyStateComponent, FeedbackMessageComponent, LoadingStateComponent, PaginationComponent, StatusBadgeComponent],
+    imports: [FormsModule, RouterModule, TableModule, InputTextModule, MenuModule, DialogModule, EmptyStateComponent, FeedbackMessageComponent, LoadingStateComponent, PaginationComponent, StatusBadgeComponent, PartnerTypePickerComponent],
     providers: [RestaurantsListFacade],
     templateUrl: './restaurants-list.component.html',
     styleUrls: ['./restaurants-list.component.scss'],
@@ -46,7 +47,8 @@ export class RestaurantsListComponent {
   readonly selectedRestaurant = signal<Restaurant | null>(null);
   readonly editingRestaurant = signal<Restaurant | null>(null);
   readonly saving = signal(false);
-  editForm = { name: '', phone: '', city: '', location: '' };
+  readonly partnerTypeLabel = partnerTypeLabel;
+  editForm = { name: '', phone: '', city: '', location: '', partnerType: 'RESTAURANT' as PartnerType };
 
   menuItemsFor(restaurant: Restaurant): MenuItem[] {
     const items: MenuItem[] = [
@@ -150,6 +152,7 @@ export class RestaurantsListComponent {
   startEdit(restaurant: Restaurant): void {
     this.editingRestaurant.set(restaurant);
     this.editForm = {
+      partnerType: restaurant.partnerType ?? 'RESTAURANT',
       name: restaurant.name,
       phone: restaurant.phone ?? '',
       city: restaurant.city ?? '',
@@ -170,7 +173,7 @@ export class RestaurantsListComponent {
     const city = this.editForm.city.trim();
     const location = this.editForm.location.trim();
 
-    if (!restaurant || name.length < 2 || !/^\d{9}$/.test(phone) || city.length < 1 || location.length < 5) {
+    if (!restaurant || !isPartnerType(this.editForm.partnerType) || name.length < 2 || !/^\d{9}$/.test(phone) || city.length < 1 || location.length < 5) {
       this.facade.setErrorFeedback(new Error('Saisissez un nom, une localisation, une ville et un téléphone valides.'), 'Modification impossible.');
       return;
     }
@@ -179,6 +182,7 @@ export class RestaurantsListComponent {
     try {
       await this.facade.updateRestaurant({
         ...restaurant,
+        partnerType: this.editForm.partnerType,
         name,
         phone,
         address: [location, city, restaurant.country ?? 'Sénégal'].filter(Boolean).join(', '),

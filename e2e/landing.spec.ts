@@ -9,6 +9,9 @@ test.describe('page publique Jambaar Pay', () => {
     await expect(page).toHaveTitle(/JambaarPay|Jambaar Pay/i);
     await expect(page.getByRole('link', { name: /connexion|connecter/i }).first()).toBeVisible();
     await expect(page.locator('h1')).toBeVisible();
+    const partnerLink = page.getByRole('link', { name: /Devenir partenaire/ });
+    await expect(partnerLink).toBeVisible();
+    await expect(partnerLink).toHaveAttribute('href', '/register?type=restaurant');
   });
 
   test('publie les métadonnées SEO essentielles', async ({ page }) => {

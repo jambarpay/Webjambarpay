@@ -5,6 +5,8 @@ import { firstValueFrom } from 'rxjs';
 import { BackendApiClient } from '../../../core/http/backend-api.client';
 import { ApiHttpError } from '../../../core/http/models/api-http.error';
 import { InputTextModule } from 'primeng/inputtext';
+import { PartnerTypePickerComponent } from '../../restaurants/partner-type-picker/partner-type-picker.component';
+import { PARTNER_TYPES, PartnerType, isPartnerType } from '../../restaurants/domain/restaurant.model';
 import {
   hasMinLength,
   hasValue,
@@ -16,6 +18,7 @@ import {
 } from '../../../core/utils/form-validation';
 
 interface RegisterForm {
+  partnerType: PartnerType;
   companyName: string;
   email: string;
   phone: string;
@@ -34,7 +37,7 @@ interface RegisterForm {
     host: {
         class: 'register-page',
     },
-    imports: [FormsModule, RouterLink, InputTextModule],
+    imports: [FormsModule, RouterLink, InputTextModule, PartnerTypePickerComponent],
     templateUrl: './register.component.html',
     styleUrls: ['./register.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
@@ -48,8 +51,11 @@ export class RegisterComponent {
   submitted = signal(false);
   successMessage = signal('');
   errorMessage = signal('');
+  readonly registrationStep = signal<1 | 2>(1);
+  readonly submitting = signal(false);
 
   form: RegisterForm = {
+    partnerType: 'RESTAURANT',
     companyName: '',
     email: '',
     phone: '',
@@ -72,7 +78,8 @@ export class RegisterComponent {
   }
 
   private isFormValid(): boolean {
-    return !this.companyNameError
+    return (this.accountType() !== 'restaurant' || isPartnerType(this.form.partnerType))
+      && !this.companyNameError
       && !this.emailError
       && !this.phoneError
       && !this.hrManagerError
@@ -91,7 +98,34 @@ export class RegisterComponent {
     this.showConfirmPassword.update(value => !value);
   }
 
+  get selectedPartnerType() {
+    return PARTNER_TYPES.find(type => type.value === this.form.partnerType);
+  }
+
+  continueToDetails(): void {
+    if (this.submitting() || this.successMessage()) return;
+    if (!isPartnerType(this.form.partnerType)) {
+      this.errorMessage.set('Choisissez une catégorie de partenaire valide.');
+      return;
+    }
+    this.errorMessage.set('');
+    this.submitted.set(false);
+    this.registrationStep.set(2);
+  }
+
+  backToCategory(): void {
+    if (this.submitting() || this.successMessage()) return;
+    this.registrationStep.set(1);
+    this.submitted.set(false);
+    this.errorMessage.set('');
+  }
+
   async onSubmit(): Promise<void> {
+    if (this.submitting() || this.successMessage()) return;
+    if (this.accountType() === 'restaurant' && this.registrationStep() === 1) {
+      this.continueToDetails();
+      return;
+    }
     this.submitted.set(true);
     this.successMessage.set('');
     this.errorMessage.set('');
@@ -102,6 +136,7 @@ export class RegisterComponent {
       return;
     }
 
+    this.submitting.set(true);
     try {
       const role = this.accountType() === 'enterprise' ? 'ENTREPRISE' : 'RESTAURANT';
       await firstValueFrom(this.api.post<{ data: { id: string } }, unknown>('auth/register/organization', {
@@ -112,6 +147,7 @@ export class RegisterComponent {
         password: this.form.password,
         role,
         organizationName: this.form.companyName.trim(),
+        ...(this.accountType() === 'restaurant' ? { partnerType: this.form.partnerType } : {}),
         sector: this.form.sector.trim() || undefined,
         employeeCount: this.form.employeeCount ? Number(this.form.employeeCount) : undefined,
         registrationNumber: this.form.ninea.trim() || undefined,
@@ -120,10 +156,12 @@ export class RegisterComponent {
       }));
 
       this.successMessage.set(this.accountType() === 'restaurant'
-        ? 'Restaurant inscrit avec succès. Vous pouvez maintenant vous connecter.'
+        ? 'Votre compte partenaire a été créé. Vous pouvez maintenant vous connecter.'
         : 'Entreprise inscrite avec succès. Vous pouvez maintenant vous connecter.');
     } catch (error) {
       this.errorMessage.set(this.getRegistrationErrorMessage(error));
+    } finally {
+      this.submitting.set(false);
     }
   }
 
@@ -164,8 +202,9 @@ export class RegisterComponent {
   }
 
   get companyNameError(): string {
-    if (!hasValue(this.form.companyName)) return 'Le nom de l’entreprise est requis.';
-    if (!hasMinLength(this.form.companyName, 2)) return 'Le nom de l’entreprise doit contenir au moins 2 caracteres.';
+    const label = this.accountType() === 'restaurant' ? 'de l’établissement' : 'de l’entreprise';
+    if (!hasValue(this.form.companyName)) return `Le nom ${label} est requis.`;
+    if (!hasMinLength(this.form.companyName, 2)) return `Le nom ${label} doit contenir au moins 2 caractères.`;
     return '';
   }
 
@@ -182,8 +221,9 @@ export class RegisterComponent {
   }
 
   get hrManagerError(): string {
-    if (!hasValue(this.form.hrManager)) return 'Le responsable RH est requis.';
-    if (!hasMinLength(this.form.hrManager, 3)) return 'Le nom du responsable RH doit contenir au moins 3 caracteres.';
+    const label = this.accountType() === 'restaurant' ? 'propriétaire' : 'responsable RH';
+    if (!hasValue(this.form.hrManager)) return `Le nom du ${label} est requis.`;
+    if (!hasMinLength(this.form.hrManager, 3)) return `Le nom du ${label} doit contenir au moins 3 caractères.`;
     return '';
   }
 
