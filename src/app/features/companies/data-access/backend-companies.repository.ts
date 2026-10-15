@@ -3,7 +3,7 @@ import { map, Observable, throwError } from 'rxjs';
 import { BackendApiClient } from '../../../core/http/backend-api.client';
 import { ApiEnvelope } from '../../../core/http/models/api-response';
 import { CompaniesRepository, CompanyRegistration } from '../application/companies.repository';
-import type { Company } from '../domain/company.model';
+import type { Company, CompanyAccountStatus } from '../domain/company.model';
 
 interface BackendCompanyUserDto {
   id: string;
@@ -11,7 +11,7 @@ interface BackendCompanyUserDto {
   lastName: string;
   phoneNumber: string;
   role: 'ENTREPRISE';
-  status: 'PENDING_OTP' | 'ACTIVE' | 'BLOCKED' | 'DISABLED';
+  status: CompanyAccountStatus;
   address?: string;
   createdAt: string;
 }
@@ -46,6 +46,7 @@ export class BackendCompaniesRepository implements CompaniesRepository {
         totalBalance: 0,
         registrationDate: company.createdAt?.slice(0, 10) ?? '',
         status: company.status === 'ACTIVE' ? 'Actif' : 'Inactif',
+        accountStatus: company.status,
         phoneNumber: company.phoneNumber,
         address: company.address,
         firstName: company.firstName,
@@ -89,6 +90,13 @@ export class BackendCompaniesRepository implements CompaniesRepository {
       .pipe(map(() => undefined));
   }
 
+  activate(id: string): Observable<void> {
+    return this.api.post<ApiEnvelope<null>, { userId: string; status: string }>(
+      'users/admin/activate',
+      { userId: id, status: 'ACTIVE' },
+    ).pipe(map(() => undefined));
+  }
+
   register(input: CompanyRegistration): Observable<Company> {
     const [firstName, ...lastNameParts] = input.managerName.trim().split(/\s+/);
     const phone = input.phone.replace(/\D/g, '').replace(/^221/, '');
@@ -105,6 +113,7 @@ export class BackendCompaniesRepository implements CompaniesRepository {
       totalBalance: 0,
       registrationDate: new Date().toISOString().slice(0, 10),
       status: 'Actif' as const,
+      accountStatus: 'ACTIVE' as const,
       phoneNumber: phone,
       address: [input.location.trim(), input.city.trim()].filter(Boolean).join(', '),
       temporaryPassword: response.data.temporaryPassword,
@@ -125,6 +134,7 @@ export class BackendCompaniesRepository implements CompaniesRepository {
       totalBalance: 0,
       registrationDate: company.createdAt?.slice(0, 10) ?? '',
       status: company.status === 'ACTIVE' ? 'Actif' : 'Inactif',
+      accountStatus: company.status,
       phoneNumber: company.phoneNumber,
       address: company.address,
       firstName: company.firstName,

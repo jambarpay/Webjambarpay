@@ -9,6 +9,7 @@ export interface CompaniesRepository {
   update(company: Company): Observable<Company>;
   delete(id: string): Observable<void>;
   disable(id: string): Observable<void>;
+  activate(id: string): Observable<void>;
   register(input: CompanyRegistration): Observable<Company>;
 }
 

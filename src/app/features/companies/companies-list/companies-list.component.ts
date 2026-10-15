@@ -62,6 +62,8 @@ export class CompaniesListComponent {
 
     if (company.status === 'Actif') {
       items.push({ label: 'Désactiver', icon: 'pi pi-ban', command: () => void this.disable(company) });
+    } else if (company.accountStatus === 'DISABLED') {
+      items.push({ label: 'Réactiver', icon: 'pi pi-check-circle', command: () => void this.activate(company) });
     }
 
     items.push({
@@ -224,6 +226,24 @@ export class CompaniesListComponent {
       await this.facade.deleteCompany(company);
     } catch (error) {
       this.facade.setErrorFeedback(error, 'Suppression définitive de l’entreprise impossible.');
+    }
+  }
+
+  async activate(company: Company): Promise<void> {
+    if (!await this.confirmation.confirm({
+      title: 'Réactiver l’entreprise ?',
+      message: `Réactiver l’entreprise « ${company.name} » ?`,
+      details: 'Son compte pourra de nouveau se connecter à l’application.',
+      confirmLabel: 'Réactiver l’entreprise',
+      tone: 'warning',
+    })) {
+      return;
+    }
+
+    try {
+      await this.facade.activateCompany(company);
+    } catch (error) {
+      this.facade.setErrorFeedback(error, 'Réactivation de l’entreprise impossible.');
     }
   }
 }

@@ -154,8 +154,14 @@ export class CompaniesListFacade {
 
   async disableCompany(company: Company): Promise<void> {
     await firstValueFrom(this.companiesRepository.disable(company.id));
-    this.replaceCompany({ ...company, status: 'Inactif' });
+    this.replaceCompany({ ...company, status: 'Inactif', accountStatus: 'DISABLED' });
     this.setFeedback('success', 'Entreprise désactivée avec succès.');
+  }
+
+  async activateCompany(company: Company): Promise<void> {
+    await firstValueFrom(this.companiesRepository.activate(company.id));
+    this.replaceCompany({ ...company, status: 'Actif', accountStatus: 'ACTIVE' });
+    this.setFeedback('success', 'Entreprise réactivée avec succès.');
   }
 
   async deleteCompany(company: Company): Promise<void> {

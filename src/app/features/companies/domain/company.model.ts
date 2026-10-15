@@ -1,3 +1,5 @@
+export type CompanyAccountStatus = 'PENDING_OTP' | 'PENDING_PIN' | 'ACTIVE' | 'BLOCKED' | 'DISABLED';
+
 export interface Company {
   id: string;
   name: string;
@@ -5,6 +7,7 @@ export interface Company {
   totalBalance: number;
   registrationDate: string;
   status: 'Actif' | 'Inactif';
+  accountStatus?: CompanyAccountStatus;
   phoneNumber?: string;
   address?: string;
   firstName?: string;
