@@ -37,6 +37,7 @@ export class EnterpriseBalanceChargeComponent {
   readonly step = signal<1 | 2 | 3>(1);
   readonly submitted = signal(false);
   readonly errorMessage = signal('');
+  readonly processing = signal(false);
 
   scope: ChargeScope = 'all';
   selectedEmployeeIds: string[] = [];
@@ -98,21 +99,27 @@ export class EnterpriseBalanceChargeComponent {
   }
 
   async confirmCharge(): Promise<void> {
+    if (this.processing()) return;
+    this.processing.set(true);
+    this.errorMessage.set('');
     try {
       const ids = this.selectedEmployees.map(employee => employee.id);
       if (!ids.length) throw new Error('Sélectionnez au moins un salarié.');
-      sessionStorage.setItem('jp_pending_employee_topup', JSON.stringify({ ids, amount: this.amountValue }));
+      if (this.amountError) throw new Error(this.amountError);
       const checkout = await firstValueFrom(this.api.post<{ paymentUrl: string }, unknown>('wave/checkout-links', {
         amount: this.totalAmount,
-        callbackUrl: `${location.origin}/enterprise-balance-charge`,
+        callbackUrl: `${location.origin}/enterprise-employees/charge-balances`,
         name: this.auth.getProfile()?.name ?? 'Entreprise JambaarPay',
         email: this.auth.getProfile()?.email,
         paymentMethod: 'momo',
       }));
       if (!checkout.paymentUrl) throw new Error('Le lien de paiement KkiaPay est indisponible.');
+      sessionStorage.setItem('jp_pending_employee_topup', JSON.stringify({ ids, amount: this.amountValue }));
       location.assign(checkout.paymentUrl);
     } catch (error) {
       this.errorMessage.set(error instanceof Error ? error.message : 'Le chargement des comptes a échoué.');
+    } finally {
+      this.processing.set(false);
     }
   }
 
@@ -136,6 +143,7 @@ export class EnterpriseBalanceChargeComponent {
     const transactionId = this.route.snapshot.queryParamMap.get('transactionId');
     const pendingRaw = sessionStorage.getItem('jp_pending_employee_topup');
     if (this.route.snapshot.queryParamMap.get('status') !== 'success' || !transactionId || !pendingRaw) return;
+    this.processing.set(true);
     try {
       const pending = JSON.parse(pendingRaw) as { ids: string[]; amount: number };
       const ownerId = this.auth.getProfile()?.id;
@@ -147,6 +155,8 @@ export class EnterpriseBalanceChargeComponent {
       await this.router.navigate(['/enterprise-employees'], { state: { balanceChargeSuccess: `${result.employeeCount} compte(s) chargé(s) pour un total de ${this.formatAmount(result.totalAmount)}.` } });
     } catch (error) {
       this.errorMessage.set(error instanceof Error ? error.message : 'La vérification KkiaPay a échoué.');
+    } finally {
+      this.processing.set(false);
     }
   }
 }

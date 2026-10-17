@@ -20,6 +20,10 @@
       <li [class.active]="step() >= 3"><span>3</span> Confirmation</li>
     </ol>
 
+    @if (errorMessage()) {
+      <p class="alert-error" role="alert"><i class="pi pi-exclamation-circle"></i>{{ errorMessage() }}</p>
+    }
+
     @if (step() === 1) {
       <div class="step-content">
         <h3>Quels comptes souhaitez-vous charger ?</h3>
@@ -118,23 +122,20 @@
           }
           <div class="summary-total"><dt>Montant total</dt><dd>{{ formatAmount(totalAmount) }}</dd></div>
         </dl>
-        @if (errorMessage()) {
-          <p class="alert-error"><i class="pi pi-exclamation-circle"></i>{{ errorMessage() }}</p>
-        }
       </div>
     }
 
     <footer class="charge-actions">
       @if (step() === 1) {
         <a routerLink="/enterprise-employees" class="btn btn-secondary">Annuler</a>
-        <button type="button" class="btn btn-primary" (click)="continueToAmount()">Continuer</button>
+        <button type="button" class="btn btn-primary" [disabled]="processing()" (click)="continueToAmount()">Continuer</button>
       } @else {
-        <button type="button" class="btn btn-secondary" (click)="previousStep()">Retour</button>
+        <button type="button" class="btn btn-secondary" [disabled]="processing()" (click)="previousStep()">Retour</button>
         @if (step() === 2) {
           <button type="button" class="btn btn-primary" (click)="continueToReview()">Voir le récapitulatif</button>
         } @else {
-          <button type="button" class="btn btn-primary" (click)="confirmCharge()">
-            <i class="pi pi-credit-card"></i> Payer avec KkiaPay
+          <button type="button" class="btn btn-primary" [disabled]="processing()" (click)="confirmCharge()">
+            <i class="pi pi-credit-card"></i> {{ processing() ? 'Traitement en cours…' : 'Payer avec KkiaPay' }}
           </button>
         }
       }
