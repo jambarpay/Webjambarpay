@@ -14,19 +14,57 @@
       <span class="secure-badge"><i class="pi pi-shield"></i> Opération sécurisée</span>
     </header>
 
+    @if (!hasPendingCheckout()) {
     <ol class="steps" aria-label="Étapes du chargement">
       <li [class.active]="step() >= 1"><span>1</span> Comptes</li>
       <li [class.active]="step() >= 2"><span>2</span> Montant</li>
       <li [class.active]="step() >= 3"><span>3</span> Confirmation</li>
     </ol>
+    }
 
     @if (errorMessage()) {
       <p class="alert-error" role="alert"><i class="pi pi-exclamation-circle"></i>{{ errorMessage() }}</p>
     }
 
-    @if (step() === 1) {
+    @if (hasPendingCheckout()) {
+      <div class="step-content review-step" [attr.aria-busy]="processing()">
+        <h3>{{ pendingTransactionId() ? 'Confirmation du chargement' : 'Chargement enregistré' }}</h3>
+        @if (processing()) {
+          <p role="status">Vérification en cours…</p>
+        }
+        @if (pendingTopUp(); as topUp) {
+          @if (topUp.sandbox) {
+            <p>Mode test KkiaPay : aucun paiement réel.</p>
+          }
+          <p>{{ topUp.employeeIds.length }} compte(s) · {{ formatAmount(topUp.totalAmount) }}</p>
+        }
+        @if (pendingTransactionId()) {
+          <p>Si la confirmation échoue, relancez la vérification ici sans effectuer un nouveau paiement.</p>
+          <button type="button" class="btn btn-primary" [disabled]="processing()" (click)="restoreCheckout()">Vérifier le paiement</button>
+        } @else if (pendingTopUp()) {
+          <p>Reprenez votre paiement pour terminer ce chargement.</p>
+          <button type="button" class="btn btn-primary" [disabled]="processing()" (click)="resumePayment()">Reprendre le paiement</button>
+          <p>Vous avez déjà payé ? Vérifiez ce paiement avec sa référence pour éviter de payer à nouveau.</p>
+          <label class="field" for="payment-reference">
+            <span>Référence du paiement KkiaPay</span>
+            <input id="payment-reference" type="text" [(ngModel)]="transactionReference" maxlength="255" />
+          </label>
+          <button type="button" class="btn btn-secondary" [disabled]="processing()" (click)="verifyReference()">Vérifier cette référence</button>
+        } @else {
+          <button type="button" class="btn btn-primary" [disabled]="processing()" (click)="restoreCheckout()">Réessayer</button>
+        }
+        @if (!pendingTransactionId()) {
+          <button type="button" class="btn btn-secondary" [disabled]="processing()" (click)="newCharge()">Nouveau chargement</button>
+        }
+      </div>
+    }
+
+    @if (!hasPendingCheckout() && step() === 1) {
       <div class="step-content">
         <h3>Quels comptes souhaitez-vous charger ?</h3>
+        @if (ineligibleCount()) {
+          <p>{{ ineligibleCount() }} salarié(s) avec un compte inactif ou un portefeuille indisponible ne peuvent pas encore être crédités.</p>
+        }
         <div class="scope-grid">
           <label class="scope-card" for="scope-all" [class.selected]="scope === 'all'">
             <input id="scope-all" type="radio" name="scope" value="all" [(ngModel)]="scope" />
@@ -74,14 +112,14 @@
           } @else {
             <p class="search-hint">Saisissez le nom ou l’identifiant du salarié pour afficher un résultat.</p>
           }
-          @if (submitted() && !selectedEmployeeIds.length) {
-            <p class="field-error">Sélectionnez au moins un salarié.</p>
-          }
+        }
+        @if (submitted() && !selectedEmployees.length) {
+          <p class="field-error">Sélectionnez au moins un salarié avec un compte actif.</p>
         }
       </div>
     }
 
-    @if (step() === 2) {
+    @if (!hasPendingCheckout() && step() === 2) {
       <div class="step-content amount-step">
         <h3>Définissez le montant du chargement</h3>
         <p class="step-description">Ce montant sera ajouté au solde de chaque compte sélectionné.</p>
@@ -104,12 +142,12 @@
         </label>
         <label class="field" for="charge-reason">
           <span>Motif <small>(facultatif)</small></span>
-          <textarea id="charge-reason" name="reason" [(ngModel)]="reason" rows="3" placeholder="Ex : Allocation repas — juillet 2026"></textarea>
+          <textarea id="charge-reason" name="reason" [(ngModel)]="reason" rows="3" maxlength="500" placeholder="Ex : Allocation repas — juillet 2026"></textarea>
         </label>
       </div>
     }
 
-    @if (step() === 3) {
+    @if (!hasPendingCheckout() && step() === 3) {
       <div class="step-content review-step">
         <div class="review-icon"><i class="pi pi-wallet"></i></div>
         <h3>Vérifiez l’opération</h3>
@@ -125,6 +163,7 @@
       </div>
     }
 
+    @if (!hasPendingCheckout()) {
     <footer class="charge-actions">
       @if (step() === 1) {
         <a routerLink="/enterprise-employees" class="btn btn-secondary">Annuler</a>
@@ -140,5 +179,6 @@
         }
       }
     </footer>
+    }
   </div>
 </section>

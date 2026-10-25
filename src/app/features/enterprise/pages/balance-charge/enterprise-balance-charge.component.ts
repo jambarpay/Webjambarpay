@@ -1,14 +1,18 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
-import { BackendApiClient } from '../../../../core/http/backend-api.client';
 import { AuthFacade } from '../../../../core/auth/application/auth.facade';
+import { EmployeeTopUp, EmployeeTopUpRequest, EmployeeTopUpsClient } from '../../application/employee-top-ups.client';
 import {
   EnterpriseEmployeesFacade,
 } from '../../application/enterprise-employees.facade';
 
 type ChargeScope = 'all' | 'selected';
+interface PendingCheckout {
+  request?: EmployeeTopUpRequest;
+  id?: string;
+  transactionId?: string;
+}
 
 @Component({
   selector: 'app-enterprise-balance-charge',
@@ -21,11 +25,13 @@ type ChargeScope = 'all' | 'selected';
 export class EnterpriseBalanceChargeComponent {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  private readonly api = inject(BackendApiClient);
+  private readonly topUps = inject(EmployeeTopUpsClient);
   private readonly auth = inject(AuthFacade);
   private readonly facade = inject(EnterpriseEmployeesFacade);
 
-  readonly employees = this.facade.employeeOptions;
+  readonly employees = computed(() => this.facade.employeeOptions()
+    .filter(employee => employee.status === 'Validé' && !!employee.walletId));
+  readonly ineligibleCount = computed(() => this.facade.employeeOptions().length - this.employees().length);
   readonly employeeSearchTerm = signal('');
   readonly filteredEmployees = computed(() => {
     const query = this.employeeSearchTerm().trim().toLowerCase();
@@ -38,15 +44,20 @@ export class EnterpriseBalanceChargeComponent {
   readonly submitted = signal(false);
   readonly errorMessage = signal('');
   readonly processing = signal(false);
+  readonly hasPendingCheckout = signal(false);
+  readonly pendingTopUp = signal<EmployeeTopUp | null>(null);
+  readonly pendingTransactionId = signal('');
+  private recovery: PendingCheckout = {};
 
   scope: ChargeScope = 'all';
   selectedEmployeeIds: string[] = [];
   amount = '';
   reason = '';
+  transactionReference = '';
 
   constructor() {
     this.facade.loadAllEmployees();
-    void this.completeKkiapayCheckout();
+    void this.restoreCheckout();
   }
 
   get selectedEmployees() {
@@ -76,7 +87,7 @@ export class EnterpriseBalanceChargeComponent {
 
   continueToAmount(): void {
     this.submitted.set(true);
-    if (this.scope === 'selected' && !this.selectedEmployeeIds.length) {
+    if (!this.selectedEmployees.length) {
       return;
     }
     this.submitted.set(false);
@@ -106,16 +117,21 @@ export class EnterpriseBalanceChargeComponent {
       const ids = this.selectedEmployees.map(employee => employee.id);
       if (!ids.length) throw new Error('Sélectionnez au moins un salarié.');
       if (this.amountError) throw new Error(this.amountError);
-      const checkout = await firstValueFrom(this.api.post<{ paymentUrl: string }, unknown>('wave/checkout-links', {
-        amount: this.totalAmount,
+      const details = {
+        employeeIds: ids.slice().sort(),
+        amountPerEmployee: this.amountValue,
+        reason: this.reason.trim(),
         callbackUrl: `${location.origin}/enterprise-employees/charge-balances`,
-        name: this.auth.getProfile()?.name ?? 'Entreprise JambaarPay',
-        email: this.auth.getProfile()?.email,
-        paymentMethod: 'momo',
-      }));
-      if (!checkout.paymentUrl) throw new Error('Le lien de paiement KkiaPay est indisponible.');
-      sessionStorage.setItem('jp_pending_employee_topup', JSON.stringify({ ids, amount: this.amountValue }));
-      location.assign(checkout.paymentUrl);
+      };
+      const previous = this.readPending().request;
+      const request = previous && JSON.stringify({ ...previous, requestId: undefined }) === JSON.stringify(details)
+        ? previous : { ...details, requestId: crypto.randomUUID() };
+      this.recovery = { request };
+      this.rememberPending();
+      const topUp = await this.topUps.create(request);
+      this.acceptPending(topUp);
+      if (topUp.status === 'COMPLETED') await this.finish(topUp);
+      else this.openPayment(topUp);
     } catch (error) {
       this.errorMessage.set(error instanceof Error ? error.message : 'Le chargement des comptes a échoué.');
     } finally {
@@ -126,6 +142,9 @@ export class EnterpriseBalanceChargeComponent {
   get amountError(): string {
     if (!this.amount.trim()) return 'Le montant est requis.';
     if (this.amountValue <= 0) return 'Le montant doit être supérieur à zéro.';
+    if (!Number.isSafeInteger(this.amountValue) || !Number.isSafeInteger(this.totalAmount)
+      || this.totalAmount > 999_999_999_999_999) return 'Saisissez un montant entier valide en FCFA.';
+    if (this.reason.length > 500) return 'Le motif est limité à 500 caractères.';
     return '';
   }
 
@@ -139,24 +158,112 @@ export class EnterpriseBalanceChargeComponent {
     return Number.isFinite(amount) ? amount : 0;
   }
 
-  private async completeKkiapayCheckout(): Promise<void> {
-    const transactionId = this.route.snapshot.queryParamMap.get('transactionId');
-    const pendingRaw = sessionStorage.getItem('jp_pending_employee_topup');
-    if (this.route.snapshot.queryParamMap.get('status') !== 'success' || !transactionId || !pendingRaw) return;
+  async restoreCheckout(): Promise<void> {
+    const query = this.route.snapshot.queryParamMap;
+    this.recovery = this.readPending();
+    const id = query.get('topUpId') || this.recovery.id;
+    const transactionId = query.get('transactionId') || this.recovery.transactionId;
+    if (!id && !this.recovery.request) {
+      if (transactionId) {
+        this.hasPendingCheckout.set(true);
+        this.pendingTransactionId.set(transactionId);
+        this.errorMessage.set('Ce lien de paiement ne contient pas de demande de chargement. Conservez sa référence et contactez l’assistance.');
+      }
+      return;
+    }
+    this.hasPendingCheckout.set(true);
     this.processing.set(true);
+    this.errorMessage.set('');
     try {
-      const pending = JSON.parse(pendingRaw) as { ids: string[]; amount: number };
-      const ownerId = this.auth.getProfile()?.id;
-      if (!ownerId || !pending.ids.length || pending.amount <= 0) throw new Error('La demande de rechargement est invalide.');
-      const wallet = await firstValueFrom(this.api.get<{ id: string }>(`wallets/owners/${encodeURIComponent(ownerId)}/types/COMPANY`));
-      await firstValueFrom(this.api.patch(`wallets/${encodeURIComponent(wallet.id)}/top-up`, { amount: pending.ids.length * pending.amount, currency: 'XOF', providerTransactionId: transactionId }));
-      const result = await this.facade.chargeBalances(pending.ids, pending.amount);
-      sessionStorage.removeItem('jp_pending_employee_topup');
-      await this.router.navigate(['/enterprise-employees'], { state: { balanceChargeSuccess: `${result.employeeCount} compte(s) chargé(s) pour un total de ${this.formatAmount(result.totalAmount)}.` } });
+      if (id) this.recovery.id = id;
+      if (transactionId) this.recovery.transactionId = transactionId;
+      this.pendingTransactionId.set(transactionId ?? '');
+      this.rememberPending();
+      const topUp = id ? await this.topUps.get(id) : await this.topUps.create(this.recovery.request!);
+      this.acceptPending(topUp);
+      if (topUp.status === 'COMPLETED') await this.finish(topUp);
+      else if (transactionId) await this.finish(await this.topUps.complete(topUp.id, transactionId));
     } catch (error) {
       this.errorMessage.set(error instanceof Error ? error.message : 'La vérification KkiaPay a échoué.');
     } finally {
       this.processing.set(false);
     }
+  }
+
+  async resumePayment(): Promise<void> {
+    const topUp = this.pendingTopUp();
+    if (!topUp || this.processing() || this.pendingTransactionId()) return;
+    this.processing.set(true);
+    this.errorMessage.set('');
+    try {
+      const refreshed = await this.topUps.renew(topUp.id);
+      this.acceptPending(refreshed);
+      if (refreshed.status === 'COMPLETED') await this.finish(refreshed);
+      else this.openPayment(refreshed);
+    } catch (error) {
+      this.errorMessage.set(error instanceof Error ? error.message : 'Le paiement est indisponible.');
+    } finally {
+      this.processing.set(false);
+    }
+  }
+
+  async verifyReference(): Promise<void> {
+    if (this.processing() || !this.pendingTopUp()) return;
+    const transactionId = this.transactionReference.trim();
+    if (!/^[A-Za-z0-9_-]{1,255}$/.test(transactionId)) {
+      this.errorMessage.set('Saisissez la référence du paiement KkiaPay.');
+      return;
+    }
+    await this.router.navigate([], { relativeTo: this.route,
+      queryParams: { topUpId: this.pendingTopUp()!.id, transactionId }, replaceUrl: true });
+    await this.restoreCheckout();
+  }
+
+  newCharge(): void {
+    if (this.processing() || this.pendingTransactionId()) return;
+    this.clearPending();
+    this.recovery = {};
+    this.hasPendingCheckout.set(false);
+    this.pendingTopUp.set(null);
+    this.errorMessage.set('');
+    void this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
+  }
+
+  private acceptPending(topUp: EmployeeTopUp): void {
+    this.pendingTopUp.set(topUp);
+    this.hasPendingCheckout.set(true);
+    this.recovery.id = topUp.id;
+    this.rememberPending();
+  }
+
+  private openPayment(topUp: EmployeeTopUp): void {
+    if (!topUp.paymentUrl) throw new Error('Le lien de paiement KkiaPay est indisponible.');
+    location.assign(topUp.paymentUrl);
+  }
+
+  private async finish(topUp: EmployeeTopUp): Promise<void> {
+    if (topUp.status !== 'COMPLETED') throw new Error('Le paiement doit encore être vérifié.');
+    this.clearPending();
+    await this.router.navigate(['/enterprise-employees'], { state: { balanceChargeSuccess:
+      `${topUp.employeeIds.length} compte(s) chargé(s) pour un total de ${this.formatAmount(topUp.totalAmount)}.` } });
+  }
+
+  private get storageKey(): string {
+    return `jp_employee_topup_${this.auth.getProfile()?.id ?? ''}`;
+  }
+
+  private readPending(): PendingCheckout {
+    try {
+      const pending = JSON.parse(sessionStorage.getItem(this.storageKey) ?? '{}') as PendingCheckout;
+      return pending && typeof pending === 'object' ? pending : {};
+    } catch { return {}; }
+  }
+
+  private rememberPending(): void {
+    try { sessionStorage.setItem(this.storageKey, JSON.stringify(this.recovery)); } catch { /* The callback also carries the server request id. */ }
+  }
+
+  private clearPending(): void {
+    try { sessionStorage.removeItem(this.storageKey); } catch { /* Server completion remains authoritative. */ }
   }
 }

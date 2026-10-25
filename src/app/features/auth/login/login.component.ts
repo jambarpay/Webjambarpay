@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, signal, inject } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { InputTextModule } from 'primeng/inputtext';
 import { firstValueFrom } from 'rxjs';
 import { AuthFacade } from '../../../core/auth/application/auth.facade';
@@ -22,6 +22,7 @@ import { isValidEmail } from '../../../core/utils/form-validation';
 export class LoginComponent {
   private readonly auth = inject(AuthFacade);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   form: LoginForm = { email: '', password: '' };
   showPassword = signal(false);
@@ -77,7 +78,10 @@ export class LoginComponent {
       const authenticated = await firstValueFrom(this.auth.login(this.form));
 
       if (authenticated) {
-        await this.router.navigate([this.auth.getLandingRoute()]);
+        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+        const internalReturnUrl = returnUrl?.startsWith('/') && !returnUrl.startsWith('//')
+          && !/[\\\r\n]/.test(returnUrl) ? returnUrl : this.auth.getLandingRoute();
+        await this.router.navigateByUrl(internalReturnUrl);
         return;
       }
 
