@@ -7,7 +7,7 @@ const employee = {
   phoneNumber: '770001122', status: 'ACTIVE',
 };
 
-test.describe('Chargement des salariés par une demande KkiaPay', () => {
+test.describe('Chargement des salariés par une demande PayDunya', () => {
   let createError: string | null;
   let completionError: boolean;
   let loseCompletionResponse: boolean;
@@ -16,6 +16,8 @@ test.describe('Chargement des salariés par une demande KkiaPay', () => {
   let creditsApplied: number;
   let completed: boolean;
   let legacyCalls: string[];
+  let paymentProvider: string;
+  let alreadyPaid: boolean;
 
   test.beforeEach(async ({ page }) => {
     createError = null;
@@ -26,6 +28,8 @@ test.describe('Chargement des salariés par une demande KkiaPay', () => {
     creditsApplied = 0;
     completed = false;
     legacyCalls = [];
+    paymentProvider = 'PAYDUNYA';
+    alreadyPaid = false;
     await page.addInitScript(() => {
       sessionStorage.setItem('jp_user', JSON.stringify({
         id: 'company-test', name: 'Entreprise Exemple', email: 'entreprise@example.org', role: 'Entreprise',
@@ -34,7 +38,17 @@ test.describe('Chargement des salariés par une demande KkiaPay', () => {
         value: 'local-checkout-test-token', expiresAt: new Date(Date.now() + (new URL(location.href).searchParams.get('expiredTest') === 'true' ? -60_000 : 60_000)).toISOString(),
       }));
     });
-    // No request reaches KkiaPay or a real wallet service.
+    await page.route('https://app.paydunya.com/sandbox-checkout/invoice/**', async route => {
+      const callback = new URL(chargePath, 'http://127.0.0.1:4200');
+      callback.searchParams.set('topUpId', 'topup-test');
+      callback.searchParams.set('token', 'transaction-test');
+      const cancelled = new URL(callback);
+      cancelled.searchParams.set('paymentCancelled', 'true');
+      await route.fulfill({ contentType: 'text/html', body: `<!doctype html>
+        <title>Paiement de test</title><a href="${callback.href}">Confirmer le paiement de test</a>
+        <a href="${cancelled.href}">Annuler le paiement de test</a>` });
+    });
+    // No request reaches PayDunya or a real wallet service.
     await page.route('**/api/v1/**', async route => {
       const request = route.request();
       const path = new URL(request.url()).pathname;
@@ -42,7 +56,8 @@ test.describe('Chargement des salariés par une demande KkiaPay', () => {
         id: 'topup-test', requestId: createRequestIds.at(-1) ?? 'test-request',
         status: completed ? 'COMPLETED' : 'PENDING', employeeIds: ['employee-test'],
         amountPerEmployee: 2500, totalAmount: 2500, currency: 'XOF', reason: '',
-        paymentUrl: new URL('/api/v1/wave/checkout/test.signature', page.url()).href,
+        paymentUrl: 'https://app.paydunya.com/sandbox-checkout/invoice/transaction-test',
+        paymentProvider, checkoutToken: paymentProvider === 'PAYDUNYA' ? 'transaction-test' : null,
         expiresAt: new Date(Date.now() + 1800000).toISOString(), sandbox: true,
         transactionId: completed ? 'transaction-test' : null,
       };
@@ -75,14 +90,11 @@ test.describe('Chargement des salariés par une demande KkiaPay', () => {
         else await route.fulfill({ json: { ...intent, status: 'COMPLETED', transactionId: 'transaction-test' } });
       } else if (path === '/api/v1/wallets/employee-topups/topup-test'
         || path === '/api/v1/wallets/employee-topups/topup-test/checkout') {
-        await route.fulfill({ json: intent });
-      } else if (path.startsWith('/api/v1/wave/checkout/')) {
-        const callback = new URL(chargePath, page.url());
-        callback.searchParams.set('topUpId', 'topup-test');
-        callback.searchParams.set('transactionId', 'transaction-test');
-        callback.searchParams.set('status', 'success');
-        await route.fulfill({ contentType: 'text/html', body: `<!doctype html>
-          <title>Paiement de test</title><a href="${callback.href}">Confirmer le paiement de test</a>` });
+        if (alreadyPaid && path.endsWith('/checkout')) {
+          creditsApplied += 1;
+          completed = true;
+          await route.fulfill({ json: { ...intent, status: 'COMPLETED', transactionId: 'transaction-test' } });
+        } else await route.fulfill({ json: intent });
       } else if (path.endsWith('/top-up') || path.endsWith('/bulk-transfers') || path === '/api/v1/wave/checkout-links') {
         legacyCalls.push(path);
         await route.fulfill({ status: 500, json: { message: 'Legacy payment path must not be used' } });
@@ -117,7 +129,7 @@ test.describe('Chargement des salariés par une demande KkiaPay', () => {
 
   test('enregistre le chargement puis confirme une seule opération côté serveur', async ({ page }) => {
     await reviewCharge(page);
-    await page.getByRole('button', { name: 'Payer avec KkiaPay' }).click();
+    await page.getByRole('button', { name: 'Payer avec PayDunya' }).click();
     await expect(page.getByRole('link', { name: 'Confirmer le paiement de test' })).toBeVisible();
     expect(creditsApplied).toBe(0);
     await page.getByRole('link', { name: 'Confirmer le paiement de test' }).click();
@@ -132,10 +144,10 @@ test.describe('Chargement des salariés par une demande KkiaPay', () => {
   test('réutilise la référence de demande après un échec de création', async ({ page }) => {
     createError = 'Le service de paiement est indisponible.';
     await reviewCharge(page);
-    await page.getByRole('button', { name: 'Payer avec KkiaPay' }).click();
+    await page.getByRole('button', { name: 'Payer avec PayDunya' }).click();
     await expect(page.getByRole('alert')).toHaveText(createError);
     createError = null;
-    await page.getByRole('button', { name: 'Payer avec KkiaPay' }).click();
+    await page.getByRole('button', { name: 'Payer avec PayDunya' }).click();
     await expect(page.getByRole('link', { name: 'Confirmer le paiement de test' })).toBeVisible();
     expect(createRequestIds).toHaveLength(2);
     expect(new Set(createRequestIds).size).toBe(1);
@@ -145,10 +157,10 @@ test.describe('Chargement des salariés par une demande KkiaPay', () => {
   test('reprend la vérification après un 503 sans rouvrir le paiement', async ({ page }) => {
     completionError = true;
     await reviewCharge(page);
-    await page.getByRole('button', { name: 'Payer avec KkiaPay' }).click();
+    await page.getByRole('button', { name: 'Payer avec PayDunya' }).click();
     await page.getByRole('link', { name: 'Confirmer le paiement de test' }).click();
     await expect(page.getByRole('alert')).toHaveText('La vérification est temporairement indisponible.');
-    await expect(page.getByRole('button', { name: 'Payer avec KkiaPay' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Payer avec PayDunya' })).toHaveCount(0);
     completionError = false;
     await page.getByRole('button', { name: 'Vérifier le paiement', exact: true }).click();
     await expect(page).toHaveURL(/\/enterprise-employees$/);
@@ -160,7 +172,7 @@ test.describe('Chargement des salariés par une demande KkiaPay', () => {
   test('retrouve une confirmation réussie lorsque la réponse réseau a été perdue', async ({ page }) => {
     loseCompletionResponse = true;
     await reviewCharge(page);
-    await page.getByRole('button', { name: 'Payer avec KkiaPay' }).click();
+    await page.getByRole('button', { name: 'Payer avec PayDunya' }).click();
     await page.getByRole('link', { name: 'Confirmer le paiement de test' }).click();
     await expect(page.getByRole('alert')).toBeVisible();
     expect(creditsApplied).toBe(1);
@@ -171,14 +183,14 @@ test.describe('Chargement des salariés par une demande KkiaPay', () => {
   });
 
   test('retrouve la demande serveur même sans stockage navigateur', async ({ page }) => {
-    await page.goto(`${chargePath}?topUpId=topup-test&transactionId=transaction-test`);
+    await page.goto(`${chargePath}?topUpId=topup-test&token=transaction-test`);
     await expect(page).toHaveURL(/\/enterprise-employees$/);
     expect(completeRequests).toBe(1);
     expect(creditsApplied).toBe(1);
   });
 
   test('reprend la confirmation après reconnexion si la session a expiré', async ({ page }) => {
-    await page.goto(`${chargePath}?topUpId=topup-test&transactionId=transaction-test&expiredTest=true`);
+    await page.goto(`${chargePath}?topUpId=topup-test&token=transaction-test&expiredTest=true`);
     await expect(page).toHaveURL(/\/login\?returnUrl=/);
     await page.getByLabel('Adresse email', { exact: true }).fill('entreprise@example.org');
     await page.getByLabel('Mot de passe', { exact: true }).fill('test-password-only');
@@ -189,7 +201,7 @@ test.describe('Chargement des salariés par une demande KkiaPay', () => {
 
   test('vérifie une référence connue sans lancer un deuxième paiement', async ({ page }) => {
     await page.goto(`${chargePath}?topUpId=topup-test`);
-    await page.getByLabel('Référence du paiement KkiaPay').fill('transaction-test');
+    await page.getByLabel('Référence du paiement PayDunya').fill('transaction-test');
     await page.getByRole('button', { name: 'Vérifier cette référence' }).click();
     await expect(page).toHaveURL(/\/enterprise-employees$/);
     expect(createRequestIds).toHaveLength(0);
@@ -204,4 +216,32 @@ test.describe('Chargement des salariés par une demande KkiaPay', () => {
     expect(createRequestIds).toHaveLength(0);
     expect(creditsApplied).toBe(0);
   });
+  test('un retour annulé conserve le chargement sans créditer les salariés', async ({ page }) => {
+    await reviewCharge(page);
+    await page.getByRole('button', { name: 'Payer avec PayDunya' }).click();
+    await page.getByRole('link', { name: 'Annuler le paiement de test' }).click();
+    await expect(page.getByRole('button', { name: 'Reprendre le paiement' })).toBeVisible();
+    expect(completeRequests).toBe(0);
+    expect(creditsApplied).toBe(0);
+  });
+
+  test('un ancien chargement ne propose pas de paiement PayDunya', async ({ page }) => {
+    paymentProvider = 'KKIAPAY';
+    await page.goto(`${chargePath}?topUpId=topup-test`);
+    await expect(page.getByRole('alert')).toContainText('ancien fournisseur');
+    await expect(page.getByRole('button', { name: 'Reprendre le paiement' })).toHaveCount(0);
+    await expect(page.getByText('Mode test PayDunya : aucun paiement réel.')).toHaveCount(0);
+    expect(completeRequests).toBe(0);
+    expect(creditsApplied).toBe(0);
+  });
+
+  test('reprendre une facture déjà payée termine le chargement sans redirection', async ({ page }) => {
+    alreadyPaid = true;
+    await page.goto(`${chargePath}?topUpId=topup-test`);
+    await page.getByRole('button', { name: 'Reprendre le paiement' }).click();
+    await expect(page).toHaveURL(/\/enterprise-employees$/);
+    expect(createRequestIds).toHaveLength(0);
+    expect(creditsApplied).toBe(1);
+  });
+
 });

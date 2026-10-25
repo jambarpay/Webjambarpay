@@ -22,6 +22,8 @@ export interface EmployeeTopUp {
   paymentUrl: string;
   expiresAt: string;
   sandbox: boolean;
+  paymentProvider: string;
+  checkoutToken: string | null;
   transactionId: string | null;
 }
 

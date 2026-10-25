@@ -33,12 +33,14 @@
           <p role="status">Vérification en cours…</p>
         }
         @if (pendingTopUp(); as topUp) {
-          @if (topUp.sandbox) {
-            <p>Mode test KkiaPay : aucun paiement réel.</p>
+          @if (topUp.sandbox && !legacyCheckout()) {
+            <p>Mode test PayDunya : aucun paiement réel.</p>
           }
           <p>{{ topUp.employeeIds.length }} compte(s) · {{ formatAmount(topUp.totalAmount) }}</p>
         }
-        @if (pendingTransactionId()) {
+        @if (legacyCheckout()) {
+          <p>Ce chargement utilise l’ancien fournisseur. Conservez sa référence pour vérifier un éventuel paiement.</p>
+        } @else if (pendingTransactionId()) {
           <p>Si la confirmation échoue, relancez la vérification ici sans effectuer un nouveau paiement.</p>
           <button type="button" class="btn btn-primary" [disabled]="processing()" (click)="restoreCheckout()">Vérifier le paiement</button>
         } @else if (pendingTopUp()) {
@@ -46,7 +48,7 @@
           <button type="button" class="btn btn-primary" [disabled]="processing()" (click)="resumePayment()">Reprendre le paiement</button>
           <p>Vous avez déjà payé ? Vérifiez ce paiement avec sa référence pour éviter de payer à nouveau.</p>
           <label class="field" for="payment-reference">
-            <span>Référence du paiement KkiaPay</span>
+            <span>Référence du paiement PayDunya</span>
             <input id="payment-reference" type="text" [(ngModel)]="transactionReference" maxlength="255" />
           </label>
           <button type="button" class="btn btn-secondary" [disabled]="processing()" (click)="verifyReference()">Vérifier cette référence</button>
@@ -151,7 +153,7 @@
       <div class="step-content review-step">
         <div class="review-icon"><i class="pi pi-wallet"></i></div>
         <h3>Vérifiez l’opération</h3>
-        <p class="step-description">Vous serez redirigé vers KkiaPay. Les comptes seront crédités après vérification du paiement.</p>
+        <p class="step-description">Vous serez redirigé vers PayDunya. Les comptes seront crédités après vérification du paiement.</p>
         <dl class="summary">
           <div><dt>Nombre de comptes</dt><dd>{{ selectedEmployees.length }}</dd></div>
           <div><dt>Montant par compte</dt><dd>{{ formatAmount(amountValue) }}</dd></div>
@@ -174,7 +176,7 @@
           <button type="button" class="btn btn-primary" (click)="continueToReview()">Voir le récapitulatif</button>
         } @else {
           <button type="button" class="btn btn-primary" [disabled]="processing()" (click)="confirmCharge()">
-            <i class="pi pi-credit-card"></i> {{ processing() ? 'Traitement en cours…' : 'Payer avec KkiaPay' }}
+            <i class="pi pi-credit-card"></i> {{ processing() ? 'Traitement en cours…' : 'Payer avec PayDunya' }}
           </button>
         }
       }

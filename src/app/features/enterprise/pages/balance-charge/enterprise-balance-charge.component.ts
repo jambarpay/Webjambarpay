@@ -47,6 +47,8 @@ export class EnterpriseBalanceChargeComponent {
   readonly hasPendingCheckout = signal(false);
   readonly pendingTopUp = signal<EmployeeTopUp | null>(null);
   readonly pendingTransactionId = signal('');
+  readonly legacyCheckout = computed(() => !!this.pendingTopUp()
+    && this.pendingTopUp()!.paymentProvider !== 'PAYDUNYA');
   private recovery: PendingCheckout = {};
 
   scope: ChargeScope = 'all';
@@ -162,7 +164,10 @@ export class EnterpriseBalanceChargeComponent {
     const query = this.route.snapshot.queryParamMap;
     this.recovery = this.readPending();
     const id = query.get('topUpId') || this.recovery.id;
-    const transactionId = query.get('transactionId') || this.recovery.transactionId;
+    const cancelled = query.get('paymentCancelled') === 'true';
+    const transactionId = cancelled ? undefined
+      : query.get('token') || query.get('transactionId') || this.recovery.transactionId;
+    if (cancelled) delete this.recovery.transactionId;
     if (!id && !this.recovery.request) {
       if (transactionId) {
         this.hasPendingCheckout.set(true);
@@ -182,9 +187,11 @@ export class EnterpriseBalanceChargeComponent {
       const topUp = id ? await this.topUps.get(id) : await this.topUps.create(this.recovery.request!);
       this.acceptPending(topUp);
       if (topUp.status === 'COMPLETED') await this.finish(topUp);
-      else if (transactionId) await this.finish(await this.topUps.complete(topUp.id, transactionId));
+      else if (this.legacyCheckout()) {
+        this.errorMessage.set('Ce chargement utilise l’ancien fournisseur. Vérifiez son paiement avant de créer un nouveau chargement PayDunya.');
+      } else if (transactionId) await this.finish(await this.topUps.complete(topUp.id, transactionId));
     } catch (error) {
-      this.errorMessage.set(error instanceof Error ? error.message : 'La vérification KkiaPay a échoué.');
+      this.errorMessage.set(error instanceof Error ? error.message : 'La vérification PayDunya a échoué.');
     } finally {
       this.processing.set(false);
     }
@@ -192,7 +199,7 @@ export class EnterpriseBalanceChargeComponent {
 
   async resumePayment(): Promise<void> {
     const topUp = this.pendingTopUp();
-    if (!topUp || this.processing() || this.pendingTransactionId()) return;
+    if (!topUp || this.processing() || this.pendingTransactionId() || this.legacyCheckout()) return;
     this.processing.set(true);
     this.errorMessage.set('');
     try {
@@ -211,11 +218,11 @@ export class EnterpriseBalanceChargeComponent {
     if (this.processing() || !this.pendingTopUp()) return;
     const transactionId = this.transactionReference.trim();
     if (!/^[A-Za-z0-9_-]{1,255}$/.test(transactionId)) {
-      this.errorMessage.set('Saisissez la référence du paiement KkiaPay.');
+      this.errorMessage.set('Saisissez la référence du paiement PayDunya.');
       return;
     }
     await this.router.navigate([], { relativeTo: this.route,
-      queryParams: { topUpId: this.pendingTopUp()!.id, transactionId }, replaceUrl: true });
+      queryParams: { topUpId: this.pendingTopUp()!.id, token: transactionId }, replaceUrl: true });
     await this.restoreCheckout();
   }
 
@@ -237,7 +244,8 @@ export class EnterpriseBalanceChargeComponent {
   }
 
   private openPayment(topUp: EmployeeTopUp): void {
-    if (!topUp.paymentUrl) throw new Error('Le lien de paiement KkiaPay est indisponible.');
+    if (topUp.paymentProvider !== 'PAYDUNYA') throw new Error('Créez un nouveau chargement PayDunya après avoir vérifié l’ancien paiement.');
+    if (!topUp.paymentUrl) throw new Error('Le lien de paiement PayDunya est indisponible.');
     location.assign(topUp.paymentUrl);
   }
 
