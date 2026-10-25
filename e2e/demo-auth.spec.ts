@@ -10,10 +10,12 @@ test('valide les champs obligatoires de connexion', async ({ page }) => {
 
 test('redirige un visiteur non connecté vers la connexion', async ({ page }) => {
   await page.goto('/dashboard');
-  await expect(page).toHaveURL(/\/login$/);
+  await expect(page).toHaveURL(url => url.pathname === '/login'
+    && url.searchParams.get('returnUrl') === '/dashboard');
 });
 
 test('protège également les espaces métier par rôle', async ({ page }) => {
   await page.goto('/enterprise-dashboard');
-  await expect(page).toHaveURL(/\/login$/);
+  await expect(page).toHaveURL(url => url.pathname === '/login'
+    && url.searchParams.get('returnUrl') === '/enterprise-dashboard');
 });
