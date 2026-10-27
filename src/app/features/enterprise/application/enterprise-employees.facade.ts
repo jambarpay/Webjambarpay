@@ -5,6 +5,7 @@ import { BackendApiClient } from '../../../core/http/backend-api.client';
 import { ApiEnvelope } from '../../../core/http/models/api-response';
 import { DataTransferService, ExportColumn, ImportedRecord } from '../../../core/services/data-transfer.service';
 import { sliceCurrentPage } from '../../../core/utils/pagination';
+import { userErrorMessage } from '../../../core/http/models/user-error-message';
 import { MONITORING_REPOSITORY, MonitoringRepository } from '../../monitoring/application/monitoring.repository';
 
 export interface EmployeeRow {
@@ -252,7 +253,7 @@ export class EnterpriseEmployeesFacade {
   }
 
   setErrorFeedback(error: unknown, fallbackMessage: string): void {
-    this.setFeedback('error', error instanceof Error ? error.message : fallbackMessage);
+    this.setFeedback('error', userErrorMessage(error, fallbackMessage));
   }
 
   setSuccessFeedback(message: string): void {
@@ -334,7 +335,10 @@ export class EnterpriseEmployeesFacade {
     }
     return this.api.get<BackendWalletDto>(`wallets/owners/${encodeURIComponent(user.id)}`).pipe(
       map(wallet => this.toEmployee(user, wallet)),
-      catchError(() => of(this.toEmployee(user, null))),
+      catchError(error => {
+        this.setErrorFeedback(error, 'Le solde de ce salarié est temporairement indisponible.');
+        return of(this.toEmployee(user, null));
+      }),
     );
   }
 

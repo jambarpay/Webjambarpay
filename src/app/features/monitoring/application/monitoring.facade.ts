@@ -2,6 +2,7 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { finalize, firstValueFrom, take } from 'rxjs';
 import { DataTransferService, ExportColumn, ImportedRecord } from '../../../core/services/data-transfer.service';
 import { sliceCurrentPage } from '../../../core/utils/pagination';
+import { userErrorMessage } from '../../../core/http/models/user-error-message';
 import { MonitoringTransaction } from '../domain/monitoring-transaction.model';
 import { MONITORING_REPOSITORY, MonitoringRepository } from './monitoring.repository';
 
@@ -119,7 +120,7 @@ export class MonitoringFacade {
   }
 
   setError(error: unknown, fallback: string): void {
-    this.feedback.set({ type: 'error', message: error instanceof Error ? error.message : fallback });
+    this.feedback.set({ type: 'error', message: userErrorMessage(error, fallback) });
   }
 
   private mapImportedTransaction(record: ImportedRecord, index: number): MonitoringTransaction | null {

@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, signal, inject } from '@angular/cor
 import { EmptyStateComponent } from '../../../../design-system/components/empty-state/empty-state.component';
 import { FeedbackMessageComponent } from '../../../../design-system/components/feedback-message/feedback-message.component';
 import { LoadingStateComponent } from '../../../../design-system/components/loading-state/loading-state.component';
+import { userErrorMessage } from '../../../../core/http/models/user-error-message';
 import { RestaurantPaymentsFacade } from '../../application/restaurant-payments.facade';
 
 @Component({
@@ -38,7 +39,7 @@ export class RestaurantPaymentsComponent {
     } catch (error) {
       this.feedback.set({
         type: 'error',
-        message: error instanceof Error ? error.message : 'Le téléchargement du QR a échoué.',
+        message: userErrorMessage(error, 'Le téléchargement du QR a échoué.'),
       });
     }
   }

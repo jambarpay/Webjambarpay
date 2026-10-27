@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { AuthFacade } from '../../../../core/auth/application/auth.facade';
 import { BackendApiClient } from '../../../../core/http/backend-api.client';
+import { userErrorMessage } from '../../../../core/http/models/user-error-message';
 import { isStrongPassword } from '../../../../core/utils/form-validation';
 
 interface BackendRestaurant {
@@ -69,7 +70,7 @@ export class RestaurantSettingsComponent {
       this.populate(response);
       this.feedback.set('Informations enregistrées.');
     } catch (error) {
-      this.feedback.set(error instanceof Error ? error.message : 'Enregistrement impossible.');
+      this.feedback.set(userErrorMessage(error, 'Enregistrement impossible.'));
     } finally {
       this.saving.set(false);
     }
@@ -94,7 +95,7 @@ export class RestaurantSettingsComponent {
       this.confirmPassword = '';
       this.feedback.set('Mot de passe mis à jour.');
     } catch (error) {
-      this.feedback.set(error instanceof Error ? error.message : 'Modification du mot de passe impossible.');
+      this.feedback.set(userErrorMessage(error, 'Modification du mot de passe impossible.'));
     }
   }
 

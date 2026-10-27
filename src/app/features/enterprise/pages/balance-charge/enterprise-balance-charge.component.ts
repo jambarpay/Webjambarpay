@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { userErrorMessage } from '../../../../core/http/models/user-error-message';
 import { AuthFacade } from '../../../../core/auth/application/auth.facade';
 import { EmployeeTopUp, EmployeeTopUpRequest, EmployeeTopUpsClient } from '../../application/employee-top-ups.client';
 import {
@@ -135,7 +136,7 @@ export class EnterpriseBalanceChargeComponent {
       if (topUp.status === 'COMPLETED') await this.finish(topUp);
       else this.openPayment(topUp);
     } catch (error) {
-      this.errorMessage.set(error instanceof Error ? error.message : 'Le chargement des comptes a échoué.');
+      this.errorMessage.set(userErrorMessage(error, 'Le chargement des comptes a échoué.'));
     } finally {
       this.processing.set(false);
     }
@@ -191,7 +192,7 @@ export class EnterpriseBalanceChargeComponent {
         this.errorMessage.set('Ce chargement utilise l’ancien fournisseur. Vérifiez son paiement avant de créer un nouveau chargement PayDunya.');
       } else if (transactionId) await this.finish(await this.topUps.complete(topUp.id, transactionId));
     } catch (error) {
-      this.errorMessage.set(error instanceof Error ? error.message : 'La vérification PayDunya a échoué.');
+      this.errorMessage.set(userErrorMessage(error, 'La vérification PayDunya a échoué.'));
     } finally {
       this.processing.set(false);
     }
@@ -208,7 +209,7 @@ export class EnterpriseBalanceChargeComponent {
       if (refreshed.status === 'COMPLETED') await this.finish(refreshed);
       else this.openPayment(refreshed);
     } catch (error) {
-      this.errorMessage.set(error instanceof Error ? error.message : 'Le paiement est indisponible.');
+      this.errorMessage.set(userErrorMessage(error, 'Le paiement est indisponible.'));
     } finally {
       this.processing.set(false);
     }

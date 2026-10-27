@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { AuthFacade } from '../../../../core/auth/application/auth.facade';
 import { BackendApiClient } from '../../../../core/http/backend-api.client';
+import { userErrorMessage } from '../../../../core/http/models/user-error-message';
 import { isStrongPassword } from '../../../../core/utils/form-validation';
 
 @Component({
@@ -57,7 +58,7 @@ export class EnterpriseSettingsComponent {
     } catch (error) {
       this.feedback.set({
         type: 'error',
-        message: error instanceof Error ? error.message : 'La modification du mot de passe a échoué.',
+        message: userErrorMessage(error, 'La modification du mot de passe a échoué.'),
       });
     } finally {
       this.saving.set(false);

@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { RouterModule } from '@angular/router';
 import { InputTextModule } from 'primeng/inputtext';
 import { firstValueFrom } from 'rxjs';
+import { userErrorMessage } from '../../../core/http/models/user-error-message';
 import { FeedbackMessage, FeedbackMessageComponent } from '../../../design-system/components/feedback-message/feedback-message.component';
 import { RESTAURANTS_REPOSITORY, RestaurantsRepository } from '../application/restaurants.repository';
 import { Restaurant, PartnerType, isPartnerType } from '../domain/restaurant.model';
@@ -68,9 +69,7 @@ export class RestaurantAddComponent {
     } catch (error) {
       this.feedback.set({
         type: 'error',
-        message: error instanceof Error
-          ? error.message
-          : 'Le restaurant n’a pas pu être enregistré. Veuillez réessayer.',
+        message: userErrorMessage(error, 'Le restaurant n’a pas pu être enregistré. Veuillez réessayer.'),
       });
     } finally {
       this.submitting.set(false);

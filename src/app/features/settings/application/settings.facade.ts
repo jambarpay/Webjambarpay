@@ -1,5 +1,6 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { tap } from 'rxjs';
+import { userErrorMessage } from '../../../core/http/models/user-error-message';
 import { createEmptyPlatformSettings } from '../domain/platform-settings.model';
 import { PLATFORM_SETTINGS_REPOSITORY, PlatformSettingsRepository } from './platform-settings.repository';
 
@@ -15,7 +16,7 @@ export class SettingsFacade {
       next: settings => Object.assign(this.form, settings),
       error: error => this.feedback.set({
         type: 'error',
-        message: error instanceof Error ? error.message : 'Chargement des paramètres impossible.',
+        message: userErrorMessage(error, 'Chargement des paramètres impossible.'),
       }),
     });
   }
@@ -27,7 +28,7 @@ export class SettingsFacade {
         next: () => this.feedback.set({ type: 'success', message: 'Les paramètres ont été enregistrés.' }),
         error: error => this.feedback.set({
           type: 'error',
-          message: error instanceof Error ? error.message : 'Enregistrement des paramètres impossible.',
+          message: userErrorMessage(error, 'Enregistrement des paramètres impossible.'),
         }),
       }),
     );

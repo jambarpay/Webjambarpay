@@ -5,6 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { BackendApiClient } from '../../../../core/http/backend-api.client';
 import { ApiEnvelope } from '../../../../core/http/models/api-response';
+import { userErrorMessage } from '../../../../core/http/models/user-error-message';
 import {
   hasMinLength,
   hasValue,
@@ -63,7 +64,7 @@ export class EnterpriseEmployeeAddComponent {
       }));
       await this.router.navigate(['/enterprise-employees']);
     } catch (error) {
-      this.errorMessage.set(error instanceof Error ? error.message : 'Le salarié n’a pas pu être créé.');
+      this.errorMessage.set(userErrorMessage(error, 'Le salarié n’a pas pu être créé.'));
     } finally {
       this.submitting.set(false);
     }

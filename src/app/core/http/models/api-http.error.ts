@@ -17,22 +17,52 @@ export class ApiHttpError extends Error {
 
 export function mapApiHttpError(response: HttpErrorResponse): ApiHttpError {
   const payload = isApiErrorPayload(response.error) ? response.error : {};
-  const correlationId = payload.correlationId
-    ?? response.headers?.get('x-correlation-id')
+  const correlationId = safeCorrelationId(payload.correlationId)
+    ?? safeCorrelationId(response.headers?.get('x-correlation-id'))
     ?? null;
+  const message = safeBusinessMessage(payload.message, response.status)
+    ?? defaultMessage(response.status);
 
   return new ApiHttpError(
-    payload.message ?? defaultMessage(response.status),
+    message,
     response.status,
-    payload.code ?? payload.errorCode ?? `HTTP_${response.status || 'NETWORK'}`,
+    safeErrorCode(payload.code) ?? safeErrorCode(payload.errorCode) ?? `HTTP_${response.status || 'NETWORK'}`,
     correlationId,
-    payload.validationErrors ?? {},
+    safeValidationErrors(payload.validationErrors),
     response,
   );
 }
 
 function isApiErrorPayload(value: unknown): value is ApiErrorPayload {
-  return !!value && typeof value === 'object';
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function safeBusinessMessage(value: unknown, status: number): string | null {
+  if (![400, 404, 409, 410, 422, 429].includes(status) || typeof value !== 'string') return null;
+  const message = value.trim();
+  if (!message || message.length > 300) return null;
+  if (/[<>\r\n]|https?:\/\/|exception|stacktrace|bearer\s|eyJ[a-zA-Z0-9_-]+\./i.test(message)) return null;
+  return message;
+}
+
+function safeCorrelationId(value: unknown): string | null {
+  return typeof value === 'string' && /^[A-Za-z0-9._:-]{1,128}$/.test(value) ? value : null;
+}
+
+function safeErrorCode(value: unknown): string | null {
+  return typeof value === 'string' && /^[A-Za-z0-9_.-]{1,80}$/.test(value) ? value : null;
+}
+
+function safeValidationErrors(value: unknown): Readonly<Record<string, readonly string[]>> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([field, messages]) => /^[A-Za-z][A-Za-z0-9_.-]{0,79}$/.test(field)
+        && Array.isArray(messages)
+        && messages.length <= 10
+        && messages.every(message => typeof message === 'string' && message.length <= 300))
+      .map(([field, messages]) => [field, [...messages as string[]]]),
+  );
 }
 
 function defaultMessage(status: number): string {

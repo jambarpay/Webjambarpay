@@ -2,6 +2,7 @@ import { computed, Injectable, signal, inject } from '@angular/core';
 import { finalize, firstValueFrom, take } from 'rxjs';
 import { DataTransferService, ExportColumn, ImportedRecord } from '../../../core/services/data-transfer.service';
 import { sliceCurrentPage } from '../../../core/utils/pagination';
+import { userErrorMessage } from '../../../core/http/models/user-error-message';
 import { COMPANIES_REPOSITORY, CompaniesRepository } from '../application/companies.repository';
 import { Company } from '../domain/company.model';
 
@@ -172,7 +173,7 @@ export class CompaniesListFacade {
   }
 
   setErrorFeedback(error: unknown, fallbackMessage: string): void {
-    this.setFeedback('error', error instanceof Error ? error.message : fallbackMessage);
+    this.setFeedback('error', userErrorMessage(error, fallbackMessage));
   }
 
   private isInDateRange(dateValue: string, range: CompanyDateFilter): boolean {

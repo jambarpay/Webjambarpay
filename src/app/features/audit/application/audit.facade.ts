@@ -2,6 +2,7 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { finalize, take } from 'rxjs';
 import { DataTransferService, ExportColumn } from '../../../core/services/data-transfer.service';
 import { sliceCurrentPage } from '../../../core/utils/pagination';
+import { userErrorMessage } from '../../../core/http/models/user-error-message';
 import { AuditLog } from '../domain/audit-log.model';
 import { AUDIT_REPOSITORY, AuditRepository } from './audit.repository';
 
@@ -62,7 +63,7 @@ export class AuditFacade {
       next: logs => this.allLogs.set(logs),
       error: error => this.feedback.set({
         type: 'error',
-        message: error instanceof Error ? error.message : 'Chargement du journal d’audit impossible.',
+        message: userErrorMessage(error, 'Chargement du journal d’audit impossible.'),
       }),
     });
   }

@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { BackendApiClient } from '../../../core/http/backend-api.client';
-import { ApiHttpError } from '../../../core/http/models/api-http.error';
+import { userErrorMessage } from '../../../core/http/models/user-error-message';
 import { InputTextModule } from 'primeng/inputtext';
 import { PartnerTypePickerComponent } from '../../restaurants/partner-type-picker/partner-type-picker.component';
 import { PARTNER_TYPES, PartnerType, isPartnerType } from '../../restaurants/domain/restaurant.model';
@@ -166,11 +166,7 @@ export class RegisterComponent {
   }
 
   private getRegistrationErrorMessage(error: unknown): string {
-    if (error instanceof ApiHttpError) {
-      if (error.message.trim()) return error.message;
-      return `L’inscription a échoué (erreur ${error.status}).`;
-    }
-    return error instanceof Error ? error.message : 'Impossible d’inscrire le compte pour le moment.';
+    return userErrorMessage(error, 'Impossible d’inscrire le compte pour le moment.');
   }
 
   showRequiredError(value: string | number | null | undefined): boolean {

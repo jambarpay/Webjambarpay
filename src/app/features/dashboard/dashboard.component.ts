@@ -1,12 +1,14 @@
 import { DecimalPipe, SlicePipe } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ChartData, ChartOptions } from 'chart.js';
 import { ChartModule } from 'primeng/chart';
 import { TableModule } from 'primeng/table';
-import { catchError, forkJoin, of } from 'rxjs';
+import { catchError, forkJoin, Observable, of } from 'rxjs';
 import { KpiCardComponent } from '../../design-system/components/kpi-card/kpi-card.component';
+import { FeedbackMessageComponent, FeedbackMessage } from '../../design-system/components/feedback-message/feedback-message.component';
 import { FcfaCurrencyPipe } from '../../shared/pipes/fcfa-currency.pipe';
+import { userErrorMessage } from '../../core/http/models/user-error-message';
 import { COMPANIES_REPOSITORY, CompaniesRepository } from '../companies/application/companies.repository';
 import { MONITORING_REPOSITORY, MonitoringRepository } from '../monitoring/application/monitoring.repository';
 import { MonitoringTransaction } from '../monitoring/domain/monitoring-transaction.model';
@@ -15,7 +17,7 @@ import { DashboardKpi, RecentActivity, TopRestaurant } from './domain/dashboard.
 
 @Component({
   selector: 'app-dashboard',
-  imports: [DecimalPipe, SlicePipe, RouterLink, TableModule, ChartModule, KpiCardComponent, FcfaCurrencyPipe],
+  imports: [DecimalPipe, SlicePipe, RouterLink, TableModule, ChartModule, KpiCardComponent, FeedbackMessageComponent, FcfaCurrencyPipe],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -29,6 +31,8 @@ export class DashboardComponent {
   readonly displayedPeriod = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(new Date());
   readonly monthlyTransactionTarget = 500;
   monthlyActivityRate = 0;
+  private readonly errors: string[] = [];
+  readonly feedback = signal<FeedbackMessage | null>(null);
   kpis: DashboardKpi[] = [];
   topRestaurants: TopRestaurant[] = [];
   recentActivities: RecentActivity[] = [];
@@ -45,9 +49,9 @@ export class DashboardComponent {
 
   constructor() {
     forkJoin({
-      companies: this.companiesRepository.list().pipe(catchError(() => of([]))),
-      restaurants: this.restaurantsRepository.list().pipe(catchError(() => of([]))),
-      transactions: this.monitoringRepository.list().pipe(catchError(() => of([]))),
+      companies: this.withFallback(this.companiesRepository.list(), [], 'Les entreprises n’ont pas pu être chargées.'),
+      restaurants: this.withFallback(this.restaurantsRepository.list(), [], 'Les restaurants n’ont pas pu être chargés.'),
+      transactions: this.withFallback(this.monitoringRepository.list(), [], 'Les transactions n’ont pas pu être chargées.'),
     }).subscribe({
       next: data => {
         const validTransactions = data.transactions.filter(transaction => transaction.status === 'Validé');
@@ -69,10 +73,23 @@ export class DashboardComponent {
           status: transaction.status === 'En attente' ? 'En cours' : transaction.status,
         }));
         this.chartData = this.buildChart(data.transactions);
+        this.feedback.set(this.errors.length
+          ? { type: 'error', message: `Certaines données sont indisponibles. ${this.errors.join(' ')}` }
+          : null);
         this.changeDetector.markForCheck();
       },
-      error: () => this.changeDetector.markForCheck(),
+      error: () => {
+        this.feedback.set({ type: 'error', message: 'Le tableau de bord est temporairement indisponible.' });
+        this.changeDetector.markForCheck();
+      },
     });
+  }
+
+  private withFallback<T>(source: Observable<T>, fallback: T, message: string): Observable<T> {
+    return source.pipe(catchError(error => {
+      this.errors.push(userErrorMessage(error, message));
+      return of(fallback);
+    }));
   }
 
   private buildTopRestaurants(transactions: MonitoringTransaction[]): TopRestaurant[] {

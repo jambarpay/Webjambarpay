@@ -37,4 +37,32 @@ describe('mapApiHttpError', () => {
     expect(error.correlationId).toBe('corr-header');
     expect(error.message).toBe('Le service rencontre une erreur temporaire.');
   });
+
+  it('does not expose server diagnostics, markup, or malformed metadata', () => {
+    const error = mapApiHttpError(new HttpErrorResponse({
+      status: 422,
+      error: {
+        code: '<script>',
+        message: 'https://internal.example/secret?token=private',
+        correlationId: 'Bearer private-token',
+        validationErrors: ['not a field map'],
+      },
+    }));
+
+    expect(error.code).toBe('HTTP_422');
+    expect(error.message).toBe('La requête n’a pas pu être traitée.');
+    expect(error.correlationId).toBeNull();
+    expect(error.validationErrors).toEqual({});
+  });
+
+  it('uses fixed infrastructure messages while retaining a safe rate-limit reason', () => {
+    const failure = (status: number, message: string) => mapApiHttpError(
+      new HttpErrorResponse({ status, error: { message } }),
+    );
+
+    expect(failure(503, 'Database host and password leaked').message)
+      .toBe('Le service rencontre une erreur temporaire.');
+    expect(failure(429, 'Trop de tentatives. Réessayez dans deux minutes.').message)
+      .toBe('Trop de tentatives. Réessayez dans deux minutes.');
+  });
 });

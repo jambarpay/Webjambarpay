@@ -2,6 +2,7 @@ import { computed, Injectable, signal, inject } from '@angular/core';
 import { finalize, firstValueFrom, take } from 'rxjs';
 import { DataTransferService, ExportColumn, ImportedRecord } from '../../../core/services/data-transfer.service';
 import { sliceCurrentPage } from '../../../core/utils/pagination';
+import { userErrorMessage } from '../../../core/http/models/user-error-message';
 import { RESTAURANTS_REPOSITORY, RestaurantsRepository } from '../application/restaurants.repository';
 import { Restaurant } from '../domain/restaurant.model';
 
@@ -154,7 +155,7 @@ export class RestaurantsListFacade {
   }
 
   setErrorFeedback(error: unknown, fallbackMessage: string): void {
-    this.setFeedback('error', error instanceof Error ? error.message : fallbackMessage);
+    this.setFeedback('error', userErrorMessage(error, fallbackMessage));
   }
 
   private mapImportedRestaurant(record: ImportedRecord, index: number): Restaurant | null {

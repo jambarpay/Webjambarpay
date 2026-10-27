@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { BackendApiClient } from '../../../../core/http/backend-api.client';
-import { ApiHttpError } from '../../../../core/http/models/api-http.error';
+import { userErrorMessage } from '../../../../core/http/models/user-error-message';
 import { ConfirmationDialogService } from '../../../../core/ui/confirmation-dialog.service';
 
 interface CreateSellerRequest {
@@ -157,24 +157,6 @@ export class RestaurantSellersComponent {
   }
 
   private formatError(error: unknown, fallbackMessage: string): string {
-    if (error instanceof ApiHttpError) {
-      if (error.status === 0 || error.status >= 500) {
-        return 'Le service est temporairement indisponible. Réessayez dans quelques instants.';
-      }
-
-      if (error.status === 403) {
-        return 'Vous n’avez pas l’autorisation de consulter cette liste.';
-      }
-
-      if (error.message?.trim()) {
-        return error.message;
-      }
-    }
-
-    if (error instanceof Error && error.message.trim()) {
-      return error.message;
-    }
-
-    return fallbackMessage;
+    return userErrorMessage(error, fallbackMessage);
   }
 }

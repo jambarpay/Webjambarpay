@@ -1,11 +1,13 @@
 import { TitleCasePipe } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject } from '@angular/core';
-import { catchError, forkJoin, of } from 'rxjs';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, signal } from '@angular/core';
+import { catchError, forkJoin, Observable, of } from 'rxjs';
 import { TableModule } from 'primeng/table';
 import { KpiCardComponent } from '../../../../design-system/components/kpi-card/kpi-card.component';
+import { FeedbackMessage, FeedbackMessageComponent } from '../../../../design-system/components/feedback-message/feedback-message.component';
 import { AuthFacade } from '../../../../core/auth/application/auth.facade';
 import { BackendApiClient } from '../../../../core/http/backend-api.client';
 import { ApiEnvelope } from '../../../../core/http/models/api-response';
+import { userErrorMessage } from '../../../../core/http/models/user-error-message';
 import { MONITORING_REPOSITORY, MonitoringRepository } from '../../../monitoring/application/monitoring.repository';
 
 interface FinancialKpi {
@@ -39,7 +41,7 @@ interface BackendWallet { balance: number }
 
 @Component({
   selector: 'app-enterprise-dashboard',
-  imports: [TableModule, TitleCasePipe, KpiCardComponent],
+  imports: [TableModule, TitleCasePipe, KpiCardComponent, FeedbackMessageComponent],
   templateUrl: './enterprise-dashboard.component.html',
   styleUrls: ['./enterprise-dashboard.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -62,6 +64,8 @@ export class EnterpriseDashboardComponent {
   maxRestaurantMeals = 1;
   transactions: EnterpriseTransaction[] = [];
   financialKpis: FinancialKpi[] = this.createKpis(0, 0, 0, 0);
+  readonly feedback = signal<FeedbackMessage | null>(null);
+  private readonly errors: string[] = [];
 
   constructor() {
     const companyId = this.auth.getProfile()?.id;
@@ -70,10 +74,20 @@ export class EnterpriseDashboardComponent {
       return;
     }
     forkJoin({
-      users: this.api.get<ApiEnvelope<BackendUser[]>>(`users/company/${encodeURIComponent(companyId)}/employees`),
-      transactions: this.monitoringRepository.list(),
-      wallet: this.api.get<BackendWallet>(`wallets/owners/${encodeURIComponent(companyId)}/types/COMPANY`).pipe(
-        catchError(() => of(null)),
+      users: this.withFallback(
+        this.api.get<ApiEnvelope<BackendUser[]>>(`users/company/${encodeURIComponent(companyId)}/employees`),
+        { data: [] },
+        'Les salariés n’ont pas pu être chargés.',
+      ),
+      transactions: this.withFallback(
+        this.monitoringRepository.list(),
+        [],
+        'Les transactions n’ont pas pu être chargées.',
+      ),
+      wallet: this.withFallback(
+        this.api.get<BackendWallet>(`wallets/owners/${encodeURIComponent(companyId)}/types/COMPANY`),
+        null,
+        'Le solde de l’entreprise est indisponible.',
       ),
     }).subscribe({
       next: ({ users, transactions, wallet }) => {
@@ -87,10 +101,23 @@ export class EnterpriseDashboardComponent {
             : transaction.status === 'Échoué' ? 'FAILED' : 'PENDING',
           createdAt: transaction.date,
         })), wallet?.balance ?? 0);
+        this.feedback.set(this.errors.length
+          ? { type: 'error', message: `Certaines données sont indisponibles. ${this.errors.join(' ')}` }
+          : null);
         this.changeDetector.markForCheck();
       },
-      error: () => this.changeDetector.markForCheck(),
+      error: () => {
+        this.feedback.set({ type: 'error', message: 'Le tableau de bord est temporairement indisponible.' });
+        this.changeDetector.markForCheck();
+      },
     });
+  }
+
+  private withFallback<T>(source: Observable<T>, fallback: T, message: string): Observable<T> {
+    return source.pipe(catchError(error => {
+      this.errors.push(userErrorMessage(error, message));
+      return of(fallback);
+    }));
   }
 
   dailyMealHeight(count: number): number {

@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { RouterModule } from '@angular/router';
 import { InputTextModule } from 'primeng/inputtext';
 import { firstValueFrom } from 'rxjs';
+import { userErrorMessage } from '../../../core/http/models/user-error-message';
 import { FeedbackMessage, FeedbackMessageComponent } from '../../../design-system/components/feedback-message/feedback-message.component';
 import { COMPANIES_REPOSITORY, CompaniesRepository } from '../application/companies.repository';
 import {
@@ -68,9 +69,7 @@ export class CompanyAddComponent {
     } catch (error) {
       this.feedback.set({
         type: 'error',
-        message: error instanceof Error
-          ? error.message
-          : 'L’entreprise n’a pas pu être enregistrée.',
+        message: userErrorMessage(error, 'L’entreprise n’a pas pu être enregistrée.'),
       });
     } finally {
       this.submitting.set(false);
