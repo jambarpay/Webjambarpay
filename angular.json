@@ -50,6 +50,11 @@
             "assets": [
               "src/robots.txt",
               "src/sitemap.xml",
+              {
+                "glob": "google*.html",
+                "input": "src",
+                "output": "/"
+              },
               "src/assets"
             ],
             "styles": [
